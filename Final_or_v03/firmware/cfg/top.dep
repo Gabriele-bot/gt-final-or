@@ -1,0 +1,27 @@
+src --vhdl2008 math_pkg.vhd
+src --vhdl2008 P2GT_monitor_pkg.vhd
+src --vhdl2008 pre_scaler_pkg.vhd
+src --vhdl2008 update_process.vhd
+src --vhdl2008 algo_pre_scaler.vhd
+src --vhdl2008 algo_rate_counter.vhd
+src --vhdl2008 algo_rate_counter_pdt.vhd 
+src --vhdl2008 algo_slice.vhd
+src --vhdl2008 monitoring_module.vhd
+src --vhdl2008 ipbus_decode_m_module.vhd
+src --vhdl2008 delay_element_ringbuffer.vhd
+src --vhdl2008 FinOR_pkg.vhd
+src --vhdl2008 InputOR.vhd
+src --vhdl2008 InputDemux.vhd
+src --vhdl2008 Mask.vhd
+src --vhdl2008 SLR_FinOR_unit.vhd
+src --vhdl2008 ipbus_decode_Finor.vhd
+src --vhdl2008 Trigger_local_or.vhd
+src ipbus_dpram.vhd
+
+addrtab -c monitoring_module.xml
+addrtab -c Finor.xml
+addrtab -c emp_payload.xml
+
+
+
+

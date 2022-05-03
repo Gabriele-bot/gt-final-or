@@ -1,0 +1,12 @@
+setup flatten_hierarchy.tcl
+setup build.tcl
+
+src top_serenity_vu9p-so2_decl.vhd
+
+include -c emp-fwk:boards/serenity/dc_vu9p dc_vu9p_so2.dep
+
+src ../ucf/payload_serenity-vu9p.tcl
+
+include top.dep
+src payload_vu9p.vhd
+
