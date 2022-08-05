@@ -1,5 +1,0 @@
-<node>
-  <node id="SLR0_monitor" address="0x80000000" fwinfo="endpoint;width=28"/>
-  <node id="SLR2_monitor" address="0x90000000" fwinfo="endpoint;width=28"/>
-  <node id="SLR1_monitor" address="0xA0000000" fwinfo="endpoint;width=28"/>
-</node>

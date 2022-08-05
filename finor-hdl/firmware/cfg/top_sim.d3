@@ -1,0 +1,31 @@
+src tb_decl.vhd
+include -c emp-fwk:boards/testbench top.dep
+
+src --vhdl2008 math_pkg.vhd
+src --vhdl2008 P2GT_monitor_pkg.vhd
+src --vhdl2008 pre_scaler_pkg.vhd
+src --vhdl2008 update_process.vhd
+src --vhdl2008 algo_pre_scaler.vhd
+src --vhdl2008 algo_rate_counter.vhd
+src --vhdl2008 algo_rate_counter_pdt.vhd 
+src --vhdl2008 algo_slice.vhd
+src --vhdl2008 m_module.vhd
+src --vhdl2008 ipbus_decode_m_module.vhd
+src --vhdl2008 delay_element_ringbuffer.vhd
+src --vhdl2008 FinOR_pkg.vhd
+src --vhdl2008 FirstOR.vhd
+src --vhdl2008 In_deser.vhd
+src --vhdl2008 Mask.vhd
+src --vhdl2008 SLR_FinOR_unit.vhd
+src --vhdl2008 ipbus_decode_emp_payload.vhd
+src --vhdl2008 Trigger_local_or.vhd
+src --vhdl2008 mux.vhd
+src ipbus_dpram.vhd
+
+
+addrtab -c my-algo-repo:Final_or_v03 m_module.xml
+addrtab -c my-algo-repo:Final_or_v03 emp_payload.xml
+
+
+
+

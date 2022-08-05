@@ -1,0 +1,4 @@
+<node description="Payload address table" fwinfo="endpoint;width=31">
+	<node id="SLR0_monitor" module="file://m_module.xml" address="0x00000000" fwinfo="endpoint;width=28"/>
+	<node id="SLR2_monitor" module="file://m_module.xml" address="0x10000000" fwinfo="endpoint;width=28"/>
+</node>

@@ -1,0 +1,37 @@
+src -c ipbus-firmware:components/ipbus_core ipbus_package.vhd
+src -c ipbus-firmware:components/ipbus_core ipbus_fabric_sel.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_reg_types.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_ctrlreg_v.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_dpram.vhd
+
+src --vhdl2008 math_pkg.vhd
+#src --vhdl2008 pre_scaler_pkg.vhd
+#src --vhdl2008 P2GT_monitor_pkg.vhd
+src --vhdl2008 P2GT_finor_pkg.vhd
+src --vhdl2008 FinOR_pkg.vhd
+src --vhdl2008 ipbus_decode_m_module.vhd
+src --vhdl2008 ipbus_decode_emp_payload.vhd
+src --vhdl2008 update_process.vhd
+src --vhdl2008 algo_pre_scaler.vhd
+src --vhdl2008 algo_rate_counter.vhd
+src --vhdl2008 algo_rate_counter_pdt.vhd 
+src --vhdl2008 algo_slice.vhd
+src --vhdl2008 delay_element_ringbuffer.vhd
+src --vhdl2008 Mask.vhd
+src --vhdl2008 m_module.vhd
+src --vhdl2008 Counter_module.vhd
+src --vhdl2008 FirstOR.vhd
+src --vhdl2008 IN_deser_validmod.vhd
+src --vhdl2008 mux.vhd
+src --vhdl2008 SLR_FinOR_unit.vhd
+src --vhdl2008 Trigger_local_or.vhd
+
+#include -c ipbus-firmware:components/ipbus_slaves
+#include -c ipbus-firmware:components/ipbus_core
+
+addrtab -c my-algo-repo:Final_or_v04 m_module.xml
+addrtab -c my-algo-repo:Final_or_v04 emp_payload.xml
+
+
+
+
