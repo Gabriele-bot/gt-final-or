@@ -40,35 +40,51 @@ end emp_payload;
 
 architecture rtl of emp_payload is
 
+    constant DEBUG : boolean := false;
+
     constant SLR_CROSSING_LATENCY : natural := 9;
     
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
 
-    signal begin_lumi_section : std_logic := '0'; -- TODO extract the value from ctrs
-    signal l1a_loc            : std_logic_vector(N_REGION - 1 downto 0);
-    signal bcres              : std_logic := '0';
-
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
-    type SLRCross_type is array (SLR_CROSSING_LATENCY - 1 downto 0) of std_logic_vector(7 downto 0);
-    signal trgg_SLR0_regs : SLRCross_type;
-    signal trgg_SLR2_regs : SLRCross_type;
-    
+    type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
+    signal trgg_SLR0_regs  : SLRCross_trigg_t;
+    signal trgg_SLR2_regs  : SLRCross_trigg_t;
+
+    signal algos_SLR0       : std_logic_vector(64*9-1 downto 0);
+    signal algos_SLR2       : std_logic_vector(64*9-1 downto 0);
+    signal algos_presc_SLR0 : std_logic_vector(64*9-1 downto 0);
+    signal algos_presc_SLR2 : std_logic_vector(64*9-1 downto 0);
+
+    type SLRCross_algos_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(64*9-1 downto 0);
+    signal algos_SLR0_regs       : SLRCross_algos_t;
+    signal algos_presc_SLR0_regs : SLRCross_algos_t;
+    signal algos_SLR2_regs       : SLRCross_algos_t;
+    signal algos_presc_SLR2_regs : SLRCross_algos_t;
+
+    attribute keep : boolean;
+    attribute keep of trgg_SLR0_regs : signal is true;
+    attribute keep of trgg_SLR2_regs : signal is true;
+
+    attribute keep of algos_SLR0_regs       : signal is true;
+    attribute keep of algos_presc_SLR0_regs : signal is true;
+    attribute keep of algos_SLR2_regs       : signal is true;
+    attribute keep of algos_presc_SLR2_regs : signal is true;
     
     attribute shreg_extract                       : string;
     attribute shreg_extract of trgg_SLR0_regs     : signal is "no";
     attribute shreg_extract of trgg_SLR2_regs     : signal is "no";
 
-
+    attribute shreg_extract of algos_SLR0_regs       : signal is "no";
+    attribute shreg_extract of algos_presc_SLR0_regs : signal is "no";
+    attribute shreg_extract of algos_SLR2_regs       : signal is "no";
+    attribute shreg_extract of algos_presc_SLR2_regs : signal is "no";
 
 begin
 
-    l1a_loc_wiring_gen : for i in N_REGION -1 downto 0 generate
-        l1a_loc(i) <= ctrs(i).l1a;
-    end generate;
-    
-    
+
     fabric_i: entity work.ipbus_fabric_sel
         generic map(
             NSLV => N_SLAVES,
@@ -96,10 +112,12 @@ begin
             rst360  => rst_loc(1),
             lhc_clk => clk_payload(2),
             lhc_rst => rst_payload(2),
-            l1a     => l1a_loc(1),
+            ctrs    => ctrs(1),
             d(11 downto 0)  => d(15 downto 4),
             d(23 downto 12) => d(123 downto 112),
-            trgg    => trgg_SLR0_regs(0)
+            trgg    => trgg_SLR0_regs(0),
+            algos           => algos_SLR0_regs(0),
+            algos_prescaled => algos_presc_SLR0_regs(0)
         );
 
     SLR2_module : entity work.SLR_FinOR_unit
@@ -115,10 +133,12 @@ begin
             rst360  => rst_loc(9),
             lhc_clk => clk_payload(2),
             lhc_rst => rst_payload(2),
-            l1a     => l1a_loc(9),
+            ctrs    => ctrs(11),
             d(11 downto 0)  => d(47 downto 36),
             d(23 downto 12) => d(91 downto 80),
-            trgg    => trgg_SLR2_regs(0)
+            trgg    => trgg_SLR2_regs(0),
+            algos           => algos_SLR2_regs(0),
+            algos_prescaled => algos_presc_SLR2_regs(0)
         );
 
     cross_SLR : process(clk_p)
@@ -137,6 +157,68 @@ begin
             trgg_0  => trgg_SLR0_regs(trgg_SLR0_regs'high),
             trgg_1  => trgg_SLR2_regs(trgg_SLR2_regs'high)
         );
+
+    --------------------------------------------------------------------------------
+    -------------------------------------------DEBUG OUT----------------------------
+    --------------------------------------------------------------------------------
+
+    -- TODO : lots of timing violation with this debug out, need to think about something
+
+    debug_g : if DEBUG generate
+
+        cross_SLR_algo : process(clk_p)
+        begin
+            if rising_edge(clk_p) then
+                algos_SLR0_regs(algos_SLR0_regs'high downto 1) <= algos_SLR0_regs(algos_SLR0_regs'high - 1 downto 0);
+                algos_SLR2_regs(algos_SLR2_regs'high downto 1) <= algos_SLR2_regs(algos_SLR2_regs'high - 1 downto 0);
+
+                algos_presc_SLR0_regs(algos_presc_SLR0_regs'high downto 1) <= algos_presc_SLR0_regs(algos_presc_SLR0_regs'high - 1 downto 0);
+                algos_presc_SLR2_regs(algos_presc_SLR2_regs'high downto 1) <= algos_presc_SLR2_regs(algos_presc_SLR2_regs'high - 1 downto 0);
+            end if;
+        end process;
+
+
+
+        SLR1_second_algos_out_mux : entity work.mux
+            port map(
+                clk         => clk_p,
+                rst         => rst_loc(25),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
+                input_40MHz => algos_SLR0_regs(algos_SLR0_regs'high),
+                output_data => q(102)
+            );
+
+        SLR1_second_algos_prescaled_out_mux : entity work.mux
+            port map(
+                clk         => clk_p,
+                rst         => rst_loc(25),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
+                input_40MHz => algos_presc_SLR0_regs(algos_presc_SLR0_regs'high),
+                output_data => q(103)
+            );
+
+        SLR1_first_algos_out_mux : entity work.mux
+            port map(
+                clk         => clk_p,
+                rst         => rst_loc(25),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
+                input_40MHz => algos_SLR2_regs(algos_SLR2_regs'high),
+                output_data => q(100)
+            );
+
+        SLR1_first_algos_prescaled_out_mux : entity work.mux
+            port map(
+                clk         => clk_p,
+                rst         => rst_loc(25),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
+                input_40MHz => algos_presc_SLR2_regs(algos_presc_SLR2_regs'high),
+                output_data => q(101)
+            );
+        end generate;
 
     gpio    <= (others => '0');
     gpio_en <= (others => '0');

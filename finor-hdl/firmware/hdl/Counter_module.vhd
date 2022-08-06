@@ -93,7 +93,7 @@ begin
     begin
         if rising_edge(lhc_clk) then
             o_cntbls_temp <= o_cntbls;
-            if (o_cntbls = '1') and (o_cntbls_temp = '0') then -- rising endge of o_cnt(BEGIN_LUMI_BIT)
+            if (o_cntbls = '1') and (o_cntbls_temp = '0') then -- rising edge of o_cnt(BEGIN_LUMI_BIT)
                 begin_lumi_sec_int <= '1';
             else 
                 begin_lumi_sec_int <= '0';

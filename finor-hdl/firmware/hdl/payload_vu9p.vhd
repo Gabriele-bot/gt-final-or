@@ -40,7 +40,7 @@ end emp_payload;
 
 architecture rtl of emp_payload is
 
-    constant DEBUG : natural := 0;
+    constant DEBUG : boolean := false;
 
     constant SLR_CROSSING_LATENCY : natural := 9;
     
@@ -67,14 +67,25 @@ architecture rtl of emp_payload is
     signal algos_presc_SLR0_regs : SLRCross_algos_t;
     signal algos_SLR2_regs       : SLRCross_algos_t;
     signal algos_presc_SLR2_regs : SLRCross_algos_t;
-    
+
+    attribute keep : boolean;
+    attribute keep of trgg_SLR0_regs : signal is true;
+    attribute keep of trgg_SLR2_regs : signal is true;
+
+    attribute keep of algos_SLR0_regs       : signal is true;
+    attribute keep of algos_presc_SLR0_regs : signal is true;
+    attribute keep of algos_SLR2_regs       : signal is true;
+    attribute keep of algos_presc_SLR2_regs : signal is true;
     
     attribute shreg_extract                       : string;
     attribute shreg_extract of trgg_SLR0_regs     : signal is "no";
     attribute shreg_extract of trgg_SLR2_regs     : signal is "no";
 
-
-
+    attribute shreg_extract of algos_SLR0_regs       : signal is "no";
+    attribute shreg_extract of algos_presc_SLR0_regs : signal is "no";
+    attribute shreg_extract of algos_SLR2_regs       : signal is "no";
+    attribute shreg_extract of algos_presc_SLR2_regs : signal is "no";
+    
 begin
 
     l1a_loc_wiring_gen : for i in N_REGION -1 downto 0 generate
@@ -138,17 +149,11 @@ begin
             algos_prescaled => algos_presc_SLR2_regs(0)
         );
 
-    cross_SLR : process(clk_p)
+    cross_SLR_trigg : process(clk_p)
     begin
         if rising_edge(clk_p) then
             trgg_SLR0_regs(trgg_SLR0_regs'high downto 1) <= trgg_SLR0_regs(trgg_SLR0_regs'high - 1 downto 0);
             trgg_SLR2_regs(trgg_SLR2_regs'high downto 1) <= trgg_SLR2_regs(trgg_SLR2_regs'high - 1 downto 0);
-
-            algos_SLR0_regs(algos_SLR0_regs'high downto 1) <= algos_SLR0_regs(algos_SLR0_regs'high - 1 downto 0);
-            algos_SLR2_regs(algos_SLR2_regs'high downto 1) <= algos_SLR2_regs(algos_SLR2_regs'high - 1 downto 0);
-
-            algos_presc_SLR0_regs(algos_presc_SLR0_regs'high downto 1) <= algos_presc_SLR0_regs(algos_presc_SLR0_regs'high - 1 downto 0);
-            algos_presc_SLR2_regs(algos_presc_SLR2_regs'high downto 1) <= algos_presc_SLR2_regs(algos_presc_SLR2_regs'high - 1 downto 0);
         end if;
     end process;
     
@@ -167,7 +172,21 @@ begin
 
     -- TODO : lots of timing violation with this debug out, need to think about something
 
-    debug_g : if DEBUG = 1 generate
+    debug_g : if DEBUG generate
+
+        cross_SLR_algo : process(clk_p)
+        begin
+            if rising_edge(clk_p) then
+                algos_SLR0_regs(algos_SLR0_regs'high downto 1) <= algos_SLR0_regs(algos_SLR0_regs'high - 1 downto 0);
+                algos_SLR2_regs(algos_SLR2_regs'high downto 1) <= algos_SLR2_regs(algos_SLR2_regs'high - 1 downto 0);
+
+                algos_presc_SLR0_regs(algos_presc_SLR0_regs'high downto 1) <= algos_presc_SLR0_regs(algos_presc_SLR0_regs'high - 1 downto 0);
+                algos_presc_SLR2_regs(algos_presc_SLR2_regs'high downto 1) <= algos_presc_SLR2_regs(algos_presc_SLR2_regs'high - 1 downto 0);
+            end if;
+        end process;
+
+
+
         SLR1_second_algos_out_mux : entity work.mux
             port map(
                 clk         => clk_p,
