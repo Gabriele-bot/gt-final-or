@@ -1,0 +1,4 @@
+src tb_decl.vhd
+include -c emp-fwk:boards/testbench top.dep
+
+setup glbl.tcl

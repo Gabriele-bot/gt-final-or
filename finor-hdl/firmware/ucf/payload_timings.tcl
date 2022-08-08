@@ -1,0 +1,2 @@
+set_multicycle_path N -setup -start -from [get_clocks -hier -filter {NAME =~ clk_payload* }] -to [get_clocks -hier -filter {NAME =~ clk_aux_2* }] 
+set_multicycle_path N-1 -hold -from [get_clocks -hier -filter {NAME =~ clk_payload* }] -to [get_clocks -hier -filter {NAME =~ clk_aux_2* }] 

@@ -1,0 +1,17 @@
+include -c emp-fwk:boards/serenity/dc_vu13p device.dep
+src -c emp-fwk:components/framework emp_framework_decl.vhd
+src -c emp-fwk:components/datapath emp_data_types.vhd
+
+src -c emp-fwk:boards/serenity/dc_vu13p emp_device_decl_a2577_sym.vhd
+
+src -c emp-fwk:components/framework emp_device_types.vhd
+
+src -c gt-final-or:finor-hdl top_serenity_vu13p-so2_decl.vhd
+
+src -c emp-fwk:components/ttc emp_ttc_decl.vhd
+src -c ipbus-firmware:components/ipbus_core ipbus_package.vhd
+
+include -c gt-final-or:finor-hdl top.d3
+src -c gt-final-or:finor-hdl payload_vu13p.vhd
+
+include top.d3

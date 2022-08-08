@@ -449,7 +449,7 @@ begin
 
     masks_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Trigger_masks_init_init.mif",
+            DATA_FILE  => "Trigger_masks_init.mif",
             ADDR_WIDTH => log2c(NR_ALGOS/32*N_TRIGG),
             DATA_WIDTH => 32
         )
