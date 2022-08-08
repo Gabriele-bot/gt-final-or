@@ -182,35 +182,14 @@ begin
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
+            -----------Prescalers----------------------------
             prscl_fct(to_integer(addr_w))      <= q_prscl_fct;
             prscl_fct_prvw(to_integer(addr_w)) <= q_prscl_fct_prvw;
-            -- delayed index for the regs
-            addr_w    <= addr;
-        end if;
-    end process;
-
-
-    -- mask regs update
-    process (lhc_clk)
-    begin
-        if rising_edge(lhc_clk) then
-            case state_mask is
-                when idle =>
-                    addr_mask   <= (others => '0');
-                    if begin_lumi_per_del1 = '1' then
-                        state_mask <= start;
-                    end if;
-                when start =>
-                    addr_mask  <= (others => '0');
-                    state_mask <= increment;
-                when increment =>
-                    addr_mask <= addr_mask + 1;
-                    if addr_mask >= NR_ALGOS/32*N_TRIGG-2 then --(2 is due to latency)
-                        state_mask <= idle;
-                    end if;
-            end case;
+            -----------Trigger masks---------------------------------
             masks_ipbus_regs(to_integer(addr_mask_w))      <= q_mask;
+            
             -- delayed index for the regs
+            addr_w         <= addr;
             addr_mask_w    <= addr_mask;
         end if;
     end process;
@@ -234,23 +213,9 @@ begin
     ---------------PRE-SCALE REGISTERS------------------------------------------------
     ----------------------------------------------------------------------------------
 
-    --prscl_fct_regs : entity work.ipbus_ctrlreg_v
-    --    generic map(
-    --        N_CTRL     => NR_ALGOS,
-    --        N_STAT     => 0
-    --    )
-    --    port map(
-    --        clk       => clk,
-    --        reset     => rst,
-    --        ipbus_in  => ipb_to_slaves(N_SLV_PRESCALE_FACTOR),
-    --        ipbus_out => ipb_from_slaves(N_SLV_PRESCALE_FACTOR),
-    --        d         => open,
-    --        q         => prscl_fct,
-    --        qmask     => open,
-    --        stb       => open
-    --    );
-    prscl_fct_regs : entity work.ipbus_dpram
+    prscl_fct_regs : entity work.ipbus_initialized_dpram
         generic map(
+            DATA_FILE  => "Pre-scale_init.mif",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -266,14 +231,13 @@ begin
             addr    => std_logic_vector(addr)
         );
 
-
-
     ----------------------------------------------------------------------------------
     ---------------PRE-SCALE PREVIEW REGISTERS----------------------------------------
     ----------------------------------------------------------------------------------
 
-    prscl_fct_prvw_regs : entity work.ipbus_dpram
+    prscl_fct_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
+            DATA_FILE  => "Pre-scale_init.mif",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -289,28 +253,13 @@ begin
             addr    => std_logic_vector(addr)
         );
 
-    --prscl_fct_prvw_regs : entity work.ipbus_ctrlreg_v
-    --    generic map(
-    --        N_CTRL     => NR_ALGOS,
-    --        N_STAT     => 0
-    --    )
-    --    port map(
-    --        clk       => clk,
-    --        reset     => rst,
-    --        ipbus_in  => ipb_to_slaves(N_SLV_PRESCALE_FACTOR_PRVW),
-    --        ipbus_out => ipb_from_slaves(N_SLV_PRESCALE_FACTOR_PRVW),
-    --        d         => open,
-    --        q         => prscl_fct_prvw,
-    --        qmask     => open,
-    --        stb       => open
-    --    );
-
     ----------------------------------------------------------------------------------
     ---------------RATE COUNTER BEFORE PRE-SCALE REGISTERS----------------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_before_prsc_regs : entity work.ipbus_dpram
+    rate_cnt_before_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
+            DATA_FILE  => "Counter_init.mif",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -326,28 +275,13 @@ begin
             addr    => std_logic_vector(addr)
         );
 
-    --rate_cnt_before_prsc_regs : entity work.ipbus_ctrlreg_v
-    --    generic map(
-    --        N_CTRL     => 0,
-    --        N_STAT     => NR_ALGOS
-    --    )
-    --    port map(
-    --        clk       => clk,
-    --        reset     => rst,
-    --        ipbus_in  => ipb_to_slaves(N_SLV_CNT_RATE_BEFORE_PRSC),
-    --        ipbus_out => ipb_from_slaves(N_SLV_CNT_RATE_BEFORE_PRSC),
-    --        d         => rate_cnt_before_prescaler,
-    --        q         => open,
-    --        qmask     => open,
-    --        stb       => open
-    --    );
-
     ----------------------------------------------------------------------------------
     ---------------RATE COUNTER AFTER PRE-SCALE REGISTERS-----------------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_after_prsc_regs : entity work.ipbus_dpram
+    rate_cnt_after_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
+            DATA_FILE  => "Counter_init.mif",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -363,28 +297,13 @@ begin
             addr    => std_logic_vector(addr)
         );
 
-    --rate_cnt_after_prsc_regs : entity work.ipbus_ctrlreg_v
-    --    generic map(
-    --        N_CTRL     => 0,
-    --        N_STAT     => NR_ALGOS
-    --    )
-    --    port map(
-    --        clk       => clk,
-    --        reset     => rst,
-    --        ipbus_in  => ipb_to_slaves(N_SLV_CNT_RATE_AFTER_PRSC),
-    --        ipbus_out => ipb_from_slaves(N_SLV_CNT_RATE_AFTER_PRSC),
-    --        d         => rate_cnt_after_prescaler,
-    --        q         => open,
-    --        qmask     => open,
-    --        stb       => open
-    --    );
-
     ----------------------------------------------------------------------------------
     ---------------RATE COUNTER AFTER PRE-SCALE PREVIEW REGISTERS---------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_after_prsc_prvw_regs : entity work.ipbus_dpram
+    rate_cnt_after_prsc_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
+            DATA_FILE  => "Counter_init.mif",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -400,28 +319,13 @@ begin
             addr    => std_logic_vector(addr)
         );
 
-    --rate_cnt_after_prsc_prvw_regs : entity work.ipbus_ctrlreg_v
-    --    generic map(
-    --        N_CTRL     => 0,
-    --        N_STAT     => NR_ALGOS
-    --    )
-    --    port map(
-    --        clk       => clk,
-    --        reset     => rst,
-    --        ipbus_in  => ipb_to_slaves(N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
-    --        ipbus_out => ipb_from_slaves(N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
-    --        d         => rate_cnt_after_prescaler_preview,
-    --        q         => open,
-    --        qmask     => open,
-    --        stb       => open
-    --    );
-
     ----------------------------------------------------------------------------------
     ---------------RATE COUNTER POST DEAD-TIME REGISTERS------------------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_post_dead_time_regs : entity work.ipbus_dpram
+    rate_cnt_post_dead_time_regs : entity work.ipbus_initialized_dpram
         generic map(
+            DATA_FILE  => "Counter_init.mif",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -436,22 +340,6 @@ begin
             q       => open,
             addr    => std_logic_vector(addr)
         );
-
-    --rate_cnt_post_dead_time_regs : entity work.ipbus_ctrlreg_v
-    --    generic map(
-    --        N_CTRL     => 0,
-    --        N_STAT     => NR_ALGOS
-    --    )
-    --    port map(
-    --        clk       => clk,
-    --        reset     => rst,
-    --        ipbus_in  => ipb_to_slaves(N_SLV_CNT_RATE_PDT),
-    --        ipbus_out => ipb_from_slaves(N_SLV_CNT_RATE_PDT),
-    --        d         => rate_cnt_post_dead_time,
-    --        q         => open,
-    --        qmask     => open,
-    --        stb       => open
-    --    );
 
     blp_regs : entity work.ipbus_ctrlreg_v
         generic map(
@@ -559,8 +447,9 @@ begin
     ---------------TRIGGER MASKS REGISTERS--------------------------------------------
     ----------------------------------------------------------------------------------
 
-    masks_regs : entity work.ipbus_dpram
+    masks_regs : entity work.ipbus_initialized_dpram
         generic map(
+            DATA_FILE  => "Trigger_masks_init_init.mif",
             ADDR_WIDTH => log2c(NR_ALGOS/32*N_TRIGG),
             DATA_WIDTH => 32
         )
@@ -575,22 +464,6 @@ begin
             q       => q_mask,
             addr    => std_logic_vector(addr_mask)
         );
-
-    --masks_regs : entity work.ipbus_ctrlreg_v
-    --    generic map(
-    --        N_CTRL     => NR_ALGOS/32*N_TRIGG,
-    --        N_STAT     => 0
-    --    )
-    --    port map(
-    --        clk       => clk,
-    --        reset     => rst,
-    --        ipbus_in  => ipb_to_slaves(N_SLV_TRGG_MASK),
-    --        ipbus_out => ipb_from_slaves(N_SLV_TRGG_MASK),
-    --        d         => open,
-    --        q         => masks_ipbus_regs,
-    --        qmask     => open,
-    --        stb       => open
-    --    );
 
     --TODO Add a request update mask as we did for the prescalers
     mask_l : for i in N_TRIGG - 1 downto 0 generate
