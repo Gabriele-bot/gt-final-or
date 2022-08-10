@@ -24,9 +24,9 @@ end entity Counter_module;
 
 architecture RTL of Counter_module is
 
-    signal bx_cnt : bctr_t;
-    signal e_cnt  : eoctr_t;
-    signal o_cnt  : eoctr_t;
+    signal bx_cnt : bctr_t  := (others => '0');
+    signal e_cnt  : eoctr_t := (others => '0');
+    signal o_cnt  : eoctr_t := (others => '0');
     signal l1a    : std_logic;
     signal o_cntbls_temp,  o_cntbls : std_logic;
     

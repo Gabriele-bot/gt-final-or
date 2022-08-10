@@ -73,7 +73,7 @@ architecture rtl of m_module is
     signal rate_cnt_after_prescaler_preview : ipb_reg_v(NR_ALGOS - 1 downto 0);
     signal rate_cnt_post_dead_time          : ipb_reg_v(NR_ALGOS - 1 downto 0);
 
-    signal masks_ipbus_regs      : ipb_reg_v(NR_ALGOS/32*N_TRIGG - 1 downto 0);
+    signal masks_ipbus_regs      : ipb_reg_v(NR_ALGOS/32*N_TRIGG - 1 downto 0) := (others => (others => '1'));
     signal masks                 : mask_arr := (others => (others => '1'));
 
     signal request_factor_update : std_logic;
@@ -176,7 +176,7 @@ begin
                     end if;
             end case;
         end if;
-    end process;	
+    end process;    
 
     -- process to read from ipbus-RAMs
     process (lhc_clk)
@@ -215,7 +215,7 @@ begin
 
     prscl_fct_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Pre-scale_init.mif",
+            INIT_VALUE => PRESCALE_FACTOR_INIT,
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -237,7 +237,7 @@ begin
 
     prscl_fct_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Pre-scale_init.mif",
+            INIT_VALUE => PRESCALE_FACTOR_INIT,
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -259,7 +259,7 @@ begin
 
     rate_cnt_before_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Counter_init.mif",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -281,7 +281,7 @@ begin
 
     rate_cnt_after_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Counter_init.mif",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -303,7 +303,7 @@ begin
 
     rate_cnt_after_prsc_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Counter_init.mif",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -325,7 +325,7 @@ begin
 
     rate_cnt_post_dead_time_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Counter_init.mif",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -449,7 +449,7 @@ begin
 
     masks_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Trigger_masks_init.mif",
+            INIT_VALUE => X"ffffffff",
             ADDR_WIDTH => log2c(NR_ALGOS/32*N_TRIGG),
             DATA_WIDTH => 32
         )
