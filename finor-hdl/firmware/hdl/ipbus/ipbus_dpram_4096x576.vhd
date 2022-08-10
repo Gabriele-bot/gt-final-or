@@ -4,9 +4,9 @@ use ieee.numeric_std.all;
 
 use work.ipbus.all;
 
-use work.ipbus_decode_dpram_4096x576.all;
+use work.ipbus_decode_ipbus_dpram_4096x576.all;
 
-entity ipb_dpram_4096x576 is
+entity ipbus_dpram_4096x576 is
     generic(
         INIT_VALUE : std_logic_vector(575 downto 0) := (others => '0');
         DATA_WIDTH: positive := 576
@@ -24,9 +24,9 @@ entity ipb_dpram_4096x576 is
         addr    : in  std_logic_vector(11  downto 0)
     );
 
-end ipb_dpram_4096x576;
+end ipbus_dpram_4096x576;
 
-architecture rtl of ipb_dpram_4096x576 is
+architecture rtl of ipbus_dpram_4096x576 is
 
     type mem_index_array is array (0 to 17) of natural;
     constant mem_index : mem_index_array :=
@@ -48,7 +48,7 @@ begin
         port map(
             ipb_in          => ipb_in,
             ipb_out         => ipb_out,
-            sel             => ipbus_sel_dpram_4096x576(ipb_in.ipb_addr),
+            sel             => ipbus_sel_ipbus_dpram_4096x576(ipb_in.ipb_addr),
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );

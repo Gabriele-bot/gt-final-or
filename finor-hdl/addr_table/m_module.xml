@@ -16,5 +16,5 @@
     </node>
    </node>
   <node id="trgg_mask" mode="block" address="0x7000" size="144" fwinfo="endpoint;width=12"/>
-  <node id="algo_bx_masks" module="file://dpram_4096x576.xml" address="0x20000" fwinfo="endpoint;width=17"/>
+  <node id="algo_bx_masks" module="file://ipbus_dpram_4096x576.xml" address="0x20000" fwinfo="endpoint;width=17"/>
 </node>

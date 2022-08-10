@@ -491,7 +491,7 @@ begin
     -- TODO Make it interchangable
     
     ----------------------------------------------------------------------------------
-    ---------------BX COUNTER INTERNAL---------------------------------------------------
+    ---------------COUNTERS INTERNAL---------------------------------------------------
     ----------------------------------------------------------------------------------
     --TODO Where to stat counting, need some latency? How much?
     bx_cnt_int_p : process(lhc_clk)
@@ -505,7 +505,7 @@ begin
     ---------------ALGO BX MASK MEM---------------------------------------------------
     ----------------------------------------------------------------------------------
     
-    algo_bx_mask_mem_i : entity work.ipb_dpram_4096x576
+    algo_bx_mask_mem_i : entity work.ipbus_dpram_4096x576
         generic map(
             INIT_VALUE => (others => '1'),
             DATA_WIDTH => NR_ALGOS
@@ -513,7 +513,7 @@ begin
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_ALGO_BX_MASKS),
+            ipb_in  => ipb_to_slaves  (N_SLV_ALGO_BX_MASKS),
             ipb_out => ipb_from_slaves(N_SLV_ALGO_BX_MASKS),
             rclk    => lhc_clk,
             we      => '0',
