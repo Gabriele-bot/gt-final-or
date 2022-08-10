@@ -27,23 +27,30 @@ begin
 
 
     frame_counter_p : process (clk360)
-        --variable frame_cntr : integer range 0 to 8;
     begin
         if rising_edge(clk360) then -- rising clock edge
             if lane_data_in.valid = '0' then
                 frame_cntr <= 0;
-                data_deserialized <= (others => '0');
             elsif frame_cntr < 8 then
                 frame_cntr <= frame_cntr + 1;
                 data_deserialized_temp(frame_cntr * 64 + 63 downto frame_cntr * 64) <= lane_data_in.data;
             else
                 frame_cntr <= 0;
-                data_deserialized(frame_cntr * 64 + 63 downto frame_cntr * 64) <= lane_data_in.data;
-                data_deserialized((frame_cntr-1) * 64 + 63 downto 0) <= data_deserialized_temp((frame_cntr-1) * 64 + 63 downto 0);
             end if;
-
         end if;
     end process frame_counter_p;
+    
+    load_data_p : process (clk360)
+    begin
+        if rising_edge(clk360) then -- rising clock edge
+            if frame_cntr = 9 then
+                data_deserialized(frame_cntr * 64 + 63 downto frame_cntr * 64) <= lane_data_in.data;
+                data_deserialized((frame_cntr-1) * 64 + 63 downto 0) <= data_deserialized_temp((frame_cntr-1) * 64 + 63 downto 0);
+            else
+                data_deserialized <= (others => '0');
+            end if;
+        end if;
+    end process load_data_p;
 
 
 

@@ -85,6 +85,8 @@ architecture rtl of m_module is
     signal begin_lumi_per              : std_logic;
     signal begin_lumi_per_del1         : std_logic;
     signal l1a_latency_delay           : std_logic_vector(log2c(MAX_DELAY)-1 downto 0);
+    
+    signal ctrs_internal              : ttc_stuff_t;
 
 
     type state_t is (idle, start, increment);
@@ -101,6 +103,8 @@ architecture rtl of m_module is
     signal mask_index : unsigned(log2c(N_TRIGG)-1 downto 0);
     signal we, we_mask    : std_logic;
     signal ready : std_logic;
+    
+    signal algo_bx_mask_mem_out : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '1');
 
     signal trigger_out             : std_logic_vector(N_TRIGG-1 downto 0);
 
@@ -485,6 +489,39 @@ begin
         end process;
     end generate;
     -- TODO Make it interchangable
+    
+    ----------------------------------------------------------------------------------
+    ---------------BX COUNTER INTERNAL---------------------------------------------------
+    ----------------------------------------------------------------------------------
+    --TODO Where to stat counting, need some latency? How much?
+    bx_cnt_int_p : process(lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            ctrs_internal <= ctrs;    
+        end if;
+    end process;
+    
+    ----------------------------------------------------------------------------------
+    ---------------ALGO BX MASK MEM---------------------------------------------------
+    ----------------------------------------------------------------------------------
+    
+    algo_bx_mask_mem_i : entity work.ipb_dpram_4096x576
+        generic map(
+            INIT_VALUE => (others => '1'),
+            DATA_WIDTH => NR_ALGOS
+        ) 
+        port map(
+            clk     => clk,
+            rst     => rst,
+            ipb_in  => ipb_to_slaves(N_SLV_ALGO_BX_MASKS),
+            ipb_out => ipb_from_slaves(N_SLV_ALGO_BX_MASKS),
+            rclk    => lhc_clk,
+            we      => '0',
+            d       => (others => '1'),
+            q       => algo_bx_mask_mem_out,
+            addr    => ctrs_internal.bctr
+        ) ;
+    
 
     delay_element_i : entity work.delay_element_ringbuffer
         generic map(
@@ -500,7 +537,7 @@ begin
         );
 
     ----------------------------------------------------------------------------------
-    ---------------COUTER MODULE------------------------------------------------------
+    ---------------COUNTER MODULE------------------------------------------------------
     ----------------------------------------------------------------------------------
 
     Counters_i : entity work.Counter_module
@@ -510,7 +547,7 @@ begin
             port map (
                 lhc_clk        => lhc_clk,
                 lhc_rst        => lhc_clk,
-                ctrs_in        => ctrs,
+                ctrs_in        => ctrs_internal,
                 bc0            => bc0,
                 ec0            => ec0,
                 oc0            => oc0, 
@@ -536,14 +573,14 @@ begin
                 sres_algo_pre_scaler             => '0',
                 sres_algo_post_dead_time_counter => '0',
                 suppress_cal_trigger             => '0',
-                l1a                              => ctrs.l1a, --TODO modify this
+                l1a                              => ctrs_internal.l1a, --TODO modify this
                 request_update_factor_pulse      => request_factor_update,
                 begin_lumi_per                   => begin_lumi_per,
                 algo_i                           => algos_in(i),
                 algo_del_i                       => algos_delayed(i),
                 prescale_factor                  => prscl_fct(i)(PRESCALE_FACTOR_WIDTH-1 downto 0),
                 prescale_factor_preview          => prscl_fct_prvw(i)(PRESCALE_FACTOR_WIDTH-1 downto 0),
-                algo_bx_mask                     => '1',
+                algo_bx_mask                     => algo_bx_mask_mem_out(i),
                 veto_mask                        => '1',
                 rate_cnt_before_prescaler        => rate_cnt_before_prescaler(i),
                 rate_cnt_after_prescaler         => rate_cnt_after_prescaler(i),
