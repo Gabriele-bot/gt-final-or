@@ -43,7 +43,7 @@ begin
     load_data_p : process (clk360)
     begin
         if rising_edge(clk360) then -- rising clock edge
-            if frame_cntr = 9 then
+            if frame_cntr = 8 then
                 data_deserialized(frame_cntr * 64 + 63 downto frame_cntr * 64) <= lane_data_in.data;
                 data_deserialized((frame_cntr-1) * 64 + 63 downto 0) <= data_deserialized_temp((frame_cntr-1) * 64 + 63 downto 0);
             else

@@ -226,7 +226,7 @@ begin
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_PRESCALE_FACTOR),
+            ipb_in  => ipb_to_slaves  (N_SLV_PRESCALE_FACTOR),
             ipb_out => ipb_from_slaves(N_SLV_PRESCALE_FACTOR),
             rclk    => lhc_clk,
             we      => '0',
@@ -248,7 +248,7 @@ begin
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_PRESCALE_FACTOR_PRVW),
+            ipb_in  => ipb_to_slaves  (N_SLV_PRESCALE_FACTOR_PRVW),
             ipb_out => ipb_from_slaves(N_SLV_PRESCALE_FACTOR_PRVW),
             rclk    => lhc_clk,
             we      => '0',
@@ -270,7 +270,7 @@ begin
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_CNT_RATE_BEFORE_PRSC),
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_BEFORE_PRSC),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_BEFORE_PRSC),
             rclk    => lhc_clk,
             we      => we,
@@ -292,7 +292,7 @@ begin
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_CNT_RATE_AFTER_PRSC),
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_AFTER_PRSC),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_AFTER_PRSC),
             rclk    => lhc_clk,
             we      => we,
@@ -314,7 +314,7 @@ begin
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
             rclk    => lhc_clk,
             we      => we,
@@ -336,7 +336,7 @@ begin
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_CNT_RATE_PDT),
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_PDT),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_PDT),
             rclk    => lhc_clk,
             we      => we,
@@ -460,7 +460,7 @@ begin
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_TRGG_MASK),
+            ipb_in  => ipb_to_slaves  (N_SLV_TRGG_MASK),
             ipb_out => ipb_from_slaves(N_SLV_TRGG_MASK),
             rclk    => lhc_clk,
             we      => '0',
