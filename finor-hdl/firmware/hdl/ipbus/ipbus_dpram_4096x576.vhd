@@ -63,7 +63,7 @@ begin
             generic map(
                 INIT_VALUE => INIT_VALUE(32*(i+1)-1 downto 32*i),
                 ADDR_WIDTH => 12,
-                DATA_WIDTH => DATA_WIDTH
+                DATA_WIDTH => 32
             )
             port map(
                 clk     => clk,
@@ -72,8 +72,8 @@ begin
                 ipb_out => ipb_from_slaves(mem_index(i)),
                 rclk    => rclk,
                 we      => we,
-                d       => d(DATA_WIDTH*(i+1)-1 downto DATA_WIDTH*i),
-                q       => q(DATA_WIDTH*(i+1)-1 downto DATA_WIDTH*i),
+                d       => d(32*(i+1)-1 downto 32*i),
+                q       => q(32*(i+1)-1 downto 32*i),
                 addr    => std_logic_vector(addr)
             );
 

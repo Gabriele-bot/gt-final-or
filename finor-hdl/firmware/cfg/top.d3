@@ -5,13 +5,11 @@ src -c ipbus-firmware:components/ipbus_slaves ipbus_ctrlreg_v.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_dpram.vhd
 
 src --vhdl2008 math_pkg.vhd
-#src --vhdl2008 pre_scaler_pkg.vhd
-#src --vhdl2008 P2GT_monitor_pkg.vhd
 src --vhdl2008 P2GT_finor_pkg.vhd
 
-src --vhdl2008 ipbus_decode_m_module.vhd
-src --vhdl2008 ipbus_decode_emp_payload.vhd
-src --vhdl2008 ipbus_decode_ipbus_dpram_4096x576.vhd
+src --vhdl2008 decoders/ipbus_decode_m_module.vhd
+src --vhdl2008 decoders/ipbus_decode_emp_payload.vhd
+src --vhdl2008 decoders/ipbus_decode_ipbus_dpram_4096x576.vhd
 
 src --vhdl2008 ipbus/ipbus_initialized_dpram.vhd
 #src RAM_init_files/Pre-scale_init.txt
@@ -29,7 +27,7 @@ src --vhdl2008 Mask.vhd
 src --vhdl2008 m_module.vhd
 src --vhdl2008 Counter_module.vhd
 src --vhdl2008 FirstOR.vhd
-src --vhdl2008 IN_deser_validmod.vhd
+src --vhdl2008 In_deser.vhd
 src --vhdl2008 mux.vhd
 src --vhdl2008 SLR_FinOR_unit.vhd
 src --vhdl2008 Trigger_local_or.vhd

@@ -43,7 +43,7 @@ architecture rtl of emp_payload is
     constant DEBUG : boolean := false;
 
     constant SLR_CROSSING_LATENCY : natural := 9;
-    
+
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
@@ -72,11 +72,11 @@ architecture rtl of emp_payload is
     attribute keep of trgg_SLR0_regs : signal is true;
     attribute keep of trgg_SLR2_regs : signal is true;
 
-    attribute keep of algos_SLR0_regs       : signal is true;
-    attribute keep of algos_presc_SLR0_regs : signal is true;
-    attribute keep of algos_SLR2_regs       : signal is true;
-    attribute keep of algos_presc_SLR2_regs : signal is true;
-    
+    attribute keep of algos_SLR0_regs       : signal is DEBUG;
+    attribute keep of algos_presc_SLR0_regs : signal is DEBUG;
+    attribute keep of algos_SLR2_regs       : signal is DEBUG;
+    attribute keep of algos_presc_SLR2_regs : signal is DEBUG;
+
     attribute shreg_extract                       : string;
     attribute shreg_extract of trgg_SLR0_regs     : signal is "no";
     attribute shreg_extract of trgg_SLR2_regs     : signal is "no";
@@ -85,17 +85,17 @@ architecture rtl of emp_payload is
     attribute shreg_extract of algos_presc_SLR0_regs : signal is "no";
     attribute shreg_extract of algos_SLR2_regs       : signal is "no";
     attribute shreg_extract of algos_presc_SLR2_regs : signal is "no";
-    
+
 begin
 
     l1a_loc_wiring_gen : for i in N_REGION -1 downto 0 generate
         l1a_loc(i) <= ctrs(i).l1a;
     end generate;
-    
-    
+
+
     fabric_i: entity work.ipbus_fabric_sel
         generic map(
-            NSLV => N_SLAVES,
+            NSLV      => N_SLAVES,
             SEL_WIDTH => IPBUS_SEL_WIDTH
         )
         port map(
@@ -105,7 +105,7 @@ begin
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );
-    
+
 
     SLR0_module : entity work.SLR_FinOR_unit
         generic map(
@@ -156,7 +156,7 @@ begin
             trgg_SLR2_regs(trgg_SLR2_regs'high downto 1) <= trgg_SLR2_regs(trgg_SLR2_regs'high - 1 downto 0);
         end if;
     end process;
-    
+
     SLR1_local_or : entity work.Trigger_local_or
         port map(
             clk360  => clk_p,
@@ -226,7 +226,7 @@ begin
                 input_40MHz => algos_presc_SLR2_regs(algos_presc_SLR2_regs'high),
                 output_data => q(85)
             );
-        end generate;
+    end generate;
 
 
     gpio    <= (others => '0');

@@ -32,13 +32,14 @@ entity m_module is
         MAX_DELAY            : natural := 127
     );
     port(
-        clk                 : in std_logic;
-        rst                 : in std_logic;
-        ipb_in              : in ipb_wbus;
+        -- =========================IPbus================================================
+        clk                 : in  std_logic;
+        rst                 : in  std_logic;
+        ipb_in              : in  ipb_wbus;
         ipb_out             : out ipb_rbus;
-        -- ==========================================================================
-        lhc_clk     : in  std_logic;
-        lhc_rst     : in  std_logic;
+        -- ==============================================================================
+        lhc_clk                  : in  std_logic;
+        lhc_rst                  : in  std_logic;
 
         ctrs                     : in  ttc_stuff_t;
 
@@ -85,26 +86,27 @@ architecture rtl of m_module is
     signal begin_lumi_per              : std_logic;
     signal begin_lumi_per_del1         : std_logic;
     signal l1a_latency_delay           : std_logic_vector(log2c(MAX_DELAY)-1 downto 0);
-    
-    signal ctrs_internal              : ttc_stuff_t;
+
+    signal ctrs_internal               : ttc_stuff_t;
 
 
     type state_t is (idle, start, increment);
-    signal state, state_mask : state_t := idle;
+    signal state, state_mask           : state_t := idle;
 
-    signal q_prscl_fct, q_prscl_fct_prvw : std_logic_vector(31 downto 0);
+    signal q_prscl_fct, q_prscl_fct_prvw                                 : std_logic_vector(31 downto 0);
+    signal q_mask                                                        : std_logic_vector(31 downto 0);
     signal d_rate_cnt_before_prescaler, d_rate_cnt_after_prescaler       : std_logic_vector(31 downto 0);
     signal d_rate_cnt_after_prescaler_preview, d_rate_cnt_post_dead_time : std_logic_vector(31 downto 0);
-    signal q_mask: std_logic_vector(31 downto 0);
-    signal addr       : unsigned(log2c(NR_ALGOS)-1 downto 0);
-    signal addr_w     : unsigned(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
-    signal addr_mask   : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
-    signal addr_mask_w : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
-    signal mask_index : unsigned(log2c(N_TRIGG)-1 downto 0);
-    signal we, we_mask    : std_logic;
-    signal ready : std_logic;
     
-    signal algo_bx_mask_mem_out : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '1');
+    signal addr         : unsigned(log2c(NR_ALGOS)-1 downto 0);
+    signal addr_w       : unsigned(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
+    signal addr_mask    : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
+    signal addr_mask_w  : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
+    signal mask_index   : unsigned(log2c(N_TRIGG)-1 downto 0);
+    signal we, we_mask  : std_logic;
+    signal ready        : std_logic;
+
+    signal algo_bx_mask_mem_out    : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '1');
 
     signal trigger_out             : std_logic_vector(N_TRIGG-1 downto 0);
 
@@ -180,7 +182,7 @@ begin
                     end if;
             end case;
         end if;
-    end process;    
+    end process;
 
     -- process to read from ipbus-RAMs
     process (lhc_clk)
@@ -191,7 +193,7 @@ begin
             prscl_fct_prvw(to_integer(addr_w)) <= q_prscl_fct_prvw;
             -----------Trigger masks---------------------------------
             masks_ipbus_regs(to_integer(addr_mask_w))      <= q_mask;
-            
+
             -- delayed index for the regs
             addr_w         <= addr;
             addr_mask_w    <= addr_mask;
@@ -489,7 +491,7 @@ begin
         end process;
     end generate;
     -- TODO Make it interchangable
-    
+
     ----------------------------------------------------------------------------------
     ---------------COUNTERS INTERNAL---------------------------------------------------
     ----------------------------------------------------------------------------------
@@ -497,19 +499,19 @@ begin
     bx_cnt_int_p : process(lhc_clk)
     begin
         if rising_edge(lhc_clk) then
-            ctrs_internal <= ctrs;    
+            ctrs_internal <= ctrs;
         end if;
     end process;
-    
+
     ----------------------------------------------------------------------------------
     ---------------ALGO BX MASK MEM---------------------------------------------------
     ----------------------------------------------------------------------------------
-    
+
     algo_bx_mask_mem_i : entity work.ipbus_dpram_4096x576
         generic map(
             INIT_VALUE => (others => '1'),
             DATA_WIDTH => NR_ALGOS
-        ) 
+        )
         port map(
             clk     => clk,
             rst     => rst,
@@ -521,7 +523,7 @@ begin
             q       => algo_bx_mask_mem_out,
             addr    => ctrs_internal.bctr
         ) ;
-    
+
 
     delay_element_i : entity work.delay_element_ringbuffer
         generic map(
@@ -541,21 +543,21 @@ begin
     ----------------------------------------------------------------------------------
 
     Counters_i : entity work.Counter_module
-            generic map (
-                BEGIN_LUMI_BIT => 18
-            )
-            port map (
-                lhc_clk        => lhc_clk,
-                lhc_rst        => lhc_clk,
-                ctrs_in        => ctrs_internal,
-                bc0            => bc0,
-                ec0            => ec0,
-                oc0            => oc0, 
-                bx_nr          => open,
-                event_nr       => open,
-                orbit_nr       => open,
-                begin_lumi_sec => begin_lumi_per
-            );
+        generic map (
+            BEGIN_LUMI_BIT => 18
+        )
+        port map (
+            lhc_clk        => lhc_clk,
+            lhc_rst        => lhc_rst,
+            ctrs_in        => ctrs_internal,
+            bc0            => bc0,
+            ec0            => ec0,
+            oc0            => oc0,
+            bx_nr          => open,
+            event_nr       => open,
+            orbit_nr       => open,
+            begin_lumi_sec => begin_lumi_per
+        );
 
 
     gen_algos_slice_l : for i in 0 to NR_ALGOS - 1 generate
