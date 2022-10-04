@@ -18,21 +18,23 @@ entity Counter_module is
         bx_nr    : out bctr_t;
         event_nr : out eoctr_t;
         orbit_nr : out eoctr_t;
-        begin_lumi_sec : out std_logic
+        begin_lumi_sec : out std_logic;
+        test_en        : out std_logic
     );
 end entity Counter_module;
 
 architecture RTL of Counter_module is
 
-    signal bx_cnt : bctr_t;
-    signal e_cnt  : eoctr_t;
-    signal o_cnt  : eoctr_t;
+    signal bx_cnt : bctr_t  := (others => '0');
+    signal e_cnt  : eoctr_t := (others => '0');
+    signal o_cnt  : eoctr_t := (others => '0');
     signal l1a    : std_logic;
     signal o_cntbls_temp,  o_cntbls : std_logic;
     
     signal bc0_s, oc0_s, ec0_s : std_logic := '0';
-
+    
     signal begin_lumi_sec_int : std_logic;
+    signal test_en_int        : std_logic;
     
 begin
     
@@ -101,6 +103,17 @@ begin
         end if;
     end process;
     
+    process (lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            if ctrs_in.ttc_cmd = TTC_BCMD_TEST_ENABLE then
+                test_en_int <= '1';
+            elsif unsigned(bx_cnt) = LHC_BUNCH_COUNT-1 then
+                test_en_int <= '0';
+            end if;
+        end if;
+    end process;
+    
     bc0 <= bc0_s;
     ec0 <= ec0_s;
     oc0 <= oc0_s;
@@ -109,6 +122,7 @@ begin
     event_nr <= e_cnt;
     orbit_nr <= o_cnt;
     begin_lumi_sec <= begin_lumi_sec_int;
+    test_en        <= test_en_int;
     
 
 

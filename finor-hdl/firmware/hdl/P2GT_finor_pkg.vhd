@@ -20,6 +20,7 @@ package P2GT_finor_pkg is
     constant N_BOARD     : natural := 12;
     constant N_SLR       : natural := 4;
     constant INPUT_LINKS : natural := 24;
+    constant MON_REG     : natural := 6;
     constant N_TRIGG     : natural := 8;
     
     

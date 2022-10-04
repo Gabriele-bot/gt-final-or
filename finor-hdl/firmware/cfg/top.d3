@@ -5,17 +5,19 @@ src -c ipbus-firmware:components/ipbus_slaves ipbus_ctrlreg_v.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_dpram.vhd
 
 src --vhdl2008 math_pkg.vhd
-#src --vhdl2008 pre_scaler_pkg.vhd
-#src --vhdl2008 P2GT_monitor_pkg.vhd
 src --vhdl2008 P2GT_finor_pkg.vhd
 
-src --vhdl2008 ipbus_initialized_dpram.vhd
-src gt-final-or:finor-hdl RAM_init_files/Pre-scale_init.mif
-src gt-final-or:finor-hdl RAM_init_files/Counter_init.mif
-src gt-final-or:finor-hdl RAM_init_files/Trigger_masks_init.mif
+src --vhdl2008 decoders/ipbus_decode_m_module.vhd
+src --vhdl2008 decoders/ipbus_decode_emp_payload.vhd
+src --vhdl2008 decoders/ipbus_decode_ipbus_dpram_4096x576.vhd
+src --vhdl2008 decoders/ipbus_decode_Output_SLR.vhd
 
-src --vhdl2008 ipbus_decode_m_module.vhd
-src --vhdl2008 ipbus_decode_emp_payload.vhd
+src --vhdl2008 ipbus/ipbus_initialized_dpram.vhd
+#src RAM_init_files/Pre-scale_init.txt
+#src RAM_init_files/Counter_init.txt
+#src RAM_init_files/Trigger_masks_init.txt
+src --vhdl2008 ipbus/ipbus_dpram_4096x576.vhd
+
 src --vhdl2008 update_process.vhd
 src --vhdl2008 algo_pre_scaler.vhd
 src --vhdl2008 algo_rate_counter.vhd
@@ -26,17 +28,19 @@ src --vhdl2008 Mask.vhd
 src --vhdl2008 m_module.vhd
 src --vhdl2008 Counter_module.vhd
 src --vhdl2008 FirstOR.vhd
-src --vhdl2008 IN_deser_validmod.vhd
+src --vhdl2008 In_deser.vhd
 src --vhdl2008 mux.vhd
 src --vhdl2008 SLR_FinOR_unit.vhd
 src --vhdl2008 Trigger_local_or.vhd
+src --vhdl2008 Output_SLR.vhd
 
 #include -c ipbus-firmware:components/ipbus_slaves
 #include -c ipbus-firmware:components/ipbus_core
 
-addrtab -c gt-final-or:finor-hdl m_module.xml
 addrtab -c gt-final-or:finor-hdl emp_payload.xml
-
+addrtab -c gt-final-or:finor-hdl m_module.xml
+addrtab -c gt-final-or:finor-hdl ipbus_dpram_4096x576.xml
+addrtab -c gt-final-or:finor-hdl Output_SLR.xml
 
 
 

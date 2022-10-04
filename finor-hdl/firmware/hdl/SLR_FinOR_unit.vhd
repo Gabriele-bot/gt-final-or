@@ -19,7 +19,8 @@ use work.math_pkg.all;
 
 entity SLR_FinOR_unit is
     generic(
-        NR_LINKS : natural := INPUT_LINKS
+        NR_LINKS   : natural := INPUT_LINKS;
+        NR_MON_REG : natural := MON_REG
     );
     port(
         clk     : in  std_logic;
@@ -31,7 +32,7 @@ entity SLR_FinOR_unit is
         rst360  : in std_logic;
         lhc_clk : in std_logic;
         lhc_rst : in std_logic;
-        ctrs    : in ttc_stuff_t;
+        ctrs    : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
         d       : in  ldata(NR_LINKS - 1 downto 0);  -- data in
         trgg    : out std_logic_vector(N_TRIGG-1 downto 0);
         algos           : out std_logic_vector(64*9-1 downto 0);
@@ -57,6 +58,7 @@ begin
             port map(
                 clk360       => clk360,
                 lhc_clk      => lhc_clk,
+                lhc_rst      => lhc_rst,
                 lane_data_in => d(i),
                 demux_data_o => links_data(i)
             );
@@ -86,7 +88,7 @@ begin
             ipb_out                 => ipb_out,
             lhc_clk                 => lhc_clk,
             lhc_rst                 => lhc_rst,
-            ctrs                    => ctrs,
+            ctrs                    => ctrs(0),
             algos_in                => algos_in,
             algos_after_prescaler_o => algos_prescaled,
             trgg_o                  => trigger_out

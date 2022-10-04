@@ -32,13 +32,14 @@ entity m_module is
         MAX_DELAY            : natural := 127
     );
     port(
-        clk                 : in std_logic;
-        rst                 : in std_logic;
-        ipb_in              : in ipb_wbus;
+        -- =========================IPbus================================================
+        clk                 : in  std_logic;
+        rst                 : in  std_logic;
+        ipb_in              : in  ipb_wbus;
         ipb_out             : out ipb_rbus;
-        -- ==========================================================================
-        lhc_clk     : in  std_logic;
-        lhc_rst     : in  std_logic;
+        -- ==============================================================================
+        lhc_clk                  : in  std_logic;
+        lhc_rst                  : in  std_logic;
 
         ctrs                     : in  ttc_stuff_t;
 
@@ -73,11 +74,11 @@ architecture rtl of m_module is
     signal rate_cnt_after_prescaler_preview : ipb_reg_v(NR_ALGOS - 1 downto 0);
     signal rate_cnt_post_dead_time          : ipb_reg_v(NR_ALGOS - 1 downto 0);
 
-    signal masks_ipbus_regs      : ipb_reg_v(NR_ALGOS/32*N_TRIGG - 1 downto 0);
+    signal masks_ipbus_regs      : ipb_reg_v(NR_ALGOS/32*N_TRIGG - 1 downto 0) := (others => (others => '1'));
     signal masks                 : mask_arr := (others => (others => '1'));
 
     signal request_factor_update : std_logic;
-    signal ctrl_reg : ipb_reg_v(0 downto 0);
+    signal ctrl_reg : ipb_reg_v(1 downto 0);
     signal stat_reg : ipb_reg_v(0 downto 0);
 
     -- counters and bgos signals
@@ -86,21 +87,31 @@ architecture rtl of m_module is
     signal begin_lumi_per_del1         : std_logic;
     signal l1a_latency_delay           : std_logic_vector(log2c(MAX_DELAY)-1 downto 0);
 
+    signal ctrs_internal               : ttc_stuff_t;
+
 
     type state_t is (idle, start, increment);
-    signal state, state_mask : state_t := idle;
+    signal state, state_mask           : state_t := idle;
 
-    signal q_prscl_fct, q_prscl_fct_prvw : std_logic_vector(31 downto 0);
+    signal q_prscl_fct, q_prscl_fct_prvw                                 : std_logic_vector(31 downto 0);
+    signal q_mask                                                        : std_logic_vector(31 downto 0);
     signal d_rate_cnt_before_prescaler, d_rate_cnt_after_prescaler       : std_logic_vector(31 downto 0);
     signal d_rate_cnt_after_prescaler_preview, d_rate_cnt_post_dead_time : std_logic_vector(31 downto 0);
-    signal q_mask: std_logic_vector(31 downto 0);
-    signal addr       : unsigned(log2c(NR_ALGOS)-1 downto 0);
-    signal addr_w     : unsigned(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
-    signal addr_mask   : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
-    signal addr_mask_w : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
-    signal mask_index : unsigned(log2c(N_TRIGG)-1 downto 0);
-    signal we, we_mask    : std_logic;
-    signal ready : std_logic;
+    
+    signal addr         : unsigned(log2c(NR_ALGOS)-1 downto 0);
+    signal addr_w       : unsigned(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
+    signal addr_mask    : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
+    signal addr_mask_w  : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
+    signal mask_index   : unsigned(log2c(N_TRIGG)-1 downto 0);
+    signal we, we_mask  : std_logic;
+    signal ready        : std_logic;
+
+    signal algo_bx_mask_mem_out    : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '1');
+
+    signal test_en                 : std_logic;
+    signal suppress_cal_trigger    : std_logic;
+    signal supp_cal_BX_low         : std_logic_vector(11 downto 0);
+    signal supp_cal_BX_high        : std_logic_vector(11 downto 0);
 
     signal trigger_out             : std_logic_vector(N_TRIGG-1 downto 0);
 
@@ -176,7 +187,7 @@ begin
                     end if;
             end case;
         end if;
-    end process;	
+    end process;
 
     -- process to read from ipbus-RAMs
     process (lhc_clk)
@@ -187,7 +198,7 @@ begin
             prscl_fct_prvw(to_integer(addr_w)) <= q_prscl_fct_prvw;
             -----------Trigger masks---------------------------------
             masks_ipbus_regs(to_integer(addr_mask_w))      <= q_mask;
-            
+
             -- delayed index for the regs
             addr_w         <= addr;
             addr_mask_w    <= addr_mask;
@@ -215,14 +226,14 @@ begin
 
     prscl_fct_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Pre-scale_init.mif",
+            INIT_VALUE => PRESCALE_FACTOR_INIT,
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_PRESCALE_FACTOR),
+            ipb_in  => ipb_to_slaves  (N_SLV_PRESCALE_FACTOR),
             ipb_out => ipb_from_slaves(N_SLV_PRESCALE_FACTOR),
             rclk    => lhc_clk,
             we      => '0',
@@ -237,14 +248,14 @@ begin
 
     prscl_fct_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Pre-scale_init.mif",
+            INIT_VALUE => PRESCALE_FACTOR_INIT,
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_PRESCALE_FACTOR_PRVW),
+            ipb_in  => ipb_to_slaves  (N_SLV_PRESCALE_FACTOR_PRVW),
             ipb_out => ipb_from_slaves(N_SLV_PRESCALE_FACTOR_PRVW),
             rclk    => lhc_clk,
             we      => '0',
@@ -259,14 +270,14 @@ begin
 
     rate_cnt_before_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Counter_init.mif",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_CNT_RATE_BEFORE_PRSC),
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_BEFORE_PRSC),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_BEFORE_PRSC),
             rclk    => lhc_clk,
             we      => we,
@@ -281,14 +292,14 @@ begin
 
     rate_cnt_after_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Counter_init.mif",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_CNT_RATE_AFTER_PRSC),
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_AFTER_PRSC),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_AFTER_PRSC),
             rclk    => lhc_clk,
             we      => we,
@@ -303,14 +314,14 @@ begin
 
     rate_cnt_after_prsc_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Counter_init.mif",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
             rclk    => lhc_clk,
             we      => we,
@@ -325,14 +336,14 @@ begin
 
     rate_cnt_post_dead_time_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Counter_init.mif",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_CNT_RATE_PDT),
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_PDT),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_PDT),
             rclk    => lhc_clk,
             we      => we,
@@ -341,9 +352,9 @@ begin
             addr    => std_logic_vector(addr)
         );
 
-    blp_regs : entity work.ipbus_ctrlreg_v
+    CSR_regs : entity work.ipbus_ctrlreg_v
         generic map(
-            N_CTRL     => 1,
+            N_CTRL     => 2,
             N_STAT     => 1
         )
         port map(
@@ -371,27 +382,6 @@ begin
     --        src_in   => ctrl_reg(0)(0)
     --    );
 
-
-    xpm_cdc_pulse_inst : xpm_cdc_pulse
-        generic map (
-            DEST_SYNC_FF   => 3, -- DECIMAL; range: 2-10
-            INIT_SYNC_FF   => 0, -- DECIMAL; 0=disable simulation init values, 1=enable simulation init values
-            REG_OUTPUT     => 1, -- DECIMAL; 0=disable registered output, 1=enable registered output
-            RST_USED       => 0, -- DECIMAL; 0=no reset, 1=implement reset
-            SIM_ASSERT_CHK => 0  -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-        )
-        port map (
-            --  LHC clock domain (40MHz)
-            dest_pulse => open,
-            dest_clk   => lhc_clk,
-            dest_rst   => '0',
-            -- ipbus clock domain (125MHz)
-            src_clk    => clk,
-            src_pulse  => ctrl_reg(0)(0),
-            src_rst    => rst
-        );
-    -- End of xpm_cdc_pulse_inst instantiatio
-
     xpm_cdc_request_factor_update : xpm_cdc_single
         generic map (
             DEST_SYNC_FF => 3,
@@ -403,7 +393,7 @@ begin
             dest_out => request_factor_update,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(1)
+            src_in   => ctrl_reg(0)(0)
         );
 
     xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
@@ -418,7 +408,37 @@ begin
             dest_out => l1a_latency_delay,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(log2c(MAX_DELAY) + 1 downto 2)
+            src_in   => ctrl_reg(0)(log2c(MAX_DELAY) downto 1)
+        );
+
+    xpm_cdc_supp_BX_low : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF => 3,
+            INIT_SYNC_FF => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => 12
+        )
+        port map (
+            dest_out => supp_cal_BX_low,
+            dest_clk => lhc_clk,
+            src_clk  => clk,
+            src_in   => ctrl_reg(1)(11 downto 0)
+        );
+ 
+    xpm_cdc_supp_BX_high : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF => 3,
+            INIT_SYNC_FF => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => 12
+        )
+        port map (
+            dest_out => supp_cal_BX_high,
+            dest_clk => lhc_clk,
+            src_clk  => clk,
+            src_in   => ctrl_reg(1)(23 downto 12)
         );
 
     ready <= not we;
@@ -437,7 +457,6 @@ begin
             src_in   => ready
         );
 
-
     --begin_lumi_per        <= ctrl_reg(0)(0);
     --request_factor_update <= ctrl_reg(0)(1);
     --l1a_latency_delay     <= ctrl_reg(0)(log2c(MAX_DELAY) + 1 downto 2);
@@ -449,14 +468,14 @@ begin
 
     masks_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE  => "Trigger_masks_init.mif",
+            INIT_VALUE => X"ffffffff",
             ADDR_WIDTH => log2c(NR_ALGOS/32*N_TRIGG),
             DATA_WIDTH => 32
         )
         port map(
             clk     => clk,
             rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_TRGG_MASK),
+            ipb_in  => ipb_to_slaves  (N_SLV_TRGG_MASK),
             ipb_out => ipb_from_slaves(N_SLV_TRGG_MASK),
             rclk    => lhc_clk,
             we      => '0',
@@ -486,6 +505,39 @@ begin
     end generate;
     -- TODO Make it interchangable
 
+    ----------------------------------------------------------------------------------
+    ---------------COUNTERS INTERNAL---------------------------------------------------
+    ----------------------------------------------------------------------------------
+    --TODO Where to stat counting, need some latency? How much?
+    bx_cnt_int_p : process(lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            ctrs_internal <= ctrs;
+        end if;
+    end process;
+
+    ----------------------------------------------------------------------------------
+    ---------------ALGO BX MASK MEM---------------------------------------------------
+    ----------------------------------------------------------------------------------
+
+    algo_bx_mask_mem_i : entity work.ipbus_dpram_4096x576
+        generic map(
+            INIT_VALUE => (others => '1'),
+            DATA_WIDTH => NR_ALGOS
+        )
+        port map(
+            clk     => clk,
+            rst     => rst,
+            ipb_in  => ipb_to_slaves  (N_SLV_ALGO_BX_MASKS),
+            ipb_out => ipb_from_slaves(N_SLV_ALGO_BX_MASKS),
+            rclk    => lhc_clk,
+            we      => '0',
+            d       => (others => '1'),
+            q       => algo_bx_mask_mem_out,
+            addr    => ctrs_internal.bctr
+        ) ;
+
+
     delay_element_i : entity work.delay_element_ringbuffer
         generic map(
             DATA_WIDTH => NR_ALGOS,
@@ -500,25 +552,42 @@ begin
         );
 
     ----------------------------------------------------------------------------------
-    ---------------COUTER MODULE------------------------------------------------------
+    ---------------COUNTER MODULE------------------------------------------------------
     ----------------------------------------------------------------------------------
 
     Counters_i : entity work.Counter_module
-            generic map (
-                BEGIN_LUMI_BIT => 18
-            )
-            port map (
-                lhc_clk        => lhc_clk,
-                lhc_rst        => lhc_clk,
-                ctrs_in        => ctrs,
-                bc0            => bc0,
-                ec0            => ec0,
-                oc0            => oc0, 
-                bx_nr          => open,
-                event_nr       => open,
-                orbit_nr       => open,
-                begin_lumi_sec => begin_lumi_per
-            );
+        generic map (
+            BEGIN_LUMI_BIT => 18
+        )
+        port map (
+            lhc_clk        => lhc_clk,
+            lhc_rst        => lhc_rst,
+            ctrs_in        => ctrs_internal,
+            bc0            => bc0,
+            ec0            => ec0,
+            oc0            => oc0,
+            bx_nr          => open,
+            event_nr       => open,
+            orbit_nr       => open,
+            begin_lumi_sec => begin_lumi_per,
+            test_en        => test_en
+        );
+
+
+    ----------------------------------------------------------------------------------
+    ---------------Suppress Trigger dureing Calibration-------------------------------
+    ----------------------------------------------------------------------------------    
+    
+    suppress_cal_trigger_p: process (lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+           if (test_en = '1' and (unsigned(ctrs_internal.bctr) >= (unsigned(supp_cal_BX_low)-1)) and (unsigned(ctrs_internal.bctr) < unsigned(supp_cal_BX_high))) then -- minus 1 to get correct length of gap (see simulation with test_bgo_test_enable_logic_tb.vhd)
+              suppress_cal_trigger <= '1'; -- pos. active signal: '1' = suppression of algos caused by calibration trigger during gap !!!
+           else
+              suppress_cal_trigger <= '0';
+           end if;
+        end if;
+    end process suppress_cal_trigger_p;
 
 
     gen_algos_slice_l : for i in 0 to NR_ALGOS - 1 generate
@@ -535,15 +604,15 @@ begin
                 sres_algo_rate_counter           => '0',
                 sres_algo_pre_scaler             => '0',
                 sres_algo_post_dead_time_counter => '0',
-                suppress_cal_trigger             => '0',
-                l1a                              => ctrs.l1a, --TODO modify this
+                suppress_cal_trigger             => suppress_cal_trigger,
+                l1a                              => ctrs_internal.l1a, --TODO modify this
                 request_update_factor_pulse      => request_factor_update,
                 begin_lumi_per                   => begin_lumi_per,
                 algo_i                           => algos_in(i),
                 algo_del_i                       => algos_delayed(i),
                 prescale_factor                  => prscl_fct(i)(PRESCALE_FACTOR_WIDTH-1 downto 0),
                 prescale_factor_preview          => prscl_fct_prvw(i)(PRESCALE_FACTOR_WIDTH-1 downto 0),
-                algo_bx_mask                     => '1',
+                algo_bx_mask                     => algo_bx_mask_mem_out(i),
                 veto_mask                        => '1',
                 rate_cnt_before_prescaler        => rate_cnt_before_prescaler(i),
                 rate_cnt_after_prescaler         => rate_cnt_after_prescaler(i),

@@ -1,19 +1,16 @@
-
--- Description: demultiplexer of 360MHz data (from optical links) to 40MHz data
--- HEPHY 2015-06-04: 50bc suppressing for a) correct behaviour of FINOR, b) catching the correct data in SPYMEM3 for ROP analyze
--- HB 2015-02-05: cleaned up the code, removed port "del_a".
--- HEPHY 2014-19-12: cross clock domain has been changed and the adjusment over register has been disabled. This feature is tested on Dec.19 with new Caloslicetest 2015. The adjusment is done over butler script.
+-- GB 29-07-2022: new version, deserializer synchronized with link_valid.
 library ieee;
 use ieee.std_logic_1164.all;
 library unisim;
 use unisim.VComponents.all;
 
 use work.emp_data_types.all;
-
+use work.emp_ttc_decl.all;
 entity In_deser is
     port(
         clk360             : in std_logic;
         lhc_clk            : in std_logic;
+        lhc_rst            : in std_logic;
         lane_data_in       : in lword;
         demux_data_o       : out std_logic_vector(9*64-1 downto 0)
     );
@@ -21,37 +18,69 @@ end In_deser;
 
 architecture rtl of In_deser is
 
-    signal temp : ldata(8 downto 0);
-    signal data_in_suppress : lword;
+    signal data_deserialized      : std_logic_vector(9*64 - 1 downto 0);
+    signal data_deserialized_temp : std_logic_vector(8*64 - 1 downto 0);
+
+    signal data_in_valid_del_arr  : std_logic_vector(9 downto 0);
+
+    signal frame_cntr,  frame_cntr_temp: integer range 0 to 8;
 
 begin
 
-    -- TODO check the necessity of other signals
-    data_in_suppress.data   <= (others => '0') when lane_data_in.valid = '0' else lane_data_in.data;
-    data_in_suppress.valid  <= lane_data_in.valid;
-    data_in_suppress.strobe <= lane_data_in.strobe;
-    data_in_suppress.start  <= lane_data_in.start;
+    data_in_valid_del_arr(0) <= lane_data_in.valid;
+    del_valid_p : process (clk360)
+    begin
+        if rising_edge(clk360) then -- rising clock edge
+            data_in_valid_del_arr(9 downto 1) <=  data_in_valid_del_arr(8 downto 0);
+        end if;
+    end process del_valid_p;
+
+
+    frame_counter_p : process (clk360)
+    begin
+        if rising_edge(clk360) then -- rising clock edge
+            if lane_data_in.valid = '0' then
+                frame_cntr <= 0;
+            elsif frame_cntr < 8 then
+                frame_cntr <= frame_cntr + 1;
+                data_deserialized_temp(frame_cntr * 64 + 63 downto frame_cntr * 64) <= lane_data_in.data;
+            else
+                frame_cntr <= 0;
+            end if;
+        end if;
+    end process frame_counter_p;
     
-    
-    temp(0) <= data_in_suppress;
-    -- Pipeline for data (360MHz)
-    pipeline_360MHz_p: process(clk360)
+    frame_counter_temp_p : process (clk360)
     begin
         if rising_edge(clk360) then
-            --temp <= data_in_suppress & temp(7 downto 1);
-            temp(8 downto 1) <= temp(7 downto 0);
+            if data_in_valid_del_arr(9) = '0' then
+                    frame_cntr_temp <= 0;
+            elsif frame_cntr_temp < 8 then
+                    frame_cntr_temp <= frame_cntr_temp + 1;
+            else
+                    frame_cntr_temp <= 0;
+            end if;
         end if;
-    end process;
+    end process frame_counter_temp_p;
 
+    load_data_p : process (clk360)
+    begin
+        if rising_edge(clk360) then -- rising clock edge
+            if frame_cntr_temp = 8 and lane_data_in.valid = '0' then
+                data_deserialized <= (others => '0');
+            elsif frame_cntr = 8 then
+                data_deserialized(frame_cntr * 64 + 63 downto frame_cntr * 64) <= lane_data_in.data;
+                data_deserialized((frame_cntr-1) * 64 + 63 downto 0) <= data_deserialized_temp((frame_cntr-1) * 64 + 63 downto 0);
+            end if;
+        end if;
+    end process load_data_p;
 
     data_40mhz_p: process(lhc_clk)
     begin
         if rising_edge(lhc_clk) then
-            demux_data_o <= temp(0).data & temp(1).data & temp(2).data & temp(3).data & temp(4).data & temp(5).data & temp(6).data & temp(7).data & temp(8).data;
+            demux_data_o <= data_deserialized;
         end if;
     end process;
 
 
 end architecture rtl;
-
-
