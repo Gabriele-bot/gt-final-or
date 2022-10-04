@@ -1,3 +1,7 @@
+# Script for generating input pattern file for the Phase-2 Finor Board.
+# Developed  by Gabriele Bortolato (Padova  University) 
+# gabriele.bortolato@cern.ch
+
 import numpy as np
 import random
 import argparse
@@ -9,14 +13,16 @@ from bitstringconverter import *
 parser = argparse.ArgumentParser(description='GT-Final OR board Pattern producer')
 parser.add_argument('-i', '--indexes', metavar='N', type=int, default=1,
                     help='Number of algos to send')
-parser.add_argument('-s', '--serenity', metavar='N', type=str, default='Serenity1',
-                    help='Board to be tested')
+parser.add_argument('-s', '--serenity', metavar='N', type=str, default='Serenity3-SLR232',
+                    help='Board to be tested, choose from: Serenity1-SLR021, Serenity2-SLR021, Serenity3-SLR021, Serenity3-SLR322')
 
 args = parser.parse_args()
-if args.serenity in ['Serenity1', 'Serenity2']:
+if args.serenity in ['Serenity1-SLR021', 'Serenity2-SLR021']:
     board = 'vu9p'
-elif args.serenity == 'Serenity3':
-    board = 'vu13p'
+elif args.serenity == 'Serenity3-SLR021':
+    board = 'vu13p-slr021'
+elif args.serenity == 'Serenity3-SLR322':
+    board = 'vu13p-slr322'
 
 
 
@@ -35,17 +41,19 @@ def prep_bitstring_data(data_int_new):
     return data_bitstring_padded
 
 
-def pattern_producer(n_algo_bits, board='vu13p', debug=False):
+def pattern_producer(n_algo_bits, board='vu13p-slr322', debug=False):
 
     Possibile_indeces = range(1152)
     Possibile_rep     = range(int(1024 / 9))
     if board == 'vu9p':
         Availabe_links = [[44,45,46,47,48,49,50,51,52,53,54,55,64,65,66,67,68,69,70,71,72,73,74,75],
                           [4,5,6,7,8,9,10,11,12,13,14,15,104,105,106,107,108,109,110,111,112,113,114,115]]
-    elif board == 'vu13p':
+    elif board == 'vu13p-slr021':
         Availabe_links = [[36,37,38,39,40,41,42,43,44,45,46,47,80,81,82,83,84,85,86,87,88,89,90,91],
                           [4,5,6,7,8,9,10,11,12,13,14,15,112,113,114,115,116,117,118,119,120,121,122,123]]
-
+    elif board == 'vu13p-slr322':
+        Availabe_links = [[36,37,38,39,40,41,42,43,44,45,46,47,80,81,82,83,84,85,86,87,88,89,90,91],
+                          [48,49,50,51,52,53,54,55,56,57,58,59,68,69,70,71,72,73,74,75,76,77,78,79]]
     indeces = random.sample(Possibile_indeces, n_algo_bits)
     repetitions = np.random.choice(Possibile_rep, size=n_algo_bits, replace=True)
     if debug:
@@ -54,8 +62,8 @@ def pattern_producer(n_algo_bits, board='vu13p', debug=False):
         print("Algo bit repetitions")
         print(np.array(repetitions))
 
-    X_input_low  = np.zeros((1024, 24), dtype=np.uint64)
-    X_input_high = np.zeros((1024, 24), dtype=np.uint64)
+    X_input_low  = np.zeros((1017, 24), dtype=np.uint64)
+    X_input_high = np.zeros((1017, 24), dtype=np.uint64)
 
     for i in range(len(indeces)):
         rep = random.sample(Possibile_rep, repetitions[i])

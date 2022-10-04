@@ -78,7 +78,7 @@ architecture rtl of m_module is
     signal masks                 : mask_arr := (others => (others => '1'));
 
     signal request_factor_update : std_logic;
-    signal ctrl_reg : ipb_reg_v(0 downto 0);
+    signal ctrl_reg : ipb_reg_v(1 downto 0);
     signal stat_reg : ipb_reg_v(0 downto 0);
 
     -- counters and bgos signals
@@ -107,6 +107,11 @@ architecture rtl of m_module is
     signal ready        : std_logic;
 
     signal algo_bx_mask_mem_out    : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '1');
+
+    signal test_en                 : std_logic;
+    signal suppress_cal_trigger    : std_logic;
+    signal supp_cal_BX_low         : std_logic_vector(11 downto 0);
+    signal supp_cal_BX_high        : std_logic_vector(11 downto 0);
 
     signal trigger_out             : std_logic_vector(N_TRIGG-1 downto 0);
 
@@ -347,9 +352,9 @@ begin
             addr    => std_logic_vector(addr)
         );
 
-    blp_regs : entity work.ipbus_ctrlreg_v
+    CSR_regs : entity work.ipbus_ctrlreg_v
         generic map(
-            N_CTRL     => 1,
+            N_CTRL     => 2,
             N_STAT     => 1
         )
         port map(
@@ -377,27 +382,6 @@ begin
     --        src_in   => ctrl_reg(0)(0)
     --    );
 
-
-    xpm_cdc_pulse_inst : xpm_cdc_pulse
-        generic map (
-            DEST_SYNC_FF   => 3, -- DECIMAL; range: 2-10
-            INIT_SYNC_FF   => 0, -- DECIMAL; 0=disable simulation init values, 1=enable simulation init values
-            REG_OUTPUT     => 1, -- DECIMAL; 0=disable registered output, 1=enable registered output
-            RST_USED       => 0, -- DECIMAL; 0=no reset, 1=implement reset
-            SIM_ASSERT_CHK => 0  -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-        )
-        port map (
-            --  LHC clock domain (40MHz)
-            dest_pulse => open,
-            dest_clk   => lhc_clk,
-            dest_rst   => '0',
-            -- ipbus clock domain (125MHz)
-            src_clk    => clk,
-            src_pulse  => ctrl_reg(0)(0),
-            src_rst    => rst
-        );
-    -- End of xpm_cdc_pulse_inst instantiatio
-
     xpm_cdc_request_factor_update : xpm_cdc_single
         generic map (
             DEST_SYNC_FF => 3,
@@ -409,7 +393,7 @@ begin
             dest_out => request_factor_update,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(1)
+            src_in   => ctrl_reg(0)(0)
         );
 
     xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
@@ -424,7 +408,37 @@ begin
             dest_out => l1a_latency_delay,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(log2c(MAX_DELAY) + 1 downto 2)
+            src_in   => ctrl_reg(0)(log2c(MAX_DELAY) downto 1)
+        );
+
+    xpm_cdc_supp_BX_low : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF => 3,
+            INIT_SYNC_FF => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => 12
+        )
+        port map (
+            dest_out => supp_cal_BX_low,
+            dest_clk => lhc_clk,
+            src_clk  => clk,
+            src_in   => ctrl_reg(1)(11 downto 0)
+        );
+ 
+    xpm_cdc_supp_BX_high : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF => 3,
+            INIT_SYNC_FF => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => 12
+        )
+        port map (
+            dest_out => supp_cal_BX_high,
+            dest_clk => lhc_clk,
+            src_clk  => clk,
+            src_in   => ctrl_reg(1)(23 downto 12)
         );
 
     ready <= not we;
@@ -442,7 +456,6 @@ begin
             src_clk  => lhc_clk,
             src_in   => ready
         );
-
 
     --begin_lumi_per        <= ctrl_reg(0)(0);
     --request_factor_update <= ctrl_reg(0)(1);
@@ -556,8 +569,25 @@ begin
             bx_nr          => open,
             event_nr       => open,
             orbit_nr       => open,
-            begin_lumi_sec => begin_lumi_per
+            begin_lumi_sec => begin_lumi_per,
+            test_en        => test_en
         );
+
+
+    ----------------------------------------------------------------------------------
+    ---------------Suppress Trigger dureing Calibration-------------------------------
+    ----------------------------------------------------------------------------------    
+    
+    suppress_cal_trigger_p: process (lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+           if (test_en = '1' and (unsigned(ctrs_internal.bctr) >= (unsigned(supp_cal_BX_low)-1)) and (unsigned(ctrs_internal.bctr) < unsigned(supp_cal_BX_high))) then -- minus 1 to get correct length of gap (see simulation with test_bgo_test_enable_logic_tb.vhd)
+              suppress_cal_trigger <= '1'; -- pos. active signal: '1' = suppression of algos caused by calibration trigger during gap !!!
+           else
+              suppress_cal_trigger <= '0';
+           end if;
+        end if;
+    end process suppress_cal_trigger_p;
 
 
     gen_algos_slice_l : for i in 0 to NR_ALGOS - 1 generate
@@ -574,7 +604,7 @@ begin
                 sres_algo_rate_counter           => '0',
                 sres_algo_pre_scaler             => '0',
                 sres_algo_post_dead_time_counter => '0',
-                suppress_cal_trigger             => '0',
+                suppress_cal_trigger             => suppress_cal_trigger,
                 l1a                              => ctrs_internal.l1a, --TODO modify this
                 request_update_factor_pulse      => request_factor_update,
                 begin_lumi_per                   => begin_lumi_per,

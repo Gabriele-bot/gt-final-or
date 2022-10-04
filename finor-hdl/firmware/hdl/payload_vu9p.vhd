@@ -109,44 +109,48 @@ begin
 
     SLR0_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS   => 24
+            NR_LINKS   => 24,
+            NR_MON_REG => 6
         )
         port map(
-            clk     => clk,
-            rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_SLR0_MONITOR),
-            ipb_out => ipb_from_slaves(N_SLV_SLR0_MONITOR),
-            clk360  => clk_p,
-            rst360  => rst_loc(1),
-            lhc_clk => clk_payload(2),
-            lhc_rst => rst_payload(2),
-            ctrs    => ctrs(1),
-            d(11 downto 0)  => d(15 downto 4),    -- regions [ 1  2  3]
-            d(23 downto 12) => d(115 downto 104), -- regions [26 27 28]
-            trgg    => trgg_SLR0_regs(0),
-            algos           => algos_SLR0_regs(0),
-            algos_prescaled => algos_presc_SLR0_regs(0)
+            clk                  => clk,
+            rst                  => rst,
+            ipb_in               => ipb_to_slaves(N_SLV_SLR0_MONITOR),
+            ipb_out              => ipb_from_slaves(N_SLV_SLR0_MONITOR),
+            clk360               => clk_p,
+            rst360               => rst_loc(1),
+            lhc_clk              => clk_payload(2),
+            lhc_rst              => rst_payload(2),
+            ctrs(2 downto 0)     => ctrs(3 downto 1),
+            ctrs(5 downto 3)     => ctrs(28 downto 26),
+            d(11 downto 0)       => d(15 downto 4),    -- regions [ 1  2  3]
+            d(23 downto 12)      => d(115 downto 104), -- regions [26 27 28]
+            trgg                 => trgg_SLR0_regs(0),
+            algos                => algos_SLR0_regs(0),
+            algos_prescaled      => algos_presc_SLR0_regs(0)
         );
 
     SLR2_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS   => 24
+            NR_LINKS   => 24,
+            NR_MON_REG => 6
         )
         port map(
-            clk     => clk,
-            rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_SLR2_MONITOR),
-            ipb_out => ipb_from_slaves(N_SLV_SLR2_MONITOR),
-            clk360  => clk_p,
-            rst360  => rst_loc(11),
-            lhc_clk => clk_payload(2),
-            lhc_rst => rst_payload(2),
-            ctrs    => ctrs(11),
-            d(11 downto 0)  => d(55 downto 44), -- regions [11 12 13]
-            d(23 downto 12) => d(75 downto 64),	-- refions [16 17 18]
-            trgg    => trgg_SLR2_regs(0),
-            algos           => algos_SLR2_regs(0),
-            algos_prescaled => algos_presc_SLR2_regs(0)
+            clk                   => clk,
+            rst                   => rst,
+            ipb_in                => ipb_to_slaves(N_SLV_SLR2_MONITOR),
+            ipb_out               => ipb_from_slaves(N_SLV_SLR2_MONITOR),
+            clk360                => clk_p,
+            rst360                => rst_loc(11),
+            lhc_clk               => clk_payload(2),
+            lhc_rst               => rst_payload(2),
+            ctrs(2 downto 0)      => ctrs(13 downto 11),
+            ctrs(5 downto 3)      => ctrs(18 downto 16),
+            d(11 downto 0)        => d(55 downto 44), -- regions [11 12 13]
+            d(23 downto 12)       => d(75 downto 64),	-- refions [16 17 18]
+            trgg                  => trgg_SLR2_regs(0),
+            algos                 => algos_SLR2_regs(0),
+            algos_prescaled       => algos_presc_SLR2_regs(0)
         );
 
     cross_SLR_trigg : process(clk_p)

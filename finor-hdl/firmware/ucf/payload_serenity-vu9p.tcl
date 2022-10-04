@@ -3,6 +3,7 @@
 add_cells_to_pblock [get_pblock payload] payload
 
 
+resize_pblock [get_pblocks payload] -add {CLOCKREGION_X0Y0}
 resize_pblock [get_pblocks payload] -add {CLOCKREGION_X1Y0}
 resize_pblock [get_pblocks payload] -add {CLOCKREGION_X2Y0}
 resize_pblock [get_pblocks payload] -add {CLOCKREGION_X3Y0}

@@ -9,7 +9,7 @@ package FinOR_pkg is
     
     constant N_BOARD     : natural := 12;
     constant N_SLR       : natural := 4;
-    constant INPUT_LINKS : natural := 24;
+    constant INPUT_LINKS : natural := 12;
     constant N_TRIGG     : natural := 8;
     
     

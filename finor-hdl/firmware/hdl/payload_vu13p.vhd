@@ -43,51 +43,59 @@ architecture rtl of emp_payload is
     constant DEBUG : boolean := false;
 
     constant SLR_CROSSING_LATENCY : natural := 9;
-    
+
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
 
+    signal begin_lumi_section : std_logic := '0'; -- TODO extract the value from ctrs
+    signal l1a_loc            : std_logic_vector(N_REGION - 1 downto 0);
+    signal bcres              : std_logic := '0';
+
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
-    signal trgg_SLR0_regs  : SLRCross_trigg_t;
+    signal trgg_SLR3_regs  : SLRCross_trigg_t;
     signal trgg_SLR2_regs  : SLRCross_trigg_t;
 
-    signal algos_SLR0       : std_logic_vector(64*9-1 downto 0);
+    signal algos_SLR3       : std_logic_vector(64*9-1 downto 0);
     signal algos_SLR2       : std_logic_vector(64*9-1 downto 0);
-    signal algos_presc_SLR0 : std_logic_vector(64*9-1 downto 0);
+    signal algos_presc_SLR3 : std_logic_vector(64*9-1 downto 0);
     signal algos_presc_SLR2 : std_logic_vector(64*9-1 downto 0);
 
     type SLRCross_algos_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(64*9-1 downto 0);
-    signal algos_SLR0_regs       : SLRCross_algos_t;
-    signal algos_presc_SLR0_regs : SLRCross_algos_t;
+    signal algos_SLR3_regs       : SLRCross_algos_t;
+    signal algos_presc_SLR3_regs : SLRCross_algos_t;
     signal algos_SLR2_regs       : SLRCross_algos_t;
     signal algos_presc_SLR2_regs : SLRCross_algos_t;
 
     attribute keep : boolean;
-    attribute keep of trgg_SLR0_regs : signal is true;
+    attribute keep of trgg_SLR3_regs : signal is true;
     attribute keep of trgg_SLR2_regs : signal is true;
 
-    attribute keep of algos_SLR0_regs       : signal is true;
-    attribute keep of algos_presc_SLR0_regs : signal is true;
-    attribute keep of algos_SLR2_regs       : signal is true;
-    attribute keep of algos_presc_SLR2_regs : signal is true;
-    
+    attribute keep of algos_SLR3_regs       : signal is DEBUG;
+    attribute keep of algos_presc_SLR3_regs : signal is DEBUG;
+    attribute keep of algos_SLR2_regs       : signal is DEBUG;
+    attribute keep of algos_presc_SLR2_regs : signal is DEBUG;
+
     attribute shreg_extract                       : string;
-    attribute shreg_extract of trgg_SLR0_regs     : signal is "no";
+    attribute shreg_extract of trgg_SLR3_regs     : signal is "no";
     attribute shreg_extract of trgg_SLR2_regs     : signal is "no";
 
-    attribute shreg_extract of algos_SLR0_regs       : signal is "no";
-    attribute shreg_extract of algos_presc_SLR0_regs : signal is "no";
+    attribute shreg_extract of algos_SLR3_regs       : signal is "no";
+    attribute shreg_extract of algos_presc_SLR3_regs : signal is "no";
     attribute shreg_extract of algos_SLR2_regs       : signal is "no";
     attribute shreg_extract of algos_presc_SLR2_regs : signal is "no";
 
 begin
 
+    l1a_loc_wiring_gen : for i in N_REGION -1 downto 0 generate
+        l1a_loc(i) <= ctrs(i).l1a;
+    end generate;
+
 
     fabric_i: entity work.ipbus_fabric_sel
         generic map(
-            NSLV => N_SLAVES,
+            NSLV      => N_SLAVES,
             SEL_WIDTH => IPBUS_SEL_WIDTH
         )
         port map(
@@ -97,66 +105,85 @@ begin
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );
-    
 
-    SLR0_module : entity work.SLR_FinOR_unit
+
+    SLR3_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS => 24
+            NR_LINKS => INPUT_LINKS
         )
         port map(
-            clk     => clk,
-            rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_SLR0_MONITOR),
-            ipb_out => ipb_from_slaves(N_SLV_SLR0_MONITOR),
-            clk360  => clk_p,
-            rst360  => rst_loc(1),
-            lhc_clk => clk_payload(2),
-            lhc_rst => rst_payload(2),
-            ctrs    => ctrs(1),
-            d(11 downto 0)  => d(15 downto 4),
-            d(23 downto 12) => d(123 downto 112),
-            trgg    => trgg_SLR0_regs(0),
-            algos           => algos_SLR0_regs(0),
-            algos_prescaled => algos_presc_SLR0_regs(0)
+            clk              => clk,
+            rst              => rst,
+            ipb_in           => ipb_to_slaves(N_SLV_SLR3_MONITOR),
+            ipb_out          => ipb_from_slaves(N_SLV_SLR3_MONITOR),
+            clk360           => clk_p,
+            rst360           => rst_loc(17),
+            lhc_clk          => clk_payload(2),
+            lhc_rst          => rst_payload(2),
+            ctrs(2 downto 0) => ctrs(19 downto 17),
+            d(11 downto 0)   => d(79 downto 68), -- regions[17,18,19]
+            trgg             => trgg_SLR3_regs(0),
+            algos            => algos_SLR3_regs(0),
+            algos_prescaled  => algos_presc_SLR3_regs(0)
         );
 
     SLR2_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS => 24
+            NR_LINKS => INPUT_LINKS
         )
         port map(
-            clk     => clk,
-            rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_SLR2_MONITOR),
-            ipb_out => ipb_from_slaves(N_SLV_SLR2_MONITOR),
-            clk360  => clk_p,
-            rst360  => rst_loc(9),
-            lhc_clk => clk_payload(2),
-            lhc_rst => rst_payload(2),
-            ctrs    => ctrs(11),
-            d(11 downto 0)  => d(47 downto 36),
-            d(23 downto 12) => d(91 downto 80),
-            trgg    => trgg_SLR2_regs(0),
-            algos           => algos_SLR2_regs(0),
-            algos_prescaled => algos_presc_SLR2_regs(0)
+            clk              => clk,
+            rst              => rst,
+            ipb_in           => ipb_to_slaves(N_SLV_SLR2_MONITOR),
+            ipb_out          => ipb_from_slaves(N_SLV_SLR2_MONITOR),
+            clk360           => clk_p,
+            rst360           => rst_loc(20),
+            lhc_clk          => clk_payload(2),
+            lhc_rst          => rst_payload(2),
+            ctrs(2 downto 0) => ctrs(22 downto 20),
+            d(11 downto 0)   => d(91 downto 80),
+            trgg             => trgg_SLR2_regs(0),
+            algos            => algos_SLR2_regs(0),
+            algos_prescaled  => algos_presc_SLR2_regs(0)
         );
 
     cross_SLR : process(clk_p)
     begin
         if rising_edge(clk_p) then
-            trgg_SLR0_regs(trgg_SLR0_regs'high downto 1) <= trgg_SLR0_regs(trgg_SLR0_regs'high - 1 downto 0);
+            trgg_SLR3_regs(trgg_SLR3_regs'high downto 1) <= trgg_SLR3_regs(trgg_SLR3_regs'high - 1 downto 0);
             trgg_SLR2_regs(trgg_SLR2_regs'high downto 1) <= trgg_SLR2_regs(trgg_SLR2_regs'high - 1 downto 0);
         end if;
     end process;
-    
-    SLR1_local_or : entity work.Trigger_local_or
+
+    --SLR1_local_or : entity work.Trigger_local_or
+    --    port map(
+    --        clk360  => clk_p,
+    --        rst360  => rst_loc(6),
+    --        q(0)    => q(24),
+    --        trgg_0  => trgg_SLR0_regs(trgg_SLR0_regs'high),
+    --        trgg_1  => trgg_SLR2_regs(trgg_SLR2_regs'high)
+    --    );
+
+    SLR2_FinalOR_or : entity work.Output_SLR
+        generic map(
+            MAX_DELAY => 127
+        )
         port map(
-            clk360  => clk_p,
-            rst360  => rst_loc(24),
-            q(0)    => q(24),
-            trgg_0  => trgg_SLR0_regs(trgg_SLR0_regs'high),
+            clk     => clk,
+            rst     => rst,
+            ipb_in  => ipb_to_slaves(N_SLV_SLR2_FINOR),
+            ipb_out => ipb_from_slaves(N_SLV_SLR2_FINOR),
+            clk_p   => clk_p,
+            rst_p   => rst_loc(8),
+            lhc_clk => clk_payload(2),
+            lhc_rst => rst_payload(2),
+            ctrs    => ctrs(8),
+            q(0)    => q(35),
+            trgg_0  => trgg_SLR3_regs(trgg_SLR3_regs'high),
             trgg_1  => trgg_SLR2_regs(trgg_SLR2_regs'high)
         );
+
+
 
     --------------------------------------------------------------------------------
     -------------------------------------------DEBUG OUT----------------------------
@@ -169,10 +196,10 @@ begin
         cross_SLR_algo : process(clk_p)
         begin
             if rising_edge(clk_p) then
-                algos_SLR0_regs(algos_SLR0_regs'high downto 1) <= algos_SLR0_regs(algos_SLR0_regs'high - 1 downto 0);
+                algos_SLR3_regs(algos_SLR3_regs'high downto 1) <= algos_SLR3_regs(algos_SLR3_regs'high - 1 downto 0);
                 algos_SLR2_regs(algos_SLR2_regs'high downto 1) <= algos_SLR2_regs(algos_SLR2_regs'high - 1 downto 0);
 
-                algos_presc_SLR0_regs(algos_presc_SLR0_regs'high downto 1) <= algos_presc_SLR0_regs(algos_presc_SLR0_regs'high - 1 downto 0);
+                algos_presc_SLR3_regs(algos_presc_SLR3_regs'high downto 1) <= algos_presc_SLR3_regs(algos_presc_SLR3_regs'high - 1 downto 0);
                 algos_presc_SLR2_regs(algos_presc_SLR2_regs'high downto 1) <= algos_presc_SLR2_regs(algos_presc_SLR2_regs'high - 1 downto 0);
             end if;
         end process;
@@ -185,7 +212,7 @@ begin
                 rst         => rst_loc(25),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
-                input_40MHz => algos_SLR0_regs(algos_SLR0_regs'high),
+                input_40MHz => algos_SLR3_regs(algos_SLR3_regs'high),
                 output_data => q(102)
             );
 
@@ -195,7 +222,7 @@ begin
                 rst         => rst_loc(25),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
-                input_40MHz => algos_presc_SLR0_regs(algos_presc_SLR0_regs'high),
+                input_40MHz => algos_presc_SLR3_regs(algos_presc_SLR3_regs'high),
                 output_data => q(103)
             );
 
@@ -218,7 +245,7 @@ begin
                 input_40MHz => algos_presc_SLR2_regs(algos_presc_SLR2_regs'high),
                 output_data => q(101)
             );
-        end generate;
+    end generate;
 
     gpio    <= (others => '0');
     gpio_en <= (others => '0');

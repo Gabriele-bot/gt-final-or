@@ -1,3 +1,7 @@
+# Script for checking pre-scale correct behaviour of the Phase-2 Finor Board.
+# Developed  by Gabriele Bortolato (Padova  University) 
+# gabriele.bortolato@cern.ch
+
 import os
 
 
@@ -6,9 +10,15 @@ import random
 import uhal
 import sys
 import time
+import argparse
 
+parser = argparse.ArgumentParser(description='GT-Final OR board Rate Checker')
+parser.add_argument('-t', '--test', metavar='N', type=str, default='random',
+                    help='random --> random pre-scale values,/nlinear --> equally spaced pre-scale values')
 
-uhal.disableLogging()
+args = parser.parse_args()
+
+#uhal.disableLogging()
 
 global manager
 global hw
@@ -134,6 +144,27 @@ def read_cnt_arr(SLR, sel):
     hw.dispatch()
     return np.array(cnt, dtype=np.uint32)
     
+def read_prsc_arr(SLR, sel):
+    if SLR == 3:
+        if sel == 0:
+            value = hw.getNode("payload.SLR3_monitor.prescale_factor").readBlock(576)
+        elif sel == 1:
+            value = hw.getNode("payload.SLR3_monitor.prescale_factor_prvw").readBlock(576)
+        else:
+            raise Exception("Selector is not in [0,1]")
+    elif SLR == 2:
+        if sel == 0:
+            value = hw.getNode("payload.SLR2_monitor.prescale_factor").readBlock(576)
+        elif sel == 1:
+            value = hw.getNode("payload.SLR2_monitor.prescale_factor_prvw").readBlock(576)
+        else:
+            raise Exception("Selector is not in [0,1]")
+    else:
+        raise Exception("Available SLRs are 2 and 3")
+
+    hw.dispatch()
+    return np.array(value, dtype=np.uint32)
+    
     
 def read_trigg_cnt(sel):
     if sel == 0:
@@ -197,16 +228,32 @@ prsc_fct_prvw_2 = np.uint32(100 * np.ones(576))  # 1.00
 index_low  = index[np.where(index<576)[0]]
 index_high = index[np.where(index>=576)[0]]
 
-#prsc_fct_3[np.int16(index_high-576)]       = np.uint32(np.random.randint(100,2**24,len(index_high)))
-prsc_fct_3[np.int16(index_high-576)]       = np.uint32(np.linspace(100,2**24-1,len(index_high)))
-#prsc_fct_2[np.int16(index_low)]       = np.uint32(np.random.randint(100,2**24,len(index_low)))
-prsc_fct_2[np.int16(index_low)]       = np.uint32(np.linspace(100,2**24-1,len(index_low)))
+print(args.test)
+
+if args.test == "random":
+    prsc_fct_3[np.int16(index_high-576)]       = np.uint32(np.random.randint(100,2**24,len(index_high)))
+    prsc_fct_2[np.int16(index_low)]       = np.uint32(np.random.randint(100,2**24,len(index_low)))
+elif args.test == "linear":
+    prsc_fct_3[np.int16(index_high-576)]       = np.uint32(np.linspace(100,2**24-1,len(index_high)))
+    prsc_fct_2[np.int16(index_low)]       = np.uint32(np.linspace(100,2**24-1,len(index_low)))
+		
+
 prsc_fct = np.vstack((prsc_fct_2,prsc_fct_3)).flatten()
+print(prsc_fct[np.int16(index)])
+
 load_prsc_in_RAM(prsc_fct_3, 3, 0)
 load_prsc_in_RAM(prsc_fct_2, 2, 0)
 
-prsc_fct_prvw_3[np.int16(index_high-576)]       = np.uint32(np.random.randint(100,2**24, len(index_high)))
-prsc_fct_prvw_2[np.int16(index_low)]  = np.uint32(np.random.randint(100,2**24, len(index_low)))
+r_prsc = read_prsc_arr(3, 0)
+print(r_prsc)
+
+if args.test == "random":
+    prsc_fct_prvw_3[np.int16(index_high-576)]  = np.uint32(np.random.randint(100,2**24, len(index_high)))
+    prsc_fct_prvw_2[np.int16(index_low)]       = np.uint32(np.random.randint(100,2**24, len(index_low)))
+elif args.test == "linear":
+    prsc_fct_prvw_3[np.int16(index_high-576)]  = np.uint32(np.linspace(100,2**24-1,len(index_high)))
+    prsc_fct_prvw_2[np.int16(index_low)]       = np.uint32(np.linspace(100,2**24-1,len(index_low)))
+
 prsc_fct_prvw = np.vstack((prsc_fct_prvw_2,prsc_fct_prvw_3)).flatten()
 load_prsc_in_RAM(prsc_fct_prvw_3, 3, 1)
 load_prsc_in_RAM(prsc_fct_prvw_2, 2, 1)
@@ -249,7 +296,7 @@ time.sleep(47)
 
 o_ctr_temp = 0
 
-for i in range(0, 2000):
+for i in range(0, 500):
     o_ctr = hw.getNode("ttc.master.common.stat.orbit_ctr").read()
     hw.dispatch()
     time.sleep(1)
