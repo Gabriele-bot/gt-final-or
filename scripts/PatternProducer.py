@@ -90,8 +90,8 @@ def pattern_producer(n_algo_bits, board='vu13p', debug=False):
     fname = indir + "/Finor_input_pattern.txt"
     write_pattern_file(data_bitstring_padded, outputfile=fname, links=links.flatten())
     # save file for the simulation
-    indir = "../simulation/firmware/hdl/Pattern_files"
-    fname = indir + "/inputPattern.txt"
+    indir = "../simulation/firmware/hdl/"
+    fname = indir + "/inputPattern.mem"
     write_pattern_file(data_bitstring_padded, outputfile=fname, links=links.flatten())
     # checking first frame
     if debug:

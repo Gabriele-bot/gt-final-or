@@ -26,8 +26,8 @@
 curl -L https://github.com/ipbus/ipbb/archive/dev/2021j.tar.gz | tar xvz
 source ipbb-dev-2021j/env.sh
 
-ipbb init gt-algorithm-work
-cd gt-algorithm-work
+ipbb init gt-fw-work
+cd gt-fw-work
 ipbb add git https://:@gitlab.cern.ch:8443/p2-xware/firmware/emp-fwk.git -b v0.6.8
 ipbb add git https://github.com/ipbus/ipbus-firmware -b v1.9
 ipbb add git https://:@gitlab.cern.ch:8443/cms-tcds/cms-tcds2-firmware.git -b v0_1_1
@@ -75,7 +75,7 @@ cd scripts
 python PatternProducer.py -i 1152 -s Serenity3
 ```
 
-The relative ```.txt``` file is saved in the folder ```scripts/Pattern_files/Finor_input_pattern.txt```.  
+The relative ```.mem``` ```.txt```  and files are saved in the folders ```simulation/firmware/hdl/inputPattern.mem``` and ```scripts/Pattern_files/Finor_input_pattern.txt``` respectively.  
 To enter in the Vivado GUI run the command
 
 ```bash
