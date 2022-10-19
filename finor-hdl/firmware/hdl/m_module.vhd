@@ -67,6 +67,9 @@ architecture rtl of m_module is
     -- prescale factor ipb regs
     signal prscl_fct      : ipb_reg_v(NR_ALGOS - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
     signal prscl_fct_prvw : ipb_reg_v(NR_ALGOS - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
+    
+    signal rst_prescale_counters           : std_logic;
+    signal change_prescale_column_occurred : std_logic;
 
     -- rate counter ipb regs
     signal rate_cnt_before_prescaler        : ipb_reg_v(NR_ALGOS - 1 downto 0);
@@ -77,7 +80,8 @@ architecture rtl of m_module is
     signal masks_ipbus_regs      : ipb_reg_v(NR_ALGOS/32*N_TRIGG - 1 downto 0) := (others => (others => '1'));
     signal masks                 : mask_arr := (others => (others => '1'));
 
-    signal request_factor_update : std_logic;
+    signal request_factor_update    : std_logic;
+    signal new_prescale_column      : std_logic;
     signal ctrl_reg : ipb_reg_v(1 downto 0);
     signal stat_reg : ipb_reg_v(0 downto 0);
 
@@ -91,17 +95,17 @@ architecture rtl of m_module is
 
 
     type state_t is (idle, start, increment);
-    signal state, state_mask           : state_t := idle;
+    signal state_r, state_w, state_mask           : state_t := idle;
 
     signal q_prscl_fct, q_prscl_fct_prvw                                 : std_logic_vector(31 downto 0);
     signal q_mask                                                        : std_logic_vector(31 downto 0);
     signal d_rate_cnt_before_prescaler, d_rate_cnt_after_prescaler       : std_logic_vector(31 downto 0);
     signal d_rate_cnt_after_prescaler_preview, d_rate_cnt_post_dead_time : std_logic_vector(31 downto 0);
     
-    signal addr         : unsigned(log2c(NR_ALGOS)-1 downto 0);
-    signal addr_w       : unsigned(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
-    signal addr_mask    : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
-    signal addr_mask_w  : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
+    signal addr, addr_prscl : unsigned(log2c(NR_ALGOS)-1 downto 0);
+    signal addr_prscl_w          : unsigned(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
+    signal addr_mask       : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
+    signal addr_mask_w     : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
     signal mask_index   : unsigned(log2c(N_TRIGG)-1 downto 0);
     signal we, we_mask  : std_logic;
     signal ready        : std_logic;
@@ -133,12 +137,12 @@ begin
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
-            case state is
+            case state_r is
                 when idle =>
                     addr   <= (others => '0');
                     we     <= '0';
                     if begin_lumi_per_del1 = '1' then
-                        state <= start;
+                        state_r <= start;
                     end if;
                 when start =>
                     addr  <= (others => '0');
@@ -148,7 +152,7 @@ begin
                     d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler(0);
                     d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(0);
                     d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(0);
-                    state <= increment;
+                    state_r <= increment;
                 when increment =>
                     addr <= addr + 1;
                     we   <= '1';
@@ -157,7 +161,7 @@ begin
                     d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(addr + 1));
                     d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(to_integer(addr + 1));
                     if addr >= NR_ALGOS-2 then --(2 is due to latency)
-                        state <= idle;
+                        state_r <= idle;
                     end if;
             end case;
         end if;
@@ -188,19 +192,40 @@ begin
             end case;
         end if;
     end process;
+    
+    -- address encoder to read from RAMs
+    process (lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            case state_w is
+                when idle =>
+                    addr_prscl   <= (others => '0');
+                    if new_prescale_column = '1' then
+                        state_w <= start;
+                    end if;
+                when start =>
+                    addr_prscl  <= (others => '0');
+                    state_w <= increment;
+                when increment =>
+                    addr_prscl <= addr_prscl + 1;
+                    if addr_prscl >= NR_ALGOS-2 then --(2 is due to latency)
+                        state_w <= idle;
+                    end if;
+            end case;
+        end if;
+    end process;
 
     -- process to read from ipbus-RAMs
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
             -----------Prescalers----------------------------
-            prscl_fct(to_integer(addr_w))      <= q_prscl_fct;
-            prscl_fct_prvw(to_integer(addr_w)) <= q_prscl_fct_prvw;
+            prscl_fct(to_integer(addr_prscl_w))      <= q_prscl_fct;
+            prscl_fct_prvw(to_integer(addr_prscl_w)) <= q_prscl_fct_prvw;
             -----------Trigger masks---------------------------------
             masks_ipbus_regs(to_integer(addr_mask_w))      <= q_mask;
-
-            -- delayed index for the regs
-            addr_w         <= addr;
+            
+            addr_prscl_w   <= addr_prscl;
             addr_mask_w    <= addr_mask;
         end if;
     end process;
@@ -395,6 +420,20 @@ begin
             src_clk  => clk,
             src_in   => ctrl_reg(0)(0)
         );
+        
+    xpm_cdc_new_prescale_column : xpm_cdc_single
+        generic map (
+            DEST_SYNC_FF => 3,
+            INIT_SYNC_FF => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1
+        )
+        port map (
+            dest_out => new_prescale_column,
+            dest_clk => lhc_clk,
+            src_clk  => clk,
+            src_in   => ctrl_reg(0)(1)
+        );
 
     xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
         generic map (
@@ -408,7 +447,7 @@ begin
             dest_out => l1a_latency_delay,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(log2c(MAX_DELAY) downto 1)
+            src_in   => ctrl_reg(0)(log2c(MAX_DELAY) + 1 downto 2)
         );
 
     xpm_cdc_supp_BX_low : xpm_cdc_array_single
@@ -461,6 +500,24 @@ begin
     --request_factor_update <= ctrl_reg(0)(1);
     --l1a_latency_delay     <= ctrl_reg(0)(log2c(MAX_DELAY) + 1 downto 2);
     --stat_reg(0)(0)        <= ready;
+    
+    ----------------------------------------------------------------------------------
+    ---------------RESET PRE-SCALE COUTNER LOGIC--------------------------------------
+    ----------------------------------------------------------------------------------
+
+    process (lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            if new_prescale_column = '1' then
+                change_prescale_column_occurred <= '1';
+            elsif begin_lumi_per_del1 = '1' then
+                change_prescale_column_occurred <= '0';
+            end if;
+        end if;
+    end process;
+    
+    rst_prescale_counters <= begin_lumi_per and change_prescale_column_occurred;
+
 
     ----------------------------------------------------------------------------------
     ---------------TRIGGER MASKS REGISTERS--------------------------------------------
@@ -602,7 +659,7 @@ begin
                 lhc_clk                          => lhc_clk,
                 lhc_rst                          => lhc_rst,
                 sres_algo_rate_counter           => '0',
-                sres_algo_pre_scaler             => '0',
+                sres_algo_pre_scaler             => rst_prescale_counters,
                 sres_algo_post_dead_time_counter => '0',
                 suppress_cal_trigger             => suppress_cal_trigger,
                 l1a                              => ctrs_internal.l1a, --TODO modify this

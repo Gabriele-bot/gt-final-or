@@ -82,8 +82,10 @@ begin
     counter_p: process (clk)
     begin
         if rising_edge(clk) then
-            if (sres_counter = '1') or (update_factor_pulse = '1') then
+            if (sres_counter = '1' and algo_i = '0') then
                 counter <= (others => '0');
+            elsif (sres_counter = '1' and algo_i = '1') then
+                counter <= INCR;
             elsif (algo_pass = '1' and algo_i = '1') then
                 counter <= counter + INCR - factor;
             elsif (algo_pass = '0' and algo_i = '1') then

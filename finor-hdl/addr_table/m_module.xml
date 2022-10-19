@@ -8,7 +8,8 @@
   <node id="CSR" address="0x6000" fwinfo="endpoint;width=12">
     <node id="ctrl" address="0x0">
       <node id="request_pulse_update"   mask="0x00000001"/>
-      <node id="l1_latency_delay"       mask="0xfffffffe"/>
+      <node id="new_prescale_column"    mask="0x00000002"/>
+      <node id="l1_latency_delay"       mask="0xfffffffc"/>
       <node id="BX_begin" address="0x1" mask="0x00000fff"/>
       <node id="BX_end"   address="0x1" mask="0x00fff000"/>
     </node>

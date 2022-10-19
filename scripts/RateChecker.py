@@ -8,13 +8,14 @@ import os
 import numpy as np
 import random
 import uhal
+import emp
 import sys
 import time
 import argparse
 
 parser = argparse.ArgumentParser(description='GT-Final OR board Rate Checker')
 parser.add_argument('-t', '--test', metavar='N', type=str, default='random',
-                    help='random --> random pre-scale values,/nlinear --> equally spaced pre-scale values')
+                    help='random --> random pre-scale values,\nlinear --> equally spaced pre-scale values')
 
 args = parser.parse_args()
 
@@ -154,6 +155,12 @@ def read_trigg_cnt(sel):
         raise Exception("Selector is not in [0,1]")
     hw.dispatch()
     return np.array(cnt, dtype=np.uint32)
+    
+    
+EMPdevice = emp.Controller(hw)
+ttcNode = EMPdevice.getTTC()
+#ttcNode.forceBCmd(0x24) #Send test enable command
+
 
 
 # load data from PaternProducer metadata
@@ -209,10 +216,10 @@ index_high = index[np.where(index>=576)[0]]
 
 if args.test == "random":
 	prsc_fct_3[np.int16(index_high-576)]       = np.uint32(np.random.randint(100,2**24,len(index_high)))
-	prsc_fct_2[np.int16(index_low)]       = np.uint32(np.random.randint(100,2**24,len(index_low)))
+	prsc_fct_2[np.int16(index_low)]            = np.uint32(np.random.randint(100,2**24,len(index_low)))
 elif args.test == "linear":
-	prsc_fct_3[np.int16(index_high-576)]       = np.uint32(np.linspace(100,2**24-1,len(index_high)))
-	prsc_fct_2[np.int16(index_low)]       = np.uint32(np.linspace(100,2**24-1,len(index_low)))
+	prsc_fct_3[np.int16(index_high-576)]       = np.int32(np.linspace(100,2**24-101,len(index_high)))
+	prsc_fct_2[np.int16(index_low)]            = np.int32(np.linspace(100,2**24-101,len(index_low)))
 
 prsc_fct = np.vstack((prsc_fct_2,prsc_fct_3)).flatten()
 load_prsc_in_RAM(prsc_fct_3, 3, 0)
@@ -268,13 +275,13 @@ time.sleep(47)
 o_ctr_temp = 0
 
 for i in range(0, 2000):
-    o_ctr = hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-    hw.dispatch()
+
+    ttcStatus = ttcNode.readStatus()
     time.sleep(1)
-    if ((o_ctr - o_ctr_temp) > (2 ** 19)):
+    if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 19)):
         os.system('clear')
-        print("Current orbit counter = %d" % o_ctr)
-        o_ctr_temp = o_ctr
+        print("Current orbit counter = %d" % ttcStatus.orbitCount)
+        o_ctr_temp = ttcStatus.orbitCount
 
         cnt_before_3 = read_cnt_arr(3, 0)
         cnt_before_2 = read_cnt_arr(2, 0)

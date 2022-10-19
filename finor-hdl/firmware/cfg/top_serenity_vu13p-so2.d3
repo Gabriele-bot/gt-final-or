@@ -9,4 +9,4 @@ include top.d3
 src payload_vu13p.vhd
 
 setup flatten_hierarchy.tcl
-setup build.tcl
+#setup build.tcl

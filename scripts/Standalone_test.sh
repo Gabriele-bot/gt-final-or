@@ -3,7 +3,7 @@
 echo "Username: $1";
 echo "Board: $2";
 
-python PatternProducer.py -i 500 -s $2
+python PatternProducer.py -i 999 -s $2
 
 
 if [ $2 = 'Serenity1' ]
@@ -61,12 +61,12 @@ then
     cd $1/Finor/ &&
     serenitybutler power off x0 &&
     serenitybutler power on x0 &&
-    serenitybutler program x0 gt-final-or.bit -r &&
+    serenitybutler program x0 p2gt-finor-slr23.bit -r &&
     empbutler -c my_connections.xml do x0 reset internal &&
     empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 36-47,48-59,68-79,80-91 --inject file://Pattern_files/Finor_input_pattern.txt &&
     empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-127 && 
     empbutler -c my_connections.xml do x0 capture --tx 0-127 && 
-    python RateChecker.py  &&
+    python RateChecker.py -t linear &&
     serenitybutler power off x0 &&
     exit"
 fi
