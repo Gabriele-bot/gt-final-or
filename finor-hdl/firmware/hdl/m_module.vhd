@@ -109,6 +109,7 @@ architecture rtl of m_module is
     signal mask_index   : unsigned(log2c(N_TRIGG)-1 downto 0);
     signal we, we_mask  : std_logic;
     signal ready        : std_logic;
+    signal prscl_col_load : std_logic;  
 
     signal algo_bx_mask_mem_out    : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '1');
 
@@ -200,14 +201,17 @@ begin
             case state_w is
                 when idle =>
                     addr_prscl   <= (others => '0');
+                    prscl_col_load <= '1';
                     if new_prescale_column = '1' then
                         state_w <= start;
                     end if;
                 when start =>
                     addr_prscl  <= (others => '0');
+                    prscl_col_load <= '0';
                     state_w <= increment;
                 when increment =>
                     addr_prscl <= addr_prscl + 1;
+                    prscl_col_load <= '0';
                     if addr_prscl >= NR_ALGOS-2 then --(2 is due to latency)
                         state_w <= idle;
                     end if;
@@ -264,7 +268,7 @@ begin
             we      => '0',
             d       => (others => '0'),
             q       => q_prscl_fct,
-            addr    => std_logic_vector(addr)
+            addr    => std_logic_vector(addr_prscl)
         );
 
     ----------------------------------------------------------------------------------
@@ -286,7 +290,7 @@ begin
             we      => '0',
             d       => (others => '0'),
             q       => q_prscl_fct_prvw,
-            addr    => std_logic_vector(addr)
+            addr    => std_logic_vector(addr_prscl)
         );
 
     ----------------------------------------------------------------------------------

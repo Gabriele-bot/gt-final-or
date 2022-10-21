@@ -49,12 +49,22 @@ def load_prsc_in_RAM(prsc_arr, SLR, sel):
     hw.dispatch()
 
 
+def send_new_prescale_column_flag():
+    hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(0)
+    hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(0)
+    hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(1)
+    hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(1)
+    time.sleep(0.01)
+    hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(0)
+    hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(0)
+    hw.dispatch()
+
 def request_update_prescale():
     hw.getNode("payload.SLR3_monitor.CSR.ctrl.request_pulse_update").write(0)
     hw.getNode("payload.SLR2_monitor.CSR.ctrl.request_pulse_update").write(0)
     hw.getNode("payload.SLR3_monitor.CSR.ctrl.request_pulse_update").write(1)
     hw.getNode("payload.SLR2_monitor.CSR.ctrl.request_pulse_update").write(1)
-    time.sleep(0.1)
+    time.sleep(0.01)
     hw.getNode("payload.SLR3_monitor.CSR.ctrl.request_pulse_update").write(0)
     hw.getNode("payload.SLR2_monitor.CSR.ctrl.request_pulse_update").write(0)
     hw.dispatch()
@@ -235,6 +245,8 @@ elif args.test == "linear":
 prsc_fct_prvw = np.vstack((prsc_fct_prvw_2,prsc_fct_prvw_3)).flatten()
 load_prsc_in_RAM(prsc_fct_prvw_3, 3, 1)
 load_prsc_in_RAM(prsc_fct_prvw_2, 2, 1)
+
+send_new_prescale_column_flag()
 
 load_BXmask_arr(bxmask_3, 3)
 load_BXmask_arr(bxmask_2, 2)
