@@ -197,7 +197,7 @@ begin
         begin
         if rising_edge(lhc_clk) then
             ready_mask_1 <= ready_mask;
-        end if:
+        end if;
     end process;
     
 
