@@ -22,6 +22,8 @@ src --vhdl2008 algo_rate_counter_pdt.vhd
 src --vhdl2008 algo_slice.vhd
 src --vhdl2008 delay_element_ringbuffer.vhd
 src --vhdl2008 Mask.vhd
+src --vhdl2008 read_FSM.vhd
+src --vhdl2008 write_FSM.vhd
 src --vhdl2008 m_module.vhd
 src --vhdl2008 Counter_module.vhd
 src --vhdl2008 FirstOR.vhd

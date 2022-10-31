@@ -18,6 +18,7 @@ entity Counter_module is
         bx_nr    : out bctr_t;
         event_nr : out eoctr_t;
         orbit_nr : out eoctr_t;
+        lumi_sec_nr : out eoctr_t;
         begin_lumi_sec : out std_logic;
         test_en        : out std_logic
     );
@@ -28,6 +29,7 @@ architecture RTL of Counter_module is
     signal bx_cnt : bctr_t  := (others => '0');
     signal e_cnt  : eoctr_t := (others => '0');
     signal o_cnt  : eoctr_t := (others => '0');
+    signal ls_cnt : eoctr_t := (others => '0');
     signal l1a    : std_logic;
     signal o_cntbls_temp,  o_cntbls : std_logic;
     
@@ -84,7 +86,7 @@ begin
     begin
         if rising_edge(lhc_clk) then
             if ec0_s = '1' then
-                e_cnt <= (others => '0');
+                e_cnt  <= (others => '0');
             elsif l1a = '1' then
                 e_cnt <= std_logic_vector(unsigned(e_cnt) + 1);
             end if;
@@ -94,9 +96,13 @@ begin
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
+            if ec0_s = '1' then
+                ls_cnt <= (others => '0');
+            end if;
             o_cntbls_temp <= o_cntbls;
-            if (o_cntbls = '1') and (o_cntbls_temp = '0') then -- rising edge of o_cnt(BEGIN_LUMI_BIT)
+            if o_cntbls_temp /= o_cntbls then -- toggle of o_cnt(BEGIN_LUMI_BIT)
                 begin_lumi_sec_int <= '1';
+                ls_cnt <= std_logic_vector(unsigned(ls_cnt) + 1);
             else 
                 begin_lumi_sec_int <= '0';
             end if;

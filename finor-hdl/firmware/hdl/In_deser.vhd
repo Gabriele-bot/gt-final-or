@@ -66,7 +66,7 @@ begin
     load_data_p : process (clk360)
     begin
         if rising_edge(clk360) then -- rising clock edge
-            if frame_cntr_temp = 8 and lane_data_in.valid = '0' then
+            if frame_cntr_temp = 8 and frame_cntr /= 8 then
                 data_deserialized <= (others => '0');
             elsif frame_cntr = 8 then
                 data_deserialized(frame_cntr * 64 + 63 downto frame_cntr * 64) <= lane_data_in.data;

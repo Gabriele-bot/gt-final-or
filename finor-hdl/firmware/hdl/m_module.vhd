@@ -67,7 +67,7 @@ architecture rtl of m_module is
     -- prescale factor ipb regs
     signal prscl_fct      : ipb_reg_v(NR_ALGOS - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
     signal prscl_fct_prvw : ipb_reg_v(NR_ALGOS - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
-    
+
     signal rst_prescale_counters           : std_logic;
     signal change_prescale_column_occurred : std_logic;
 
@@ -82,8 +82,10 @@ architecture rtl of m_module is
 
     signal request_factor_update    : std_logic;
     signal new_prescale_column      : std_logic;
+    signal request_masks_update     : std_logic;
+    signal new_trgg_masks           : std_logic;
     signal ctrl_reg : ipb_reg_v(1 downto 0);
-    signal stat_reg : ipb_reg_v(0 downto 0);
+    signal stat_reg : ipb_reg_v(2 downto 0);
 
     -- counters and bgos signals
     signal bc0, oc0, ec0               : std_logic := '0';
@@ -101,22 +103,26 @@ architecture rtl of m_module is
     signal q_mask                                                        : std_logic_vector(31 downto 0);
     signal d_rate_cnt_before_prescaler, d_rate_cnt_after_prescaler       : std_logic_vector(31 downto 0);
     signal d_rate_cnt_after_prescaler_preview, d_rate_cnt_post_dead_time : std_logic_vector(31 downto 0);
-    
-    signal addr, addr_prscl : unsigned(log2c(NR_ALGOS)-1 downto 0);
-    signal addr_prscl_w          : unsigned(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
-    signal addr_mask       : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
-    signal addr_mask_w     : unsigned(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
-    signal mask_index   : unsigned(log2c(N_TRIGG)-1 downto 0);
-    signal we, we_mask  : std_logic;
-    signal ready        : std_logic;
-    signal prscl_col_load : std_logic;  
+
+    signal addr, addr_prscl : std_logic_vector(log2c(NR_ALGOS)-1 downto 0);
+    signal addr_prscl_w          : std_logic_vector(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
+    signal addr_mask       : std_logic_vector(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
+    signal addr_mask_w     : std_logic_vector(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
+    signal we, we_mask              : std_logic;
+    signal ready                    : std_logic;
+    signal ready_mask, ready_mask_1 : std_logic;
+    signal prscl_col_load           : std_logic;
 
     signal algo_bx_mask_mem_out    : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '1');
 
-    signal test_en                 : std_logic;
-    signal suppress_cal_trigger    : std_logic;
-    signal supp_cal_BX_low         : std_logic_vector(11 downto 0);
-    signal supp_cal_BX_high        : std_logic_vector(11 downto 0);
+    signal orbit_nr                 : eoctr_t;
+    signal lumi_sec_nr              : std_logic_vector(31 downto 0);
+    signal lumi_sec_load_prscl_mark : std_logic_vector(31 downto 0);
+    signal lumi_sec_load_masks_mark : std_logic_vector(31 downto 0);
+    signal test_en                  : std_logic;
+    signal suppress_cal_trigger     : std_logic;
+    signal supp_cal_BX_low          : std_logic_vector(11 downto 0);
+    signal supp_cal_BX_high         : std_logic_vector(11 downto 0);
 
     signal trigger_out             : std_logic_vector(N_TRIGG-1 downto 0);
 
@@ -133,107 +139,84 @@ begin
         end if;
     end process;
 
+    rate_cntrs_read_FSM_i : entity work.write_FSM
+        generic map(
+            RAM_DEPTH => NR_ALGOS
+        ) 
+        port map(
+            clk        => lhc_clk,
+            rst        => lhc_rst,
+            write_flag => begin_lumi_per_del1,
+            orbit_nr   => orbit_nr,
+            addr_o     => addr,
+            addr_w_o   => open,
+            we_o       => we
+        ) ;
+        
+    
+    
 
-    -- process to write into ipbus-RAMs
-    process (lhc_clk)
-    begin
-        if rising_edge(lhc_clk) then
-            case state_r is
-                when idle =>
-                    addr   <= (others => '0');
-                    we     <= '0';
-                    if begin_lumi_per_del1 = '1' then
-                        state_r <= start;
-                    end if;
-                when start =>
-                    addr  <= (others => '0');
-                    we    <= '1';
-                    -- TODO check in hardware what happens to the first reg
-                    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler(0);
-                    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler(0);
-                    d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(0);
-                    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(0);
-                    state_r <= increment;
-                when increment =>
-                    addr <= addr + 1;
-                    we   <= '1';
-                    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler(to_integer(addr + 1));
-                    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler(to_integer(addr + 1));
-                    d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(addr + 1));
-                    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(to_integer(addr + 1));
-                    if addr >= NR_ALGOS-2 then --(2 is due to latency)
-                        state_r <= idle;
-                    end if;
-            end case;
-        end if;
-    end process;
+    prescaler_read_FSM_i : entity work.read_FSM
+        generic map(
+            RAM_DEPTH      => NR_ALGOS,
+            BEGIN_LUMI_BIT => 18
+        )
+        port map(
+            clk                => lhc_clk,
+            rst                => lhc_rst,
+            load_flag          => new_prescale_column,
+            orbit_nr           => orbit_nr,
+            lumi_sec_nr        => lumi_sec_nr,
+            lumi_sec_load_mark => lumi_sec_load_prscl_mark,
+            addr_o             => addr_prscl,
+            addr_w_o           => addr_prscl_w,
+            request_update     => request_factor_update,
+            ready_o            => open
+        ) ;
 
-    -- process to write into ipbus-RAMs
-    process (lhc_clk)
-    begin
+
+    trgg_mask_read_FSM_i : entity work.read_FSM
+        generic map(
+            RAM_DEPTH      => NR_ALGOS/32*N_TRIGG,
+            BEGIN_LUMI_BIT => 18
+        )
+        port map(
+            clk                => lhc_clk,
+            rst                => lhc_rst,
+            load_flag          => new_trgg_masks,
+            orbit_nr           => orbit_nr,
+            lumi_sec_nr        => lumi_sec_nr,
+            lumi_sec_load_mark => lumi_sec_load_masks_mark,
+            addr_o             => addr_mask,
+            addr_w_o           => addr_mask_w,
+            request_update     => request_masks_update,
+            ready_o            => ready_mask
+        ) ;
+        
+    process(lhc_clk)
+        begin
         if rising_edge(lhc_clk) then
-            case state_mask is
-                when idle =>
-                    addr_mask   <= (others => '0');
-                    we_mask     <= '0';
-                    if begin_lumi_per_del1 = '1' then
-                        state_mask <= start;
-                    end if;
-                when start =>
-                    addr_mask  <= (others => '0');
-                    we_mask    <= '1';
-                    -- TODO check in hardware what happens to the first reg
-                    state_mask <= increment;
-                when increment =>
-                    addr_mask <= addr_mask + 1;
-                    we_mask   <= '1';
-                    if addr_mask >= NR_ALGOS/32*N_TRIGG-2 then --(2 is due to latency)
-                        state_mask <= idle;
-                    end if;
-            end case;
-        end if;
+            ready_mask_1 <= ready_mask;
+        end if:
     end process;
     
-    -- address encoder to read from RAMs
-    process (lhc_clk)
-    begin
-        if rising_edge(lhc_clk) then
-            case state_w is
-                when idle =>
-                    addr_prscl   <= (others => '0');
-                    prscl_col_load <= '1';
-                    if new_prescale_column = '1' then
-                        state_w <= start;
-                    end if;
-                when start =>
-                    addr_prscl  <= (others => '0');
-                    prscl_col_load <= '0';
-                    state_w <= increment;
-                when increment =>
-                    addr_prscl <= addr_prscl + 1;
-                    prscl_col_load <= '0';
-                    if addr_prscl >= NR_ALGOS-2 then --(2 is due to latency)
-                        state_w <= idle;
-                    end if;
-            end case;
-        end if;
-    end process;
 
     -- process to read from ipbus-RAMs
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
             -----------Prescalers----------------------------
-            prscl_fct(to_integer(addr_prscl_w))      <= q_prscl_fct;
-            prscl_fct_prvw(to_integer(addr_prscl_w)) <= q_prscl_fct_prvw;
+            prscl_fct(to_integer(unsigned(addr_prscl_w)))      <= q_prscl_fct;
+            prscl_fct_prvw(to_integer(unsigned(addr_prscl_w))) <= q_prscl_fct_prvw;
             -----------Trigger masks---------------------------------
-            masks_ipbus_regs(to_integer(addr_mask_w))      <= q_mask;
-            
-            addr_prscl_w   <= addr_prscl;
-            addr_mask_w    <= addr_mask;
+            masks_ipbus_regs(to_integer(unsigned(addr_mask_w)))      <= q_mask;
         end if;
     end process;
 
+    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler(to_integer(unsigned(addr)));
+    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler(to_integer(unsigned(addr)));
+    d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(unsigned(addr)));
+    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(to_integer(unsigned(addr)));
 
 
     fabric_i: entity work.ipbus_fabric_sel
@@ -384,7 +367,7 @@ begin
     CSR_regs : entity work.ipbus_ctrlreg_v
         generic map(
             N_CTRL     => 2,
-            N_STAT     => 1
+            N_STAT     => 3
         )
         port map(
             clk       => clk,
@@ -419,12 +402,12 @@ begin
             SRC_INPUT_REG  => 1
         )
         port map (
-            dest_out => request_factor_update,
+            dest_out => new_prescale_column,
             dest_clk => lhc_clk,
             src_clk  => clk,
             src_in   => ctrl_reg(0)(0)
         );
-        
+
     xpm_cdc_new_prescale_column : xpm_cdc_single
         generic map (
             DEST_SYNC_FF => 3,
@@ -433,7 +416,7 @@ begin
             SRC_INPUT_REG  => 1
         )
         port map (
-            dest_out => new_prescale_column,
+            dest_out => new_trgg_masks,
             dest_clk => lhc_clk,
             src_clk  => clk,
             src_in   => ctrl_reg(0)(1)
@@ -468,7 +451,7 @@ begin
             src_clk  => clk,
             src_in   => ctrl_reg(1)(11 downto 0)
         );
- 
+
     xpm_cdc_supp_BX_high : xpm_cdc_array_single
         generic map (
             DEST_SYNC_FF => 3,
@@ -499,12 +482,42 @@ begin
             src_clk  => lhc_clk,
             src_in   => ready
         );
+        
+    xpm_cdc_prescaler_lumi_mark : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => 32
+        )
+        port map (
+            dest_out => stat_reg(1),
+            dest_clk => clk,
+            src_clk  => lhc_clk,
+            src_in   => lumi_sec_load_prscl_mark
+        );
+        
+    xpm_cdc_masks_lumi_mark : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => 32
+        )
+        port map (
+            dest_out => stat_reg(2),
+            dest_clk => clk,
+            src_clk  => lhc_clk,
+            src_in   => lumi_sec_load_masks_mark
+        );
 
     --begin_lumi_per        <= ctrl_reg(0)(0);
     --request_factor_update <= ctrl_reg(0)(1);
     --l1a_latency_delay     <= ctrl_reg(0)(log2c(MAX_DELAY) + 1 downto 2);
     --stat_reg(0)(0)        <= ready;
-    
+
     ----------------------------------------------------------------------------------
     ---------------RESET PRE-SCALE COUTNER LOGIC--------------------------------------
     ----------------------------------------------------------------------------------
@@ -512,15 +525,15 @@ begin
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
-            if new_prescale_column = '1' then
+            if request_factor_update = '1' then
                 change_prescale_column_occurred <= '1';
             elsif begin_lumi_per_del1 = '1' then
                 change_prescale_column_occurred <= '0';
             end if;
         end if;
     end process;
-    
-    rst_prescale_counters <= begin_lumi_per and change_prescale_column_occurred;
+
+    rst_prescale_counters <= begin_lumi_per and change_prescale_column_occurred; -- TODO possibility of glitches, need to investigate
 
 
     ----------------------------------------------------------------------------------
@@ -545,12 +558,11 @@ begin
             addr    => std_logic_vector(addr_mask)
         );
 
-    --TODO Add a request update mask as we did for the prescalers
     mask_l : for i in N_TRIGG - 1 downto 0 generate
         process(lhc_clk)
         begin
             if rising_edge(lhc_clk) then
-                if (we_mask = '0') then
+                if (ready_mask = '1' and ready_mask_1 = '0') then --rising edge
                     masks(i) <= (masks_ipbus_regs(i*18+17), masks_ipbus_regs(i*18+16),
                                  masks_ipbus_regs(i*18+15), masks_ipbus_regs(i*18+14),
                                  masks_ipbus_regs(i*18+13), masks_ipbus_regs(i*18+12),
@@ -629,7 +641,8 @@ begin
             oc0            => oc0,
             bx_nr          => open,
             event_nr       => open,
-            orbit_nr       => open,
+            orbit_nr       => orbit_nr,
+            lumi_sec_nr    => lumi_sec_nr,
             begin_lumi_sec => begin_lumi_per,
             test_en        => test_en
         );
@@ -638,15 +651,15 @@ begin
     ----------------------------------------------------------------------------------
     ---------------Suppress Trigger dureing Calibration-------------------------------
     ----------------------------------------------------------------------------------    
-    
+
     suppress_cal_trigger_p: process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
-           if (test_en = '1' and (unsigned(ctrs_internal.bctr) >= (unsigned(supp_cal_BX_low)-1)) and (unsigned(ctrs_internal.bctr) < unsigned(supp_cal_BX_high))) then -- minus 1 to get correct length of gap (see simulation with test_bgo_test_enable_logic_tb.vhd)
-              suppress_cal_trigger <= '1'; -- pos. active signal: '1' = suppression of algos caused by calibration trigger during gap !!!
-           else
-              suppress_cal_trigger <= '0';
-           end if;
+            if (test_en = '1' and (unsigned(ctrs_internal.bctr) >= (unsigned(supp_cal_BX_low)-1)) and (unsigned(ctrs_internal.bctr) < unsigned(supp_cal_BX_high))) then -- minus 1 to get correct length of gap (see simulation with test_bgo_test_enable_logic_tb.vhd)
+                suppress_cal_trigger <= '1'; -- pos. active signal: '1' = suppression of algos caused by calibration trigger during gap !!!
+            else
+                suppress_cal_trigger <= '0';
+            end if;
         end if;
     end process suppress_cal_trigger_p;
 
@@ -693,10 +706,12 @@ begin
             NR_ALGOS => 64*9
         )
         port map(
-            clk         => lhc_clk,
-            algos_in    => algos_after_prescaler,
-            masks       => masks,
-            trigger_out => trigger_out
+            clk                             => lhc_clk,
+            algos_in                        => algos_after_prescaler,
+            masks                           => masks,
+            request_masks_update_pulse      => request_masks_update,
+            update_masks_pulse              => begin_lumi_per,
+            trigger_out                     => trigger_out
         );
 
     trgg_o <= trigger_out;
