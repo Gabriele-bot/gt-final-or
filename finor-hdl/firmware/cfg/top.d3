@@ -27,7 +27,7 @@ src --vhdl2008 delay_element_ringbuffer.vhd
 src --vhdl2008 Mask.vhd
 src --vhdl2008 m_module.vhd
 src --vhdl2008 Counter_module.vhd
-src --vhdl2008 FirstOR.vhd
+src --vhdl2008 Link_merger.vhd
 src --vhdl2008 In_deser.vhd
 src --vhdl2008 mux.vhd
 src --vhdl2008 SLR_FinOR_unit.vhd
