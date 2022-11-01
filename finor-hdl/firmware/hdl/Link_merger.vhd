@@ -14,7 +14,7 @@ entity Link_merger is
         clk_p : in std_logic;
         rst_p : in std_logic;
         d     : in   ldata(NR_LINKS - 1 downto 0);  -- data in
-        q     : out  lword;  -- data out
+        q     : out  lword  -- data out
     );
 end entity Link_merger;
 
@@ -40,7 +40,7 @@ begin
 
     mapping_i : for i in 0 to 63 generate
         mapping_j : for j in 0 to NR_LINKS -1 generate
-            data_mapped(i)(j) <= data_in(j)(i);
+            data_mapped(i)(j) <= d_data(j)(i);
         end generate;
     end generate;
 

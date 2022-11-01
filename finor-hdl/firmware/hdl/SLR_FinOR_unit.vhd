@@ -82,7 +82,7 @@ begin
         port map(
             clk_p => clk360,
             rst_p => rst360,
-            d     => d(NR_LINKS - 1 downto NR_LINKS/2),
+            d     => d_reg(NR_LINKS - 1 downto NR_LINKS/2),
             q     => d_left(0)
         ) ;
         
