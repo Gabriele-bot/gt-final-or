@@ -2,6 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.emp_data_types.all;
+
 use work.P2GT_finor_pkg.all;
 
 entity Link_merger is
