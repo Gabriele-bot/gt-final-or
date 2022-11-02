@@ -31,7 +31,6 @@ src --vhdl2008 Link_merger.vhd
 src --vhdl2008 In_deser.vhd
 src --vhdl2008 mux.vhd
 src --vhdl2008 SLR_FinOR_unit.vhd
-src --vhdl2008 Trigger_local_or.vhd
 src --vhdl2008 Output_SLR.vhd
 
 #include -c ipbus-firmware:components/ipbus_slaves
