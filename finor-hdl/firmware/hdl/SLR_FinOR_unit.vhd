@@ -43,35 +43,78 @@ end entity SLR_FinOR_unit;
 
 architecture RTL of SLR_FinOR_unit is
 
+    signal d_reg : ldata(NR_LINKS - 1 downto 0);
     signal links_data : data_arr;
 
     signal algos_in                : std_logic_vector(64*9-1 downto 0);
     signal algos_after_prescaler   : std_logic_vector(64*9-1 downto 0);
+    
+    signal d_left, d_right: ldata(1 downto 0);
+    signal d_res : lword;
 
     signal trigger_out             : std_logic_vector(7 downto 0);
 
 
 begin
 
-    deser_l : for i in 0 to NR_LINKS-1 generate
-        deser_i : entity work.In_deser
+    process(clk360)
+    begin
+        if rising_edge(clk360) then
+            d_reg <= d;
+        end if;
+    end process;
+
+    Right_merge : entity work.Link_merger
+        generic map(
+            NR_LINKS => NR_LINKS/2
+        ) 
+        port map(
+            clk_p => clk360,
+            rst_p => rst360,
+            d     => d_reg(NR_LINKS/2 - 1 downto 0),
+            q     => d_right(0)
+        ) ;
+        
+    Left_merge : entity work.Link_merger
+        generic map(
+            NR_LINKS => NR_LINKS/2
+        ) 
+        port map(
+            clk_p => clk360,
+            rst_p => rst360,
+            d     => d_reg(NR_LINKS - 1 downto NR_LINKS/2),
+            q     => d_left(0)
+        ) ;
+        
+    process(clk360)
+    begin
+        if rising_edge(clk360) then
+            d_left(1)  <= d_left(0);
+            d_right(1) <= d_right(0);
+        end if;
+    end process; 
+    
+    Last_merge : entity work.Link_merger
+        generic map(
+            NR_LINKS => 2
+        ) 
+        port map(
+            clk_p => clk360,
+            rst_p => rst360,
+            d(0)  => d_left(1),
+            d(1)  => d_right(1),
+            q     => d_res 
+        ) ;
+        
+    deser_i : entity work.In_deser
             port map(
                 clk360       => clk360,
                 lhc_clk      => lhc_clk,
                 lhc_rst      => lhc_rst,
-                lane_data_in => d(i),
-                demux_data_o => links_data(i)
+                lane_data_in => d_res,
+                demux_data_o => algos_in
             );
-    end generate;
-
-    FirstOR_i : entity work.FirstOR
-        generic map(
-            NR_LINKS => INPUT_LINKS
-        )
-        port map(
-            data_in  => links_data,
-            data_out => algos_in
-        );
+    
 
     algos <= algos_in;
 
@@ -95,6 +138,6 @@ begin
         );
 
     trgg <= trigger_out;
-    
-    
+
+
 end architecture RTL;

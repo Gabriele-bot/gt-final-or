@@ -109,7 +109,7 @@ begin
 
     SLR3_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS => 24
+            NR_LINKS => INPUT_LINKS
         )
         port map(
             clk              => clk,
@@ -131,7 +131,7 @@ begin
 
     SLR2_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS => 24
+            NR_LINKS => INPUT_LINKS
         )
         port map(
             clk              => clk,
