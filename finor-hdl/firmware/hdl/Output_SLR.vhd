@@ -21,7 +21,7 @@ use work.P2GT_finor_pkg.all;
 entity Output_SLR is
     generic(
         MAX_DELAY            : natural := 127
-        );
+    );
     port(
         clk         : in  std_logic;        -- ipbus signals
         rst         : in  std_logic;
@@ -32,24 +32,27 @@ entity Output_SLR is
         rst_p       : in std_logic;
         lhc_clk     : in std_logic;
         lhc_rst     : in std_logic;
-        
+
         ctrs                     : in  ttc_stuff_t;
-        
+
         q           : out ldata(0 downto 0);             -- data out
-        trgg_0      : in std_logic_vector(N_TRIGG-1 downto 0);
-        trgg_1      : in std_logic_vector(N_TRIGG-1 downto 0)
+        trgg_0           : in std_logic_vector(N_TRIGG-1 downto 0);
+        trgg_1           : in std_logic_vector(N_TRIGG-1 downto 0);
+        trgg_with_veto_0 : in std_logic_vector(N_TRIGG-1 downto 0);
+        trgg_with_veto_1 : in std_logic_vector(N_TRIGG-1 downto 0)
 
     );
 end entity Output_SLR;
 
 architecture RTL of Output_SLR is
-    
+
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
 
     signal Final_OR, Final_OR_delayed : std_logic_vector(N_TRIGG-1 downto 0);
-    
+    signal Final_OR_with_veto, Final_OR_with_veto_delayed : std_logic_vector(N_TRIGG-1 downto 0);
+
     -- counters and bgos signals
     signal bc0, oc0, ec0               : std_logic := '0';
     signal begin_lumi_per              : std_logic;
@@ -58,23 +61,26 @@ architecture RTL of Output_SLR is
 
     constant finor_latency : integer := 3;
     signal ctrs_internal               : ttc_stuff_array(finor_latency downto 0);
-    
+
     signal rate_cnt_finor        : ipb_reg_v(N_TRIGG - 1 downto 0);
     signal rate_cnt_finor_pdt    : ipb_reg_v(N_TRIGG - 1 downto 0);
-    
+    signal rate_cnt_finor_with_veto        : ipb_reg_v(N_TRIGG - 1 downto 0);
+    signal rate_cnt_finor_with_veto_pdt    : ipb_reg_v(N_TRIGG - 1 downto 0);
+
     signal ctrl_reg : ipb_reg_v(0 downto 0);
     signal stat_reg : ipb_reg_v(0 downto 0);
-    
+
     type state_t is (idle, start, increment);
     signal state           : state_t := idle;
-    
+
     signal addr   : unsigned(log2c(N_TRIGG)-1 downto 0);
     signal we     : std_logic;
     signal ready  : std_logic;
     signal d_rate_cnt_finor, d_rate_cnt_finor_pdt       : std_logic_vector(31 downto 0);
+    signal d_rate_cnt_finor_with_veto, d_rate_cnt_finor_with_veto_pdt       : std_logic_vector(31 downto 0);
 
 begin
-    
+
     fabric_i: entity work.ipbus_fabric_sel
         generic map(
             NSLV      => N_SLAVES,
@@ -87,7 +93,7 @@ begin
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );
-    
+
     ----------------------------------------------------------------------------------
     ---------------COUNTERS INTERNAL---------------------------------------------------
     ----------------------------------------------------------------------------------
@@ -99,7 +105,7 @@ begin
             ctrs_internal(finor_latency downto 1) <= ctrs_internal(finor_latency - 1 downto 0);
         end if;
     end process;
-    
+
     Counters_i : entity work.Counter_module
         generic map (
             BEGIN_LUMI_BIT => 18
@@ -116,9 +122,9 @@ begin
             orbit_nr       => open,
             begin_lumi_sec => begin_lumi_per,
             test_en        => open
-            
+
         );
-        
+
     Ctrl_stat_regs : entity work.ipbus_ctrlreg_v
         generic map(
             N_CTRL     => 1,
@@ -137,8 +143,8 @@ begin
 
     xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
         generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
             SRC_INPUT_REG  => 1,
             WIDTH          => log2c(MAX_DELAY)
@@ -165,8 +171,8 @@ begin
             src_clk  => lhc_clk,
             src_in   => ready
         );
-    
-        
+
+
     -- rate counters are updated with begin_lumi_per_del1
     process (lhc_clk)
     begin
@@ -174,7 +180,7 @@ begin
             begin_lumi_per_del1 <= begin_lumi_per;
         end if;
     end process;
-    
+
     delay_element_i : entity work.delay_element_ringbuffer
         generic map(
             DATA_WIDTH => N_TRIGG,
@@ -189,9 +195,25 @@ begin
         );
 
 
+    delay_element_veto_i : entity work.delay_element_ringbuffer
+        generic map(
+            DATA_WIDTH => N_TRIGG,
+            MAX_DELAY  => MAX_DELAY
+        )
+        port map(
+            clk    => lhc_clk,
+            rst    => lhc_rst,
+            data_i => Final_OR_with_veto,
+            data_o => Final_OR_with_veto_delayed,
+            delay  => l1a_latency_delay
+        );
+
+
+
     Final_OR_p : process (trgg_0, trgg_1)
     begin
-        Final_OR <= trgg_0 or trgg_1;
+        Final_OR           <= trgg_0 or trgg_1;
+        Final_OR_with_veto <= trgg_with_veto_0 or trgg_with_veto_1;
     end process;
 
     gen_rate_counters_l : for i in 0 to N_TRIGG - 1 generate
@@ -207,23 +229,52 @@ begin
                 algo_i          => Final_OR(i),
                 counter_o       => rate_cnt_finor(i)
             ) ;
-            
-            rate_countrs_pdt_i : entity work.algo_rate_counter_pdt
-                generic map(
-                    COUNTER_WIDTH => RATE_COUNTER_WIDTH
-                ) 
-                port map(
-                    sys_clk         => clk,
-                    lhc_clk         => lhc_clk,
-                    lhc_rst         => lhc_rst,
-                    sres_counter    => '0',
-                    store_cnt_value => begin_lumi_per_del1,
-                    l1a             => ctrs_internal(finor_latency).l1a,
-                    algo_del_i      => Final_OR_delayed(i),
-                    counter_o       => rate_cnt_finor_pdt(i)
-                ) ;
+
+        rate_countrs_pdt_i : entity work.algo_rate_counter_pdt
+            generic map(
+                COUNTER_WIDTH => RATE_COUNTER_WIDTH
+            )
+            port map(
+                sys_clk         => clk,
+                lhc_clk         => lhc_clk,
+                lhc_rst         => lhc_rst,
+                sres_counter    => '0',
+                store_cnt_value => begin_lumi_per_del1,
+                l1a             => ctrs_internal(finor_latency).l1a,
+                algo_del_i      => Final_OR_delayed(i),
+                counter_o       => rate_cnt_finor_pdt(i)
+            ) ;
+
+
+        rate_counters_veto_i : entity work.algo_rate_counter
+            generic map(
+                COUNTER_WIDTH => RATE_COUNTER_WIDTH
+            )
+            port map(
+                sys_clk         => clk,
+                clk             => lhc_clk,
+                sres_counter    => '0',
+                store_cnt_value => begin_lumi_per_del1,
+                algo_i          => Final_OR_with_veto(i),
+                counter_o       => rate_cnt_finor_with_veto(i)
+            ) ;
+
+        rate_countrs_veto_pdt_i : entity work.algo_rate_counter_pdt
+            generic map(
+                COUNTER_WIDTH => RATE_COUNTER_WIDTH
+            )
+            port map(
+                sys_clk         => clk,
+                lhc_clk         => lhc_clk,
+                lhc_rst         => lhc_rst,
+                sres_counter    => '0',
+                store_cnt_value => begin_lumi_per_del1,
+                l1a             => ctrs_internal(finor_latency).l1a,
+                algo_del_i      => Final_OR_with_veto_delayed(i),
+                counter_o       => rate_cnt_finor_with_veto_pdt(i)
+            ) ;
     end generate;
-    
+
     -- process to write into ipbus-RAMs
     process (lhc_clk)
     begin
@@ -241,19 +292,23 @@ begin
                     -- TODO check in hardware what happens to the first reg
                     d_rate_cnt_finor      <= rate_cnt_finor(0);
                     d_rate_cnt_finor_pdt  <= rate_cnt_finor_pdt(0);
+                    d_rate_cnt_finor_with_veto      <= rate_cnt_finor_with_veto(0);
+                    d_rate_cnt_finor_with_veto_pdt  <= rate_cnt_finor_with_veto_pdt(0);
                     state <= increment;
                 when increment =>
                     addr <= addr + 1;
                     we   <= '1';
-                    d_rate_cnt_finor      <= rate_cnt_finor(to_integer(addr + 1));
+                    d_rate_cnt_finor      <= rate_cnt_finor    (to_integer(addr + 1));
                     d_rate_cnt_finor_pdt  <= rate_cnt_finor_pdt(to_integer(addr + 1));
+                    d_rate_cnt_finor_with_veto      <= rate_cnt_finor_with_veto    (to_integer(addr + 1));
+                    d_rate_cnt_finor_with_veto_pdt  <= rate_cnt_finor_with_veto_pdt(to_integer(addr + 1));
                     if addr >= N_TRIGG-2 then --(2 is due to latency)
                         state <= idle;
                     end if;
             end case;
         end if;
     end process;
-    
+
     --==================================================================================================--
     --======================================Rate couter RAMs============================================--
     --==================================================================================================--
@@ -274,8 +329,8 @@ begin
             q       => open,
             addr    => std_logic_vector(addr)
         );
-        
-        
+
+
     rate_cnt_finor_pdt_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
@@ -294,6 +349,43 @@ begin
             addr    => std_logic_vector(addr)
         );
 
+    rate_cnt_finor_with_veto_regs : entity work.ipbus_initialized_dpram
+        generic map(
+            INIT_VALUE => X"00000000",
+            ADDR_WIDTH => log2c(N_TRIGG),
+            DATA_WIDTH => 32
+        )
+        port map(
+            clk     => clk,
+            rst     => rst,
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR_WITH_VETO),
+            ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR_WITH_VETO),
+            rclk    => lhc_clk,
+            we      => we,
+            d       => d_rate_cnt_finor_with_veto,
+            q       => open,
+            addr    => std_logic_vector(addr)
+        );
+
+
+    rate_cnt_finor_with_veto_pdt_regs : entity work.ipbus_initialized_dpram
+        generic map(
+            INIT_VALUE => X"00000000",
+            ADDR_WIDTH => log2c(N_TRIGG),
+            DATA_WIDTH => 32
+        )
+        port map(
+            clk     => clk,
+            rst     => rst,
+            ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR_WITH_VETO_PDT),
+            ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR_WITH_VETO_PDT),
+            rclk    => lhc_clk,
+            we      => we,
+            d       => d_rate_cnt_finor_with_veto_pdt,
+            q       => open,
+            addr    => std_logic_vector(addr)
+        );
+
 
 
 
@@ -306,8 +398,9 @@ begin
                 q(0).start  <= '0';
                 q(0).strobe <= '1';
             else
-                q(0).data(N_TRIGG -1 downto 0)  <= Final_OR;
-                q(0).data(63 downto N_TRIGG) <= (others => '0');
+                q(0).data(N_TRIGG   - 1 downto 0)        <= Final_OR;
+                q(0).data(N_TRIGG*2 - 1 downto N_TRIGG)  <= Final_OR_with_veto;
+                q(0).data(63 downto N_TRIGG*2) <= (others => '0');
                 q(0).valid  <= '1';
                 q(0).start  <= '1';
                 q(0).strobe <= '1';

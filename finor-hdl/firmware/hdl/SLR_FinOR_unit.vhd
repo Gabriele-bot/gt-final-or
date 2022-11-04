@@ -28,13 +28,14 @@ entity SLR_FinOR_unit is
         ipb_in  : in  ipb_wbus;
         ipb_out : out ipb_rbus;
         --====================================================================--
-        clk360 : in std_logic;
+        clk360  : in std_logic;
         rst360  : in std_logic;
         lhc_clk : in std_logic;
         lhc_rst : in std_logic;
         ctrs    : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
         d       : in  ldata(NR_LINKS - 1 downto 0);  -- data in
-        trgg    : out std_logic_vector(N_TRIGG-1 downto 0);
+        trgg            : out std_logic_vector(N_TRIGG-1 downto 0);
+        trgg_with_veto  : out std_logic_vector(N_TRIGG-1 downto 0);
         algos           : out std_logic_vector(64*9-1 downto 0);
         algos_prescaled : out std_logic_vector(64*9-1 downto 0)
 
@@ -48,12 +49,12 @@ architecture RTL of SLR_FinOR_unit is
 
     signal algos_in                : std_logic_vector(64*9-1 downto 0);
     signal algos_after_prescaler   : std_logic_vector(64*9-1 downto 0);
-    
+
     signal d_left, d_right: ldata(1 downto 0);
     signal d_res : lword;
 
-    signal trigger_out             : std_logic_vector(7 downto 0);
-
+    signal trigger_out            : std_logic_vector(N_TRIGG-1 downto 0);
+    signal trigger_with_veto_out  : std_logic_vector(N_TRIGG-1 downto 0);
 
 begin
 
@@ -67,54 +68,54 @@ begin
     Right_merge : entity work.Link_merger
         generic map(
             NR_LINKS => NR_LINKS/2
-        ) 
+        )
         port map(
             clk_p => clk360,
             rst_p => rst360,
             d     => d_reg(NR_LINKS/2 - 1 downto 0),
             q     => d_right(0)
         ) ;
-        
+
     Left_merge : entity work.Link_merger
         generic map(
             NR_LINKS => NR_LINKS/2
-        ) 
+        )
         port map(
             clk_p => clk360,
             rst_p => rst360,
             d     => d_reg(NR_LINKS - 1 downto NR_LINKS/2),
             q     => d_left(0)
         ) ;
-        
+
     process(clk360)
     begin
         if rising_edge(clk360) then
             d_left(1)  <= d_left(0);
             d_right(1) <= d_right(0);
         end if;
-    end process; 
-    
+    end process;
+
     Last_merge : entity work.Link_merger
         generic map(
             NR_LINKS => 2
-        ) 
+        )
         port map(
             clk_p => clk360,
             rst_p => rst360,
             d(0)  => d_left(1),
             d(1)  => d_right(1),
-            q     => d_res 
+            q     => d_res
         ) ;
-        
+
     deser_i : entity work.In_deser
-            port map(
-                clk360       => clk360,
-                lhc_clk      => lhc_clk,
-                lhc_rst      => lhc_rst,
-                lane_data_in => d_res,
-                demux_data_o => algos_in
-            );
-    
+        port map(
+            clk360       => clk360,
+            lhc_clk      => lhc_clk,
+            lhc_rst      => lhc_rst,
+            lane_data_in => d_res,
+            demux_data_o => algos_in
+        );
+
 
     algos <= algos_in;
 
@@ -134,10 +135,11 @@ begin
             ctrs                    => ctrs(0),
             algos_in                => algos_in,
             algos_after_prescaler_o => algos_prescaled,
-            trgg_o                  => trigger_out
+            trgg_o                  => trigger_out,
+            trgg_with_veto_o        => trigger_with_veto_out
         );
 
-    trgg <= trigger_out;
-
+    trgg           <= trigger_out;
+    trgg_with_veto <= trigger_with_veto_out;
 
 end architecture RTL;
