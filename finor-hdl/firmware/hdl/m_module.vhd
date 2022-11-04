@@ -104,16 +104,16 @@ architecture rtl of m_module is
     signal d_rate_cnt_before_prescaler, d_rate_cnt_after_prescaler       : std_logic_vector(31 downto 0);
     signal d_rate_cnt_after_prescaler_preview, d_rate_cnt_post_dead_time : std_logic_vector(31 downto 0);
 
-    signal addr, addr_prscl : std_logic_vector(log2c(NR_ALGOS)-1 downto 0);
-    signal addr_prscl_w          : std_logic_vector(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
-    signal addr_mask       : std_logic_vector(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
-    signal addr_mask_w     : std_logic_vector(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
+    signal addr, addr_prscl         : std_logic_vector(log2c(NR_ALGOS)-1 downto 0);
+    signal addr_prscl_w             : std_logic_vector(log2c(NR_ALGOS)-1 downto 0) := (others => '0');
+    signal addr_mask                : std_logic_vector(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0);
+    signal addr_mask_w              : std_logic_vector(log2c(NR_ALGOS/32*N_TRIGG)-1 downto 0) := (others => '0');
     signal we, we_mask              : std_logic;
     signal ready                    : std_logic;
     signal ready_mask, ready_mask_1 : std_logic;
     signal prscl_col_load           : std_logic;
 
-    signal algo_bx_mask_mem_out    : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '1');
+    signal algo_bx_mask_mem_out     : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '1');
 
     signal orbit_nr                 : eoctr_t;
     signal lumi_sec_nr              : std_logic_vector(31 downto 0);
@@ -124,7 +124,7 @@ architecture rtl of m_module is
     signal supp_cal_BX_low          : std_logic_vector(11 downto 0);
     signal supp_cal_BX_high         : std_logic_vector(11 downto 0);
 
-    signal trigger_out             : std_logic_vector(N_TRIGG-1 downto 0);
+    signal trigger_out              : std_logic_vector(N_TRIGG-1 downto 0);
 
 begin
 
@@ -142,7 +142,7 @@ begin
     rate_cntrs_read_FSM_i : entity work.write_FSM
         generic map(
             RAM_DEPTH => NR_ALGOS
-        ) 
+        )
         port map(
             clk        => lhc_clk,
             rst        => lhc_rst,
@@ -152,14 +152,14 @@ begin
             addr_w_o   => open,
             we_o       => we
         ) ;
-        
-    
-    
+
+
+
 
     prescaler_read_FSM_i : entity work.read_FSM
         generic map(
             RAM_DEPTH      => NR_ALGOS,
-            BEGIN_LUMI_BIT => 18
+            BEGIN_LUMI_BIT => BEGIN_LUMI_SECTION_BIT
         )
         port map(
             clk                => lhc_clk,
@@ -178,7 +178,7 @@ begin
     trgg_mask_read_FSM_i : entity work.read_FSM
         generic map(
             RAM_DEPTH      => NR_ALGOS/32*N_TRIGG,
-            BEGIN_LUMI_BIT => 18
+            BEGIN_LUMI_BIT => BEGIN_LUMI_SECTION_BIT
         )
         port map(
             clk                => lhc_clk,
@@ -192,31 +192,31 @@ begin
             request_update     => request_masks_update,
             ready_o            => ready_mask
         ) ;
-        
+
     process(lhc_clk)
-        begin
+    begin
         if rising_edge(lhc_clk) then
             ready_mask_1 <= ready_mask;
         end if;
     end process;
-    
+
 
     -- process to read from ipbus-RAMs
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
             -----------Prescalers----------------------------
-            prscl_fct(to_integer(unsigned(addr_prscl_w)))      <= q_prscl_fct;
-            prscl_fct_prvw(to_integer(unsigned(addr_prscl_w))) <= q_prscl_fct_prvw;
+            prscl_fct(to_integer     (unsigned(addr_prscl_w)))  <= q_prscl_fct;
+            prscl_fct_prvw(to_integer(unsigned(addr_prscl_w)))  <= q_prscl_fct_prvw;
             -----------Trigger masks---------------------------------
-            masks_ipbus_regs(to_integer(unsigned(addr_mask_w)))      <= q_mask;
+            masks_ipbus_regs(to_integer(unsigned(addr_mask_w))) <= q_mask;
         end if;
     end process;
 
-    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler(to_integer(unsigned(addr)));
-    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler(to_integer(unsigned(addr)));
+    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler       (to_integer(unsigned(addr)));
+    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler        (to_integer(unsigned(addr)));
     d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(unsigned(addr)));
-    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(to_integer(unsigned(addr)));
+    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time         (to_integer(unsigned(addr)));
 
 
     fabric_i: entity work.ipbus_fabric_sel
@@ -380,21 +380,8 @@ begin
             stb       => open
         );
 
-    --xpm_cdc_begin_lumi_per : xpm_cdc_single
-    --    generic map (
-    --        DEST_SYNC_FF => 3,
-    --        INIT_SYNC_FF => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG => 1
-    --    )
-    --    port map (
-    --        dest_out => begin_lumi_per,
-    --        dest_clk => lhc_clk,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg(0)(0)
-    --    );
 
-    xpm_cdc_request_factor_update : xpm_cdc_single
+    xpm_cdc_new_prescale_column : xpm_cdc_single
         generic map (
             DEST_SYNC_FF => 3,
             INIT_SYNC_FF => 0,
@@ -408,7 +395,7 @@ begin
             src_in   => ctrl_reg(0)(0)
         );
 
-    xpm_cdc_new_prescale_column : xpm_cdc_single
+    xpm_cdc_new_trgg_masks : xpm_cdc_single
         generic map (
             DEST_SYNC_FF => 3,
             INIT_SYNC_FF => 0,
@@ -482,7 +469,7 @@ begin
             src_clk  => lhc_clk,
             src_in   => ready
         );
-        
+
     xpm_cdc_prescaler_lumi_mark : xpm_cdc_array_single
         generic map (
             DEST_SYNC_FF   => 3,
@@ -497,7 +484,7 @@ begin
             src_clk  => lhc_clk,
             src_in   => lumi_sec_load_prscl_mark
         );
-        
+
     xpm_cdc_masks_lumi_mark : xpm_cdc_array_single
         generic map (
             DEST_SYNC_FF   => 3,
@@ -630,7 +617,7 @@ begin
 
     Counters_i : entity work.Counter_module
         generic map (
-            BEGIN_LUMI_BIT => 18
+            BEGIN_LUMI_BIT => BEGIN_LUMI_SECTION_BIT
         )
         port map (
             lhc_clk        => lhc_clk,
@@ -703,7 +690,8 @@ begin
 
     Mask_i : entity work.Mask
         generic map(
-            NR_ALGOS => 64*9
+            NR_ALGOS => 64*9,
+            OUT_REG  => FALSE
         )
         port map(
             clk                             => lhc_clk,

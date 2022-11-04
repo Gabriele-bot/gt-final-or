@@ -48,7 +48,7 @@ begin
                         state <= check;
                     end if;
                 when check  =>
-                    if unsigned(orbit_nr(BEGIN_LUMI_BIT - 1 downto 0)) <= to_unsigned(2**BEGIN_LUMI_BIT - 3, BEGIN_LUMI_BIT) then
+                    if unsigned(orbit_nr(BEGIN_LUMI_BIT - 1 downto 0)) <= to_unsigned(2**BEGIN_LUMI_BIT - 2, BEGIN_LUMI_BIT) then
                         addr  <= (others => '0');
                         request_update <= '0';
                         ready          <= '0';
@@ -75,8 +75,11 @@ begin
                     lumi_sec_load_mark <= std_logic_vector(unsigned(lumi_sec_nr) + 1);
                     request_update <= '1';
                     ready          <= '1';
-                    state <= idle;
+                    state          <= idle;
                 when others =>
+                    request_update <= '0';
+                    ready          <= '0';
+                    state          <= idle;
 
             end case;
         end if;

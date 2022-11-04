@@ -7,7 +7,8 @@ use work.P2GT_finor_pkg.all;
 
 entity Mask is
     generic(
-        NR_ALGOS : natural := 64*9
+        NR_ALGOS : natural := 64*9;
+        OUT_REG  : boolean := TRUE
     );
     port(
         clk                  : in std_logic;
@@ -47,11 +48,15 @@ begin
         trigger_s(i) <= or (algos_in and masks_int(i));
     end generate;
 
-    process(clk)
-    begin
-        if rising_edge(clk) then
-            trigger_out <= trigger_s;
-        end if;
-    end process;
+    out_reg_g : if OUT_REG generate
+        process(clk)
+        begin
+            if rising_edge(clk) then
+                trigger_out <= trigger_s;
+            end if;
+        end process;
+    else generate
+        trigger_out <= trigger_s;
+    end generate;
 
 end architecture RTL;

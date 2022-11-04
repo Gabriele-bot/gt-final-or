@@ -17,12 +17,12 @@ package P2GT_finor_pkg is
     -- =======================================================================================================
     -- GT FinalOR definitions
     -- =======================================================================================================
-    constant N_BOARD     : natural := 12;
-    constant N_SLR       : natural := 4;
-    constant INPUT_LINKS : natural := 24;
-    constant MON_REG     : natural := 6;
-    constant N_TRIGG     : natural := 8;
-    
+    constant N_BOARD                : integer := 12;
+    constant N_SLR                  : integer := 4;
+    constant INPUT_LINKS            : integer := 24;
+    constant MON_REG                : integer := 6;
+    constant N_TRIGG                : integer := 8;
+    constant BEGIN_LUMI_SECTION_BIT : integer := 18;
     
     type data_arr is array (INPUT_LINKS - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
     type mask_arr is array (N_TRIGG     - 1 downto 0) of std_logic_vector(64*9-1 downto 0);

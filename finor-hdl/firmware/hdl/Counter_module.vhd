@@ -12,13 +12,13 @@ entity Counter_module is
         lhc_clk  : in std_logic;
         lhc_rst  : in std_logic;
         ctrs_in  : in ttc_stuff_t;
-        bc0      : out std_logic;
-        ec0      : out std_logic;
-        oc0      : out std_logic;
-        bx_nr    : out bctr_t;
-        event_nr : out eoctr_t;
-        orbit_nr : out eoctr_t;
-        lumi_sec_nr : out eoctr_t;
+        bc0            : out std_logic;
+        ec0            : out std_logic;
+        oc0            : out std_logic;
+        bx_nr          : out bctr_t;
+        event_nr       : out eoctr_t;
+        orbit_nr       : out eoctr_t;
+        lumi_sec_nr    : out eoctr_t;
         begin_lumi_sec : out std_logic;
         test_en        : out std_logic
     );
@@ -124,9 +124,11 @@ begin
     ec0 <= ec0_s;
     oc0 <= oc0_s;
 
-    bx_nr    <= bx_cnt;
-    event_nr <= e_cnt;
-    orbit_nr <= o_cnt;
+    bx_nr          <= bx_cnt;
+    event_nr       <= e_cnt;
+    orbit_nr       <= o_cnt;
+    lumi_sec_nr    <= ls_cnt;
+    
     begin_lumi_sec <= begin_lumi_sec_int;
     test_en        <= test_en_int;
     
