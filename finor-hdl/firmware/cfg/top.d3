@@ -36,6 +36,3 @@ addrtab -c gt-final-or:finor-hdl emp_payload.xml
 addrtab -c gt-final-or:finor-hdl m_module.xml
 addrtab -c gt-final-or:finor-hdl ipbus_dpram_4096x576.xml
 addrtab -c gt-final-or:finor-hdl Output_SLR.xml
-
-
-

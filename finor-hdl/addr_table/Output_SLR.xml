@@ -1,4 +1,4 @@
-<node id="Output_SLR" fwinfo="endpoint;width=6">
+<node id="Output_SLR" fwinfo="endpoint;width=8">
   <node id="cnt_rate_finor"               mode="block" address="0x00" size="8" fwinfo="endpoint;width=4"/>
   <node id="cnt_rate_finor_pdt"           mode="block" address="0x10" size="8" fwinfo="endpoint;width=4"/>
   <node id="cnt_rate_finor_with_veto"     mode="block" address="0x20" size="8" fwinfo="endpoint;width=4"/>
