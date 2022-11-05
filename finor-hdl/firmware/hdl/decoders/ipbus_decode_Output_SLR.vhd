@@ -17,7 +17,7 @@ package ipbus_decode_Output_SLR is
   subtype ipbus_sel_t is std_logic_vector(IPBUS_SEL_WIDTH - 1 downto 0);
   function ipbus_sel_Output_SLR(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
 
--- START automatically generated VHDL (Fri Nov  4 17:24:19 2022)
+-- START automatically generated VHDL (Sat Nov  5 21:48:07 2022)
   constant N_SLV_CNT_RATE_FINOR: integer := 0;
   constant N_SLV_CNT_RATE_FINOR_PDT: integer := 1;
   constant N_SLV_CNT_RATE_FINOR_WITH_VETO: integer := 2;
@@ -35,7 +35,7 @@ package body ipbus_decode_Output_SLR is
     variable sel: ipbus_sel_t;
   begin
 
--- START automatically generated VHDL (Fri Nov  4 17:24:19 2022)
+-- START automatically generated VHDL (Sat Nov  5 21:48:07 2022)
     if    std_match(addr, "-------------------------000----") then
       sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR, IPBUS_SEL_WIDTH)); -- cnt_rate_finor / base 0x00000000 / mask 0x00000070
     elsif std_match(addr, "-------------------------001----") then

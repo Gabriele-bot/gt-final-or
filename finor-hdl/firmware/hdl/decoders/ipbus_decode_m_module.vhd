@@ -17,7 +17,7 @@ package ipbus_decode_m_module is
   subtype ipbus_sel_t is std_logic_vector(IPBUS_SEL_WIDTH - 1 downto 0);
   function ipbus_sel_m_module(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
 
--- START automatically generated VHDL (Fri Nov  4 17:24:15 2022)
+-- START automatically generated VHDL (Sat Nov  5 21:45:54 2022)
   constant N_SLV_PRESCALE_FACTOR: integer := 0;
   constant N_SLV_PRESCALE_FACTOR_PRVW: integer := 1;
   constant N_SLV_CNT_RATE_BEFORE_PRSC: integer := 2;
@@ -40,7 +40,7 @@ package body ipbus_decode_m_module is
     variable sel: ipbus_sel_t;
   begin
 
--- START automatically generated VHDL (Fri Nov  4 17:24:15 2022)
+-- START automatically generated VHDL (Sat Nov  5 21:45:54 2022)
     if    std_match(addr, "--------------0-0000------------") then
       sel := ipbus_sel_t(to_unsigned(N_SLV_PRESCALE_FACTOR, IPBUS_SEL_WIDTH)); -- prescale_factor / base 0x00000000 / mask 0x0002f000
     elsif std_match(addr, "--------------0-0001------------") then
