@@ -325,49 +325,50 @@ if args.test =='prescaler':
         ttcStatus = ttcNode.readStatus()
         time.sleep(1)
         if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        os.system('clear')
-        print("Current orbit counter = %d" % ttcStatus.orbitCount)
-        o_ctr_temp = ttcStatus.orbitCount
+            os.system('clear')
+            print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            o_ctr_temp = ttcStatus.orbitCount
 
-        cnt_before_3 = read_cnt_arr(3, 0)
-        cnt_before_2 = read_cnt_arr(2, 0)
-        cnt_before = np.vstack((cnt_before_2, cnt_before_3)).flatten()
-        cnt_after_3 = read_cnt_arr(3, 1)
-        cnt_after_2 = read_cnt_arr(2, 1)
-        cnt_after = np.vstack((cnt_after_2, cnt_after_3)).flatten()
-        cnt_prvw_3 = read_cnt_arr(3, 2)
-        cnt_prvw_2 = read_cnt_arr(2, 2)
-        cnt_prvw = np.vstack((cnt_prvw_2, cnt_prvw_3)).flatten()
-        cnt_pdt_3 = read_cnt_arr(3, 3)
-        cnt_pdt_2 = read_cnt_arr(2, 3)
-        cnt_pdt = np.vstack((cnt_pdt_2, cnt_pdt_3)).flatten()
+            cnt_before_3 = read_cnt_arr(3, 0)
+            cnt_before_2 = read_cnt_arr(2, 0)
+            cnt_before = np.vstack((cnt_before_2, cnt_before_3)).flatten()
+            cnt_after_3 = read_cnt_arr(3, 1)
+            cnt_after_2 = read_cnt_arr(2, 1)
+            cnt_after = np.vstack((cnt_after_2, cnt_after_3)).flatten()
+            cnt_prvw_3 = read_cnt_arr(3, 2)
+            cnt_prvw_2 = read_cnt_arr(2, 2)
+            cnt_prvw = np.vstack((cnt_prvw_2, cnt_prvw_3)).flatten()
+            cnt_pdt_3 = read_cnt_arr(3, 3)
+            cnt_pdt_2 = read_cnt_arr(2, 3)
+            cnt_pdt = np.vstack((cnt_pdt_2, cnt_pdt_3)).flatten()
 
-        trigg_cnt = read_trigg_cnt(0)
-        trigg_cnt_pdt = read_trigg_cnt(1)
+            trigg_cnt = read_trigg_cnt(0)
+            trigg_cnt_pdt = read_trigg_cnt(1)
 
-        rate_before_exp = cnt_before
-        rate_after_exp = cnt_after
-        rate_prvw_exp = cnt_prvw
+            rate_before_exp = cnt_before
+            rate_after_exp = cnt_after
+            rate_prvw_exp = cnt_prvw
 
-        error_before = np.abs(rate_before_exp - rate_before_theo)
-        error_after = np.abs(rate_after_exp - rate_after_theo)
-        error_preview = np.abs(rate_prvw_exp - rate_prvw_theo)
+            error_before = np.abs(rate_before_exp - rate_before_theo)
+            error_after = np.abs(rate_after_exp - rate_after_theo)
+            error_preview = np.abs(rate_prvw_exp - rate_prvw_theo)
 
-        for current_i, error in enumerate(error_before):
-            if error > 1:
-                print('Mismatch found on rate before pescaler %d, error= %d' % (current_i, error))
-                print('Expected value %d, Value got= %d' % (rate_before_theo[current_i], rate_before_exp[current_i]))
-        for current_i, error in enumerate(error_after):
-            if error > 1:
-                print('Mismatch found on rate after pescaler %d, error= %d' % (current_i, error))
-                print('Expected value %d, Value got= %d' % (rate_after_theo[current_i], rate_after_exp[current_i]))
-        for current_i, error in enumerate(error_preview):
-            if error > 1:
-                print('Mismatch found on rate after pescaler preview %d, error= %d' % (current_i, error))
-                print('Expected value %d, Value got= %d' % (rate_prvw_theo[current_i], rate_prvw_exp[current_i]))
-               
-           
-    sys.stdout.flush()
+            for current_i, error in enumerate(error_before):
+                if error > 1:
+                    print('Mismatch found on rate before pescaler %d, error= %d' % (current_i, error))
+                    print('Expected value %d, Value got= %d' % (rate_before_theo[current_i], rate_before_exp[current_i]))
+            for current_i, error in enumerate(error_after):
+                if error > 1:
+                    print('Mismatch found on rate after pescaler %d, error= %d' % (current_i, error))
+                    print('Expected value %d, Value got= %d' % (rate_after_theo[current_i], rate_after_exp[current_i]))
+            for current_i, error in enumerate(error_preview):
+                if error > 1:
+                    print('Mismatch found on rate after pescaler preview %d, error= %d' % (current_i, error))
+                    print('Expected value %d, Value got= %d' % (rate_prvw_theo[current_i], rate_prvw_exp[current_i]))
+
+
+        sys.stdout.flush()
+
 
     ls_trigg_mark = read_lumi_sec_trigger_mask_mark()
     print("SLR 2 mark = %d" % ls_trigg_mark[0])
@@ -398,16 +399,16 @@ elif args.test =='trigger_mask':
 
     for mask_i, indeces in enumerate(trigg_index):
         for index in indeces:
-        if index < 576:
-            reg_index = np.uint16(np.floor(index/32) + mask_i * 18)
-            print(reg_index)
-            masks_2[np.uint16(reg_index)] = masks_2[np.uint32(reg_index)] | (1 << np.uint32(index - 32*np.floor(index/32)))
-            print(hex(masks_2[np.uint16(reg_index)]))
-        else:
-            reg_index = np.uint16(np.floor((index-576)/32) + mask_i * 18)
-            print(reg_index)
-            masks_3[np.uint16(reg_index)] = masks_3[np.uint32(reg_index)] | (1 << np.uint32((index-576) - 32 * np.floor((index-576)/32)))
-            print(hex(masks_3[np.uint16(reg_index)]))
+            if index < 576:
+                reg_index = np.uint16(np.floor(index/32) + mask_i * 18)
+                print(reg_index)
+                masks_2[np.uint16(reg_index)] = masks_2[np.uint32(reg_index)] | (1 << np.uint32(index - 32*np.floor(index/32)))
+                print(hex(masks_2[np.uint16(reg_index)]))
+            else:
+                reg_index = np.uint16(np.floor((index-576)/32) + mask_i * 18)
+                print(reg_index)
+                masks_3[np.uint16(reg_index)] = masks_3[np.uint32(reg_index)] | (1 << np.uint32((index-576) - 32 * np.floor((index-576)/32)))
+                print(hex(masks_3[np.uint16(reg_index)]))
 
     # Set pre-scaler factors
     prsc_fct_3 = np.uint32(100 * np.ones(576))  # 1.00
@@ -452,16 +453,16 @@ elif args.test =='trigger_mask':
     # Read counters from board
     cnt_before_3 = read_cnt_arr(3, 0)
     cnt_before_2 = read_cnt_arr(2, 0)
-    cnt_before = np.vstack((cnt_before_2, cnt_before_3)).flatten()
-    cnt_after_3 = read_cnt_arr(3, 1)
-    cnt_after_2 = read_cnt_arr(2, 1)
-    cnt_after = np.vstack((cnt_after_2, cnt_after_3)).flatten()
-    cnt_prvw_3 = read_cnt_arr(3, 2)
-    cnt_prvw_2 = read_cnt_arr(2, 2)
-    cnt_prvw = np.vstack((cnt_prvw_2, cnt_prvw_3)).flatten()
-    cnt_pdt_3 = read_cnt_arr(3, 3)
-    cnt_pdt_2 = read_cnt_arr(2, 3)
-    cnt_pdt = np.vstack((cnt_pdt_2, cnt_pdt_3)).flatten()
+    cnt_before   = np.vstack((cnt_before_2, cnt_before_3)).flatten()
+    cnt_after_3  = read_cnt_arr(3, 1)
+    cnt_after_2  = read_cnt_arr(2, 1)
+    cnt_after    = np.vstack((cnt_after_2, cnt_after_3)).flatten()
+    cnt_prvw_3   = read_cnt_arr(3, 2)
+    cnt_prvw_2   = read_cnt_arr(2, 2)
+    cnt_prvw     = np.vstack((cnt_prvw_2, cnt_prvw_3)).flatten()
+    cnt_pdt_3    = read_cnt_arr(3, 3)
+    cnt_pdt_2    = read_cnt_arr(2, 3)
+    cnt_pdt      = np.vstack((cnt_pdt_2, cnt_pdt_3)).flatten()
 
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
@@ -477,22 +478,21 @@ elif args.test =='trigger_mask':
         ttcStatus = ttcNode.readStatus()
         time.sleep(1)
         if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        os.system('clear')
-        print("Current orbit counter = %d" % ttcStatus.orbitCount)
-        o_ctr_temp = ttcStatus.orbitCount
+            os.system('clear')
+            print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            o_ctr_temp = ttcStatus.orbitCount
 
-        trigg_cnt = read_trigg_cnt(0)
-        trigg_cnt_pdt = read_trigg_cnt(1)
+            trigg_cnt     = read_trigg_cnt(0)
+            trigg_cnt_pdt = read_trigg_cnt(1)
 
+            for trigg_index, cnt in enumerate(trigg_cnt):
+                error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
+                print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
+                if error_trgg > 1:
+                    print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
+                    print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
 
-        for trigg_index, cnt in enumerate(trigg_cnt):
-            error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
-            print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
-            if error_trgg > 1:
-                print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
-                print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
+            for trigg_index, cnt in enumerate(trigg_cnt_pdt):
+                print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
 
-        for trigg_index, cnt in enumerate(trigg_cnt_pdt):
-            print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
-                
-        sys.stdout.flush()
+            sys.stdout.flush()
