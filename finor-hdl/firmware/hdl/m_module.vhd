@@ -662,15 +662,15 @@ begin
     begin
         if rising_edge(lhc_clk) then
             if (ready_veto = '1' and ready_veto_1 = '0') then --rising edge
-                veto_mask  <= (veto_ipbus_regs(18+17), veto_ipbus_regs(18+16),
-                               veto_ipbus_regs(18+15), veto_ipbus_regs(18+14),
-                               veto_ipbus_regs(18+13), veto_ipbus_regs(18+12),
-                               veto_ipbus_regs(18+11), veto_ipbus_regs(18+10),
-                               veto_ipbus_regs(18+9) , veto_ipbus_regs(18+8) ,
-                               veto_ipbus_regs(18+7) , veto_ipbus_regs(18+6) ,
-                               veto_ipbus_regs(18+5) , veto_ipbus_regs(18+4) ,
-                               veto_ipbus_regs(18+3) , veto_ipbus_regs(18+2) ,
-                               veto_ipbus_regs(18+1) , veto_ipbus_regs(18+0) );
+                veto_mask  <= (veto_ipbus_regs(17), veto_ipbus_regs(16),
+                               veto_ipbus_regs(15), veto_ipbus_regs(14),
+                               veto_ipbus_regs(13), veto_ipbus_regs(12),
+                               veto_ipbus_regs(11), veto_ipbus_regs(10),
+                               veto_ipbus_regs(9) , veto_ipbus_regs(8) ,
+                               veto_ipbus_regs(7) , veto_ipbus_regs(6) ,
+                               veto_ipbus_regs(5) , veto_ipbus_regs(4) ,
+                               veto_ipbus_regs(3) , veto_ipbus_regs(2) ,
+                               veto_ipbus_regs(1) , veto_ipbus_regs(0) );
             end if;
         end if;
     end process;
