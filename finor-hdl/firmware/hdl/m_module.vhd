@@ -691,7 +691,7 @@ begin
     Mask_i : entity work.Mask
         generic map(
             NR_ALGOS => 64*9,
-            OUT_REG  => FALSE
+            OUT_REG  => TRUE
         )
         port map(
             clk                             => lhc_clk,
