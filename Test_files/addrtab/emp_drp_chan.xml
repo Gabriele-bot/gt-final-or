@@ -1,0 +1,57 @@
+<node description="Dynamic Reconfiguration Port (DRP) registers within the GTH/GTY transceivers" fwinfo="endpoint;width=10" class="DRPNode">
+	
+	<node id="es_qual_mask_15to00"   address="0x44" mask="0xffff" />
+	<node id="es_qual_mask_31to16"   address="0x45" mask="0xffff" />
+	<node id="es_qual_mask_47to32"   address="0x46" mask="0xffff" />
+	<node id="es_qual_mask_63to48"   address="0x47" mask="0xffff" />
+	<node id="es_qual_mask_79to64"   address="0x48" mask="0xffff" />
+	<node id="es_qual_mask_95to80"   address="0xEC" mask="0xffff" />
+	<node id="es_qual_mask_111to96"  address="0xED" mask="0xffff" />
+	<node id="es_qual_mask_127to112" address="0xEE" mask="0xffff" />
+	<node id="es_qual_mask_143to128" address="0xEF" mask="0xffff" />
+	<node id="es_qual_mask_159to144" address="0xF0" mask="0xffff" />
+
+	<node id="es_sdata_mask_15to00"   address="0x49" mask="0xffff" />
+	<node id="es_sdata_mask_31to16"   address="0x4a" mask="0xffff" />
+	<node id="es_sdata_mask_47to32"   address="0x4b" mask="0xffff" />
+	<node id="es_sdata_mask_63to48"   address="0x4c" mask="0xffff" />
+	<node id="es_sdata_mask_79to64"   address="0x4d" mask="0xffff" />
+	<node id="es_sdata_mask_95to80"   address="0xF1" mask="0xffff" />
+	<node id="es_sdata_mask_111to96"  address="0xF2" mask="0xffff" />
+	<node id="es_sdata_mask_127to112" address="0xF3" mask="0xffff" />
+	<node id="es_sdata_mask_143to128" address="0xF4" mask="0xffff" />
+	<node id="es_sdata_mask_159to144" address="0xF5" mask="0xffff" />
+
+	<node id="es_control_run"     address="0x3c" mask="0x0400"/>
+	<node id="es_control_arm"     address="0x3c" mask="0x0800"/>
+	<node id="es_control_trigger" address="0x3c" mask="0xf000"/>
+	<node id="es_errdet_en"       address="0x3c" mask="0x0200" />
+	<node id="es_eye_scan_en"     address="0x3c" mask="0x0100"/>
+	<node id="es_prescale"        address="0x3c" mask="0x001f" />
+
+	<node id="es_horz_offset"      address="0x4f" mask="0xfff0" />
+	<node id="fts_lane_deskew_cfg" address="0x4f" mask="0x000f" />
+
+	<node id="rx_int_datawidth"      address="0x66" mask="0x3" />
+	<node id="rx_data_width"         address="0x3" mask="0x01e0" />
+	<node id="tx_data_width"        address="0x7a" mask="0x000f" />
+
+	<node id="es_clk_phase_sel"      address="0x94" mask="0x0800" />
+	<node id="use_pcs_clk_phase_sel" address="0x94" mask="0x0400" />
+
+	<node id="rx_eyescan_vs_neg_dir" address="0x97" mask="0x0400" />
+	<node id="rx_eyescan_vs_ut_sign" address="0x97" mask="0x0200" />
+	<node id="rx_eyescan_vs_code"    address="0x97" mask="0x01fc" />
+	<node id="rx_eyescan_vs_range"   address="0x97" mask="0x0003" />
+
+	<node id="es_error_count"    address="0x251" mask="0xffff" />
+	<node id="es_sample_count"   address="0x252" mask="0xffff" />
+	<node id="es_control_status" address="0x253" >
+		<node id="done"  mask="0x1" />
+		<node id="state" mask="0xe" />
+	</node>
+
+	<node id="rx_prbs_err_cnt_15to00" address="0x25e" mask="0xffff" />
+	<node id="rx_prbs_err_cnt_31to16" address="0x25f" mask="0xffff" />
+
+</node>

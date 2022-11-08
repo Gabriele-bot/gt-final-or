@@ -1,0 +1,17 @@
+<node description="MGT quad CSR registers" fwinfo="endpoint;width=5" class="MGTRegionNode">
+	<node id="ctrl" address="0x00">
+		<node id="ch0" module="file://emp_chan_rw.xml" address="0x0"/>
+		<node id="ch1" module="file://emp_chan_rw.xml" address="0x1"/>
+		<node id="ch2" module="file://emp_chan_rw.xml" address="0x2"/>
+		<node id="ch3" module="file://emp_chan_rw.xml" address="0x3"/>
+		<node id="common" module="file://emp_common_rw.xml" address="0x4"/>
+    </node>
+	<node id="stat" address="0x10">
+		<node id="ch0" module="file://emp_chan_ro.xml" address="0x0"/>
+		<node id="ch1" module="file://emp_chan_ro.xml" address="0x3"/>
+		<node id="ch2" module="file://emp_chan_ro.xml" address="0x6"/>
+		<node id="ch3" module="file://emp_chan_ro.xml" address="0x9"/>
+		<node id="common" module="file://emp_common_ro.xml" address="0xC"/>
+	</node>
+
+</node>

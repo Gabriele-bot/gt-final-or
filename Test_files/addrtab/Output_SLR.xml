@@ -1,0 +1,13 @@
+<node id="Output_SLR" fwinfo="endpoint;width=6">
+  <node id="cnt_rate_finor" mode="block" address="0x00" size="8" fwinfo="endpoint;width=4"/>
+  <node id="cnt_rate_finor_pdt" mode="block" address="0x10" size="8" fwinfo="endpoint;width=4"/>
+  <node id="CSR" address="0x20" fwinfo="endpoint;width=1">
+    <node id="ctrl" address="0x0000">
+      <node id="l1_latency_delay"     mask="0xFFF" />
+    </node>
+    <node id="stat" mode="single" address="0x0001">
+      <node id="ready"  mask="0x0001"/>
+    </node>
+   </node>
+</node>
+

@@ -1,0 +1,8 @@
+<node description="top-level control and status registers" class="CtrlNode" fwinfo="endpoint;width=0">
+    <node id="csr" address="0x0" description="ctrl/stat register" fwinfo="endpoint;width=0">
+        <node id="ctrl" address="0x0">
+            <node id="nuke" mask="0x1"/>
+            <node id="soft_rst" mask="0x2"/>
+        </node>
+    </node>
+</node>

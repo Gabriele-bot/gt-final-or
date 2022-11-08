@@ -1,0 +1,4 @@
+<node>
+	<node id="qplllock"   mask="0x00000001"/>
+	<node id="not_in_use" mask="0xFFFFFFFE"/>
+</node>

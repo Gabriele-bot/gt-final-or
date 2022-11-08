@@ -1,0 +1,43 @@
+<node fwinfo="endpoint;width=9">
+  <node id="magic" address="0x0" fwinfo="endpoint;width=0"/>
+  <node id="address_hash" address="0x1" fwinfo="endpoint;width=0"/>
+  <node id="versions" address="0x2" description="Firmware version registers" fwinfo="endpoint;width=1">
+    <node id="framework" address="0x0">
+      <node id="design" mask="0xff000000" description="ID for hardware design of board"/>
+      <node id="major" mask="0x00ff0000"/>
+      <node id="minor" mask="0x0000ff00"/>
+      <node id="patch" mask="0x000000ff"/>
+    </node>
+    <node id="payload" address="0x1" />
+  </node>
+
+  <node id="framework" address="0x4" fwinfo="endpoint;width=0">
+    <node id="bunch_count" mask="0xfff"/>
+    <node id="lb_addr_width" mask="0xf000"/>
+    <node id="clock_ratio" mask="0xf0000"/>
+    <node id="n_region" mask="0x3f00000"/>
+  </node>
+
+  <node id="build_time" address="0x5" permission="r" fwinfo="endpoint;width=0"/>
+
+  <node id="source_areas" address="0x10" permission="r" fwinfo="endpoint;width=4">
+    <node id="count" address="0x0"/>
+    <node id="sel" address="0x1"/>
+    <node id="clean" address="0x2" mask="0x10000000"/>
+    <node id="sha" address="0x2" mask="0xfffffff"/>
+    <node id="name" address="0x3" mode="block" size="5"/>
+    <node id="ref" address="0x8" mode="block" size="5"/>
+  </node>
+
+  <node id="autobuild" address="0x20" fwinfo="endpoint;width=2">
+    <node id="project"  permission="r"/>
+    <node id="pipeline" permission="r" address="0x1"/>
+    <node id="job"      permission="r" address="0x2"/>
+  </node>
+
+  <node id="device" address="0x80">
+    <node id="dna" module="file://ipbus_device_dna_us_usp.xml"/>
+    <node id="idcode" address="0x4" permission="r" fwinfo="endpoint;width=0"/>
+    <node id="sysmon" address="0x80" module="file://ipbus_sysmon_us_int_ref.xml"/>
+  </node>
+</node>

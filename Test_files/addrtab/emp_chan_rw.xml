@@ -1,0 +1,18 @@
+<node>
+	<node id="loopback"              mask="0x00000007"/>
+	<node id="reset_counters"        mask="0x00000008"/>
+	<node id="tx_polarity"           mask="0x00000010"/>
+	<node id="rx_polarity"           mask="0x00000020"/>
+	<node id="tx_usrrst"             mask="0x00000040"/>
+	<node id="rx_usrrst"             mask="0x00000080"/>
+	<node id="enable_orbit_tag"      mask="0x00000100"/>
+	<node id="disable_align"         mask="0x00000200"/>
+	<node id="reset_latched_signals" mask="0x00000400"/>
+	<node id="eyescan_reset"         mask="0x00000800"/>
+	<node id="tx_prbs_sel"           mask="0x0000F000"/>
+	<node id="rx_prbs_sel"           mask="0x000F0000"/>
+	<node id="rx_prbs_error_rst"     mask="0x00100000"/>
+	<node id="tx_prbs_force_error"   mask="0x00200000"/>
+	<node id="rxpmareset"            mask="0x00400000"/>
+	<node id="rxlpm_en"              mask="0x00800000"/>
+</node>

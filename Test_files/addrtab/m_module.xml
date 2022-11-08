@@ -1,0 +1,24 @@
+<node id="monitoring_module" fwinfo="endpoint;width=28">
+  <node id="prescale_factor" mode="block" address="0x0000" size="576" fwinfo="endpoint;width=12"/>
+  <node id="prescale_factor_prvw" mode="block" address="0x1000" size="576" fwinfo="endpoint;width=12"/>
+  <node id="cnt_rate_before_prsc" mode="block" address="0x2000" size="576" fwinfo="endpoint;width=12"/>
+  <node id="cnt_rate_after_prsc" mode="block" address="0x3000" size="576" fwinfo="endpoint;width=12"/>
+  <node id="cnt_rate_after_prsc_prvw" mode="block" address="0x4000" size="576" fwinfo="endpoint;width=12"/>
+  <node id="cnt_rate_pdt" mode="block" address="0x5000" size="576" fwinfo="endpoint;width=12"/>
+  <node id="CSR" address="0x6000" fwinfo="endpoint;width=12">
+    <node id="ctrl" address="0x0">
+      <node id="new_prescale_column"   mask="0x00000001"/>
+      <node id="new_trigger_masks"    mask="0x00000002"/>
+      <node id="l1_latency_delay"       mask="0xfffffffc"/>
+      <node id="BX_begin" address="0x1" mask="0x00000fff"/>
+      <node id="BX_end"   address="0x1" mask="0x00fff000"/>
+    </node>
+    <node id="stat" address="0x2">
+      <node id="ready"  mask="0x1"/>
+      <node id="lumi_sec_update_prescaler_mark"  address="0x01"/>
+      <node id="lumi_sec_update_trigger_masks_mark"  address="0x02"/>
+    </node>
+  </node>
+  <node id="trgg_mask" mode="block" address="0x7000" size="144" fwinfo="endpoint;width=12"/>
+  <node id="algo_bx_masks" module="file://ipbus_dpram_4096x576.xml" address="0x20000" fwinfo="endpoint;width=17"/>
+</node>
