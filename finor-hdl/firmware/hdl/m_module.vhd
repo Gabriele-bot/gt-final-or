@@ -770,7 +770,7 @@ begin
                 INIT_VALUE => NULL_VETO_MASK
             )
             port map(
-                clk                  => clk,
+                clk                  => lhc_clk,
                 request_update_pulse => request_veto_update,
                 update_pulse         => begin_lumi_per,
                 data_i               => veto_mask,
