@@ -22,173 +22,161 @@ args = parser.parse_args()
 
 uhal.disableLogging()
 
-global manager
-global hw
+class HWtest_class:
+    def __init__(self, serenity, connection_file='my_connections.xml', device='x0'):
+        self.serenity = serenity
+        self.connection_file = 'file://' + connection_file
+        if self.serenity == 'Serenity3':
+            self.SLRs = [2,3]
+            self.part = 'vu13p'
+        elif self.serenity == 'Serenity2':
+            self.SLRs = [2,3]
+            self.part = 'vu9p'
+        self.manager = uhal.ConnectionManager(self.connection_file)
+        self.hw = self.manager.getDevice(device)
 
-manager = uhal.ConnectionManager("file://my_connections.xml")
-hw = manager.getDevice("x0")
-
-
-######################## READ_WRITE IPbus regs ########################################
-def load_prsc_in_RAM(prsc_arr, SLR, sel):
-    if SLR == 3:
+# ==============================READ_WRITE IPbus regs ==============================
+    def load_prsc_in_RAM(self, prsc_arr, sel):
         if sel == 0:
-            hw.getNode("payload.SLR3_monitor.prescale_factor").writeBlock(prsc_arr)
+            self.hw.getNode("payload.SLR3_monitor.prescale_factor").writeBlock(prsc_arr[1])
+            self.hw.getNode("payload.SLR2_monitor.prescale_factor").writeBlock(prsc_arr[0])
         elif sel == 1:
-            hw.getNode("payload.SLR3_monitor.prescale_factor_prvw").writeBlock(prsc_arr)
+            self.hw.getNode("payload.SLR3_monitor.prescale_factor_prvw").writeBlock(prsc_arr[1])
+            self.hw.getNode("payload.SLR2_monitor.prescale_factor_prvw").writeBlock(prsc_arr[0])
         else:
             raise Exception("Selector is not in [0,1]")
-    elif SLR == 2:
+        self.hw.dispatch()
+
+    def send_new_prescale_column_flag(self):
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(0)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(0)
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(1)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(1)
+        time.sleep(0.01)
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(0)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(0)
+        self.hw.dispatch()
+
+    def send_new_trigger_mask_flag(self):
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_trigger_masks").write(0)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_trigger_masks").write(0)
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_trigger_masks").write(1)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_trigger_masks").write(1)
+        time.sleep(0.01)
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_trigger_masks").write(0)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_trigger_masks").write(0)
+        self.hw.dispatch()
+
+    def read_lumi_sec_prescale_mark(self):
+        mark_3 = self.hw.getNode("payload.SLR3_monitor.CSR.stat.lumi_sec_update_prescaler_mark").read()
+        mark_2 = self.hw.getNode("payload.SLR2_monitor.CSR.stat.lumi_sec_update_prescaler_mark").read()
+        self.hw.dispatch()
+
+        return np.uint32(mark_2), np.uint32(mark_3)
+
+    def read_lumi_sec_trigger_mask_mark(self):
+        mark_3 = self.hw.getNode("payload.SLR3_monitor.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
+        mark_2 = self.hw.getNode("payload.SLR2_monitor.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
+        self.hw.dispatch()
+
+        return np.uint32(mark_2), np.uint32(mark_3)
+
+    def load_mask_arr(self, mask_arr):
+        self.hw.getNode("payload.SLR3_monitor.trgg_mask").writeBlock(mask_arr[1])
+        self.hw.getNode("payload.SLR2_monitor.trgg_mask").writeBlock(mask_arr[0])
+        self.hw.dispatch()
+
+    def load_BXmask_arr(self, BXmask_arr):
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_0_31"   ).writeBlock(BXmask_arr[1][0])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_32_63"  ).writeBlock(BXmask_arr[1][1])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_64_95"  ).writeBlock(BXmask_arr[1][2])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_96_127" ).writeBlock(BXmask_arr[1][3])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[1][4])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[1][5])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[1][6])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[1][7])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[1][8])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[1][9])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[1][10])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[1][11])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[1][12])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[1][13])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[1][14])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[1][15])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[1][16])
+        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[1][17])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_0_31"   ).writeBlock(BXmask_arr[0][0])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_32_63"  ).writeBlock(BXmask_arr[0][1])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_64_95"  ).writeBlock(BXmask_arr[0][2])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_96_127" ).writeBlock(BXmask_arr[0][3])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[0][4])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[0][5])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[0][6])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[0][7])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[0][8])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[0][9])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[0][10])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[0][11])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[0][12])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[0][13])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[0][14])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[0][15])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[0][16])
+        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[0][17])
+        self.hw.dispatch()
+
+    def load_latancy_delay(self, latency):
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.l1_latency_delay").write(latency)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.l1_latency_delay").write(latency)
+        self.hw.dispatch()
+
+    def read_cnt_arr(self, sel):
         if sel == 0:
-            hw.getNode("payload.SLR2_monitor.prescale_factor").writeBlock(prsc_arr)
+            cnt_1 = self.hw.getNode("payload.SLR3_monitor.cnt_rate_before_prsc").readBlock(576)
+            cnt_0 = self.hw.getNode("payload.SLR2_monitor.cnt_rate_before_prsc").readBlock(576)
         elif sel == 1:
-            hw.getNode("payload.SLR2_monitor.prescale_factor_prvw").writeBlock(prsc_arr)
+            cnt_1 = self.hw.getNode("payload.SLR3_monitor.cnt_rate_after_prsc").readBlock(576)
+            cnt_0 = self.hw.getNode("payload.SLR2_monitor.cnt_rate_after_prsc").readBlock(576)
+        elif sel == 2:
+            cnt_1 = self.hw.getNode("payload.SLR3_monitor.cnt_rate_after_prsc_prvw").readBlock(576)
+            cnt_0 = self.hw.getNode("payload.SLR2_monitor.cnt_rate_after_prsc_prvw").readBlock(576)
+        elif sel == 3:
+            cnt_1 = self.hw.getNode("payload.SLR3_monitor.cnt_rate_pdt").readBlock(576)
+            cnt_0 = self.hw.getNode("payload.SLR2_monitor.cnt_rate_pdt").readBlock(576)
+        else:
+            raise Exception("Selector is not in [0,1,2,3]")
+
+        self.hw.dispatch()
+        cnt = np.vstack((cnt_0, cnt_1)).flatten()
+
+        return np.array(cnt, dtype=np.uint32)
+
+    def read_trigg_cnt(self, sel):
+        if sel == 0:
+            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor").readBlock(8)
+        elif sel == 1:
+            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor_pdt").readBlock(8)
         else:
             raise Exception("Selector is not in [0,1]")
-    else:
-        raise Exception("Available SLRs are 2 and 3")
-    hw.dispatch()
+        self.hw.dispatch()
+
+        return np.array(cnt, dtype=np.uint32)
+
+    def get_device(self):
+        device = emp.Controller(self.hw)
+
+        return device
 
 
-def send_new_prescale_column_flag():
-    hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(0)
-    hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(0)
-    hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(1)
-    hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(1)
-    time.sleep(0.01)
-    hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(0)
-    hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(0)
-    hw.dispatch()
-    
-    
-def send_new_trigger_mask_flag():
-    hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_trigger_masks").write(0)
-    hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_trigger_masks").write(0)
-    hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_trigger_masks").write(1)
-    hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_trigger_masks").write(1)
-    time.sleep(0.01)
-    hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_trigger_masks").write(0)
-    hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_trigger_masks").write(0)
-    hw.dispatch()
-    
-    
-def read_lumi_sec_prescale_mark():
-    mark_3 = hw.getNode("payload.SLR3_monitor.CSR.stat.lumi_sec_update_prescaler_mark").read()
-    mark_2 = hw.getNode("payload.SLR2_monitor.CSR.stat.lumi_sec_update_prescaler_mark").read()
-    hw.dispatch()
-    
-    return np.uint32(mark_2), np.uint32(mark_3)
-    
-    
-def read_lumi_sec_trigger_mask_mark():
-    mark_3 = hw.getNode("payload.SLR3_monitor.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-    mark_2 = hw.getNode("payload.SLR2_monitor.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-    hw.dispatch()
-    
-    return np.uint32(mark_2), np.uint32(mark_3)
-    
+HWtest = HWtest_class('Serenity3', 'my_connections.xml', 'x0')
 
-
-def load_mask_arr(mask_arr, SLR):
-    if SLR == 3:
-        hw.getNode("payload.SLR3_monitor.trgg_mask").writeBlock(mask_arr)
-    elif SLR == 2:
-        hw.getNode("payload.SLR2_monitor.trgg_mask").writeBlock(mask_arr)
-    else:
-        raise Exception("Available SLRs are 2 and 3")
-    hw.dispatch()
-
-
-def load_BXmask_arr(BXmask_arr, SLR):
-    if SLR == 3:
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[0])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[1])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[2])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_96_127").writeBlock(BXmask_arr[3])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[4])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[5])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[6])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[7])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[8])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[9])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[10])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[11])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[12])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[13])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[14])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[15])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[16])
-        hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[17])
-    elif SLR == 2:
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[0])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[1])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[2])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_96_127").writeBlock(BXmask_arr[3])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[4])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[5])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[6])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[7])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[8])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[9])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[10])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[11])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[12])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[13])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[14])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[15])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[16])
-        hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[17])
-    else:
-        raise Exception("Available SLRs are 2 and 3")
-    hw.dispatch()
-
-
-def read_cnt_arr(SLR, sel):
-    if SLR == 3:
-        if sel == 0:
-            cnt = hw.getNode("payload.SLR3_monitor.cnt_rate_before_prsc").readBlock(576)
-        elif sel == 1:
-            cnt = hw.getNode("payload.SLR3_monitor.cnt_rate_after_prsc").readBlock(576)
-        elif sel == 2:
-            cnt = hw.getNode("payload.SLR3_monitor.cnt_rate_after_prsc_prvw").readBlock(576)
-        elif sel == 3:
-            cnt = hw.getNode("payload.SLR3_monitor.cnt_rate_pdt").readBlock(576)
-        else:
-            raise Exception("Selector is not in [0,1,2,3]")
-    elif SLR == 2:
-        if sel == 0:
-            cnt = hw.getNode("payload.SLR2_monitor.cnt_rate_before_prsc").readBlock(576)
-        elif sel == 1:
-            cnt = hw.getNode("payload.SLR2_monitor.cnt_rate_after_prsc").readBlock(576)
-        elif sel == 2:
-            cnt = hw.getNode("payload.SLR2_monitor.cnt_rate_after_prsc_prvw").readBlock(576)
-        elif sel == 3:
-            cnt = hw.getNode("payload.SLR2_monitor.cnt_rate_pdt").readBlock(576)
-        else:
-            raise Exception("Selector is not in [0,1,2,3]")
-    else:
-        raise Exception("Available SLRs are 2 and 3")
-
-    hw.dispatch()
-    return np.array(cnt, dtype=np.uint32)
-
-
-def read_trigg_cnt(sel):
-    if sel == 0:
-        cnt = hw.getNode("payload.SLR2_FINOR.cnt_rate_finor").readBlock(8)
-    elif sel == 1:
-        cnt = hw.getNode("payload.SLR2_FINOR.cnt_rate_finor_pdt").readBlock(8)
-    else:
-        raise Exception("Selector is not in [0,1]")
-    hw.dispatch()
-    return np.array(cnt, dtype=np.uint32)
-
-
-EMPdevice = emp.Controller(hw)
-ttcNode = EMPdevice.getTTC()
+EMPdevice = HWtest.get_device()
+ttcNode   = EMPdevice.getTTC()
 # ttcNode.forceBCmd(0x24) #Send test enable command
 
-
+# Set the l1a-latency delay
+l1_latency_delay = int(100)
+HWtest.load_latancy_delay(l1_latency_delay)
 
 #-------------------------------------------------------------------------------------
 #-----------------------------------PRE-SCALER TEST-----------------------------------
@@ -199,121 +187,95 @@ if args.test =='prescaler':
     index = algo_data[0]
     repetitions = algo_data[1]
 
-    # Set the l1a-latency delay
-    l1_latency_delay = int(100)
-    hw.getNode("payload.SLR2_monitor.CSR.ctrl.l1_latency_delay").write(l1_latency_delay)
-    hw.dispatch()
-
     # Set the bxmasks
-    bxmask_3 = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
-    bxmask_2 = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+    bxmask = np.empty((2,18,4096), dtype=np.uint32)
+    bxmask[0] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+    bxmask[1] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+
+    HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks
-    masks_3 = np.zeros(144, dtype=np.uint32)
-    masks_3[0:144] = (2 ** 32 - 1) * np.ones(1, dtype=np.uint32)
-    masks_3[0] = (2 ** 1 - 1) * np.ones(1, dtype=np.uint32)
-    masks_3[19] = (2 ** 2 - 1) * np.ones(1, dtype=np.uint32)
-    masks_3[38] = (2 ** 3 - 1) * np.ones(1, dtype=np.uint32)
-    masks_3[57] = (2 ** 4 - 1) * np.ones(1, dtype=np.uint32)
-    masks_3[76] = (2 ** 5 - 1) * np.ones(1, dtype=np.uint32)
-    masks_3[95] = (2 ** 6 - 1) * np.ones(1, dtype=np.uint32)
-    masks_3[114] = (2 ** 7 - 1) * np.ones(1, dtype=np.uint32)
-    masks_3[133] = (2 ** 8 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask = np.empty((2,144), dtype=np.uint32)
+    trigger_mask[0][0]   = (2 ** 1 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[0][19]  = (2 ** 2 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[0][38]  = (2 ** 3 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[0][57]  = (2 ** 4 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[0][76]  = (2 ** 5 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[0][95]  = (2 ** 6 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[0][114] = (2 ** 7 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[0][133] = (2 ** 8 - 1) * np.ones(1, dtype=np.uint32)
 
-    masks_2 = np.zeros(144, dtype=np.uint32)
-    masks_2[0:144] = (2 ** 32 - 1) * np.ones(1, dtype=np.uint32)
-    masks_2[5] = (2 ** 30 - 1) * np.ones(1, dtype=np.uint32)
-    masks_2[25] = (2 ** 29 - 1) * np.ones(1, dtype=np.uint32)
-    masks_2[45] = (2 ** 28 - 1) * np.ones(1, dtype=np.uint32)
-    masks_2[65] = (2 ** 27 - 1) * np.ones(1, dtype=np.uint32)
-    masks_2[85] = (2 ** 26 - 1) * np.ones(1, dtype=np.uint32)
-    masks_2[105] = (2 ** 25 - 1) * np.ones(1, dtype=np.uint32)
-    masks_2[125] = (2 ** 24 - 1) * np.ones(1, dtype=np.uint32)
-    masks_2[143] = (2 ** 23 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[1][5]   = (2 ** 30 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[1][25]  = (2 ** 29 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[1][45]  = (2 ** 28 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[1][65]  = (2 ** 27 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[1][85]  = (2 ** 26 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[1][105] = (2 ** 25 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[1][125] = (2 ** 24 - 1) * np.ones(1, dtype=np.uint32)
+    trigger_mask[1][143] = (2 ** 23 - 1) * np.ones(1, dtype=np.uint32)
+
+    HWtest.load_mask_arr(trigger_mask)
     
-    load_mask_arr(masks_3, 3)
-    load_mask_arr(masks_2, 2)
-    
-    ls_trigg_mark = read_lumi_sec_trigger_mask_mark()
+    ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
     print("SLR 2 mark = %d" % ls_trigg_mark[0])
     print("SLR 3 mark = %d" % ls_trigg_mark[1])
     
-    send_new_trigger_mask_flag()
+    HWtest.send_new_trigger_mask_flag()
     time.sleep(2)
     
-    ls_trigg_mark = read_lumi_sec_trigger_mask_mark()
+    ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
     print("SLR 2 mark = %d" % ls_trigg_mark[0])
     print("SLR 3 mark = %d" % ls_trigg_mark[1])
 
-    prsc_fct_3      = np.uint32(100 * np.ones(576))  # 1.00
-    prsc_fct_2      = np.uint32(100 * np.ones(576))  # 1.00
-    prsc_fct_prvw_3 = np.uint32(100 * np.ones(576))  # 1.00
-    prsc_fct_prvw_2 = np.uint32(100 * np.ones(576))  # 1.00
+    prsc_fct      = np.uint32(100 * np.ones((2,576)))  # 1.00
+    prsc_fct_prvw = np.uint32(100 * np.ones((2,576)))  # 1.00
 
     index_low  = index[np.where(index < 576)[0]]
     index_high = index[np.where(index >= 576)[0]]
 
     if args.ps_column == "random":
-        prsc_fct_3[np.int16(index_high - 576)] = np.uint32(np.random.randint(100, 2 ** 24, len(index_high)))
-        prsc_fct_2[np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 24, len(index_low)))
+        prsc_fct[1][np.int16(index_high - 576)] = np.uint32(np.random.randint(100, 2 ** 24, len(index_high)))
+        prsc_fct[0][np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 24, len(index_low)))
     elif args.ps_column == "linear":
-        prsc_fct_3[np.int16(index_high - 576)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_high)))
-        prsc_fct_2[np.int16(index_low)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_low)))
+        prsc_fct[1][np.int16(index_high - 576)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_high)))
+        prsc_fct[0][np.int16(index_low)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_low)))
 
-    prsc_fct = np.vstack((prsc_fct_2, prsc_fct_3)).flatten()
-    load_prsc_in_RAM(prsc_fct_3, 3, 0)
-    load_prsc_in_RAM(prsc_fct_2, 2, 0)
+    HWtest.load_prsc_in_RAM(prsc_fct, 0)
 
     if args.ps_column == "random":
-        prsc_fct_prvw_3[np.int16(index_high - 576)] = np.uint32(np.random.randint(100, 2 ** 24, len(index_high)))
-        prsc_fct_prvw_2[np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 24, len(index_low)))
+        prsc_fct_prvw[1][np.int16(index_high - 576)] = np.uint32(np.random.randint(100, 2 ** 24, len(index_high)))
+        prsc_fct_prvw[0][np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 24, len(index_low)))
     elif args.ps_column == "linear":
-        prsc_fct_prvw_3[np.int16(index_high - 576)] = np.uint32(np.linspace(100, 2 ** 24 - 1, len(index_high)))
-        prsc_fct_prvw_2[np.int16(index_low)] = np.uint32(np.linspace(100, 2 ** 24 - 1, len(index_low)))
+        prsc_fct_prvw[1][np.int16(index_high - 576)] = np.uint32(np.linspace(100, 2 ** 24 - 1, len(index_high)))
+        prsc_fct_prvw[0][np.int16(index_low)] = np.uint32(np.linspace(100, 2 ** 24 - 1, len(index_low)))
 
-    prsc_fct_prvw = np.vstack((prsc_fct_prvw_2, prsc_fct_prvw_3)).flatten()
-    load_prsc_in_RAM(prsc_fct_prvw_3, 3, 1)
-    load_prsc_in_RAM(prsc_fct_prvw_2, 2, 1)
+    HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
     
-    ls_prescale_mark = read_lumi_sec_prescale_mark()
+    ls_prescale_mark = HWtest.read_lumi_sec_prescale_mark()
     print("SLR 2 mark = %d" % ls_prescale_mark[0])
     print("SLR 3 mark = %d" % ls_prescale_mark[1])
     
-    send_new_prescale_column_flag()
+    HWtest.send_new_prescale_column_flag()
     time.sleep(2)
     
-    ls_prescale_mark = read_lumi_sec_prescale_mark()
+    ls_prescale_mark = HWtest.read_lumi_sec_prescale_mark()
     print("SLR 2 mark = %d" % ls_prescale_mark[0])
     print("SLR 3 mark = %d" % ls_prescale_mark[1])
-    
 
-    load_BXmask_arr(bxmask_3, 3)
-    load_BXmask_arr(bxmask_2, 2)
 
-    load_mask_arr(masks_3, 3)
-    load_mask_arr(masks_2, 2)
-
-    cnt_before_3 = read_cnt_arr(3, 0)
-    cnt_before_2 = read_cnt_arr(2, 0)
-    cnt_before = np.vstack((cnt_before_2, cnt_before_3)).flatten()
-    cnt_after_3 = read_cnt_arr(3, 1)
-    cnt_after_2 = read_cnt_arr(2, 1)
-    cnt_after = np.vstack((cnt_after_2, cnt_after_3)).flatten()
-    cnt_prvw_3 = read_cnt_arr(3, 2)
-    cnt_prvw_2 = read_cnt_arr(2, 2)
-    cnt_prvw = np.vstack((cnt_prvw_2, cnt_prvw_3)).flatten()
-    cnt_pdt_3 = read_cnt_arr(3, 3)
-    cnt_pdt_2 = read_cnt_arr(2, 3)
-    cnt_pdt = np.vstack((cnt_pdt_2, cnt_pdt_3)).flatten()
+    cnt_before = HWtest.read_cnt_arr(0)
+    cnt_after  = HWtest.read_cnt_arr(1)
+    cnt_prvw   = HWtest.read_cnt_arr(2)
+    cnt_pdt    = HWtest.read_cnt_arr(3)
 
     # compute expected rate
-    rate_before_theo = np.float64(np.zeros_like(prsc_fct))
-    rate_after_theo = np.float64(np.zeros_like(prsc_fct))
-    rate_prvw_theo = np.float64(np.zeros_like(prsc_fct))
+    rate_before_theo = np.float64(np.zeros(1152))
+    rate_after_theo = np.float64(np.zeros(1152))
+    rate_prvw_theo = np.float64(np.zeros(1152))
 
     rate_before_theo[np.uint32(index)] = np.uint32(repetitions * (2 ** 18))
-    rate_after_theo[np.uint32(index)] = np.uint32(repetitions * (2 ** 18) / prsc_fct[np.int16(index)] * 100)
-    rate_prvw_theo[np.uint32(index)] = np.uint32(repetitions * (2 ** 18) / prsc_fct_prvw[np.int16(index)] * 100)
+    rate_after_theo[np.uint32(index)] = np.uint32(repetitions * (2 ** 18) / prsc_fct.flatten()[np.int16(index)] * 100)
+    rate_prvw_theo[np.uint32(index)] = np.uint32(repetitions * (2 ** 18) / prsc_fct_prvw.flatten()[np.int16(index)] * 100)
 
 
     time.sleep(47)
@@ -329,21 +291,13 @@ if args.test =='prescaler':
             print("Current orbit counter = %d" % ttcStatus.orbitCount)
             o_ctr_temp = ttcStatus.orbitCount
 
-            cnt_before_3 = read_cnt_arr(3, 0)
-            cnt_before_2 = read_cnt_arr(2, 0)
-            cnt_before = np.vstack((cnt_before_2, cnt_before_3)).flatten()
-            cnt_after_3 = read_cnt_arr(3, 1)
-            cnt_after_2 = read_cnt_arr(2, 1)
-            cnt_after = np.vstack((cnt_after_2, cnt_after_3)).flatten()
-            cnt_prvw_3 = read_cnt_arr(3, 2)
-            cnt_prvw_2 = read_cnt_arr(2, 2)
-            cnt_prvw = np.vstack((cnt_prvw_2, cnt_prvw_3)).flatten()
-            cnt_pdt_3 = read_cnt_arr(3, 3)
-            cnt_pdt_2 = read_cnt_arr(2, 3)
-            cnt_pdt = np.vstack((cnt_pdt_2, cnt_pdt_3)).flatten()
+            cnt_before = HWtest.read_cnt_arr(0)
+            cnt_after = HWtest.read_cnt_arr(1)
+            cnt_prvw = HWtest.read_cnt_arr(2)
+            cnt_pdt = HWtest.read_cnt_arr(3)
 
-            trigg_cnt = read_trigg_cnt(0)
-            trigg_cnt_pdt = read_trigg_cnt(1)
+            trigg_cnt = HWtest.read_trigg_cnt(0)
+            trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
 
             rate_before_exp = cnt_before
             rate_after_exp = cnt_after
@@ -370,99 +324,81 @@ if args.test =='prescaler':
         sys.stdout.flush()
 
 
-    ls_trigg_mark = read_lumi_sec_trigger_mask_mark()
+    ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
     print("SLR 2 mark = %d" % ls_trigg_mark[0])
     print("SLR 3 mark = %d" % ls_trigg_mark[1])
 
-    ls_prescale_mark = read_lumi_sec_prescale_mark()
+    ls_prescale_mark = HWtest.read_lumi_sec_prescale_mark()
     print("SLR 2 mark = %d" % ls_prescale_mark[0])
     print("SLR 3 mark = %d" % ls_prescale_mark[1])
 
-elif args.test =='trigger_mask':
+
 #-------------------------------------------------------------------------------------
 #-----------------------------------TRIGG MASK TEST-----------------------------------
 #-------------------------------------------------------------------------------------
+elif args.test == 'trigger_mask':
 
     # load data from PaternProducer metadata
     trigg_index = np.loadtxt('Pattern_files/metadata/Trigg_mask_test/trigg_index.txt')
     trigg_rep   = np.loadtxt('Pattern_files/metadata/Trigg_mask_test/trigg_rep.txt')
 
-    # Set the bxmasks as a pass through
-    bxmask_3 = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
-    bxmask_2 = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+    bxmask = np.empty((2, 18, 4096), dtype=np.uint32)
+    bxmask[0] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+    bxmask[1] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
 
+    HWtest.load_BXmask_arr(bxmask)
     # Set the masks to match trigg_index
-    masks_3 = np.zeros(144, dtype=np.uint32)
-    masks_2 = np.zeros(144, dtype=np.uint32)
-
-    
-
+    trigger_mask = np.zeros((2, 144), dtype=np.uint32)
     for mask_i, indeces in enumerate(trigg_index):
         for index in indeces:
             if index < 576:
                 reg_index = np.uint16(np.floor(index/32) + mask_i * 18)
                 print(reg_index)
-                masks_2[np.uint16(reg_index)] = masks_2[np.uint32(reg_index)] | (1 << np.uint32(index - 32*np.floor(index/32)))
-                print(hex(masks_2[np.uint16(reg_index)]))
+                trigger_mask[0][np.uint16(reg_index)] = trigger_mask[0][np.uint32(reg_index)] | (1 << np.uint32(index - 32*np.floor(index/32)))
+                print(hex(trigger_mask[0][np.uint16(reg_index)]))
             else:
                 reg_index = np.uint16(np.floor((index-576)/32) + mask_i * 18)
                 print(reg_index)
-                masks_3[np.uint16(reg_index)] = masks_3[np.uint32(reg_index)] | (1 << np.uint32((index-576) - 32 * np.floor((index-576)/32)))
-                print(hex(masks_3[np.uint16(reg_index)]))
+                trigger_mask[1][np.uint16(reg_index)] = trigger_mask[1][np.uint32(reg_index)] | (1 << np.uint32((index-576) - 32 * np.floor((index-576)/32)))
+                print(hex(trigger_mask[1][np.uint16(reg_index)]))
 
     # Set pre-scaler factors
-    prsc_fct_3 = np.uint32(100 * np.ones(576))  # 1.00
-    prsc_fct_2 = np.uint32(100 * np.ones(576))  # 1.00
-    prsc_fct_prvw_3 = np.uint32(100 * np.ones(576))  # 1.00
-    prsc_fct_prvw_2 = np.uint32(100 * np.ones(576))  # 1.00
+    prsc_fct = np.uint32(100 * np.ones((2, 576)))  # 1.00
+    prsc_fct_prvw = np.uint32(100 * np.ones((2, 576)))  # 1.00
 
 
-    load_prsc_in_RAM(prsc_fct_3, 3, 0)
-    load_prsc_in_RAM(prsc_fct_2, 2, 0)
-    load_prsc_in_RAM(prsc_fct_prvw_3, 3, 1)
-    load_prsc_in_RAM(prsc_fct_prvw_2, 2, 1)
+    HWtest.load_prsc_in_RAM(prsc_fct, 0)
+    HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
 
-    ls_prescale_mark = read_lumi_sec_prescale_mark()
+    ls_prescale_mark = HWtest.read_lumi_sec_prescale_mark()
     print("SLR 2 mark = %d" % ls_prescale_mark[0])
     print("SLR 3 mark = %d" % ls_prescale_mark[1])
     
-    send_new_prescale_column_flag()
+    HWtest.send_new_prescale_column_flag()
     time.sleep(2)
     
-    ls_prescale_mark = read_lumi_sec_prescale_mark()
+    ls_prescale_mark = HWtest.read_lumi_sec_prescale_mark()
     print("SLR 2 mark = %d" % ls_prescale_mark[0])
     print("SLR 3 mark = %d" % ls_prescale_mark[1])
 
-    load_BXmask_arr(bxmask_3, 3)
-    load_BXmask_arr(bxmask_2, 2)
+    HWtest.load_mask_arr(trigger_mask)
 
-    load_mask_arr(masks_3, 3)
-    load_mask_arr(masks_2, 2)
-
-    ls_trigg_mark = read_lumi_sec_trigger_mask_mark()
+    ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
     print("SLR 2 mark = %d" % ls_trigg_mark[0])
     print("SLR 3 mark = %d" % ls_trigg_mark[1])
     
-    send_new_trigger_mask_flag()
+    HWtest.send_new_trigger_mask_flag()
     time.sleep(2)
     
-    ls_trigg_mark = read_lumi_sec_trigger_mask_mark()
+    ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
     print("SLR 2 mark = %d" % ls_trigg_mark[0])
     print("SLR 3 mark = %d" % ls_trigg_mark[1])
 
     # Read counters from board
-    cnt_before_3 = read_cnt_arr(3, 0)
-    cnt_before_2 = read_cnt_arr(2, 0)
-    cnt_before   = np.vstack((cnt_before_2, cnt_before_3)).flatten()
-    cnt_after_3  = read_cnt_arr(3, 1)
-    cnt_after_2  = read_cnt_arr(2, 1)
-    cnt_after    = np.vstack((cnt_after_2, cnt_after_3)).flatten()
-    cnt_prvw_3   = read_cnt_arr(3, 2)
-    cnt_prvw_2   = read_cnt_arr(2, 2)
-    cnt_prvw     = np.vstack((cnt_prvw_2, cnt_prvw_3)).flatten()
-    cnt_pdt_3    = read_cnt_arr(3, 3)
-    cnt_pdt_2    = read_cnt_arr(2, 3)
-    cnt_pdt      = np.vstack((cnt_pdt_2, cnt_pdt_3)).flatten()
+    cnt_before = HWtest.read_cnt_arr(0)
+    cnt_after = HWtest.read_cnt_arr(1)
+    cnt_prvw = HWtest.read_cnt_arr(2)
+    cnt_pdt = HWtest.read_cnt_arr(3)
 
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
@@ -482,8 +418,8 @@ elif args.test =='trigger_mask':
             print("Current orbit counter = %d" % ttcStatus.orbitCount)
             o_ctr_temp = ttcStatus.orbitCount
 
-            trigg_cnt     = read_trigg_cnt(0)
-            trigg_cnt_pdt = read_trigg_cnt(1)
+            trigg_cnt     = HWtest.read_trigg_cnt(0)
+            trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
 
             for trigg_index, cnt in enumerate(trigg_cnt):
                 error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
