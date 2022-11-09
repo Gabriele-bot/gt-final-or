@@ -55,16 +55,16 @@ entity algo_slice is
         l1a               : in std_logic;
 
         request_update_factor_pulse : in std_logic;
+        request_update_veto_pulse   : in std_logic;
         begin_lumi_per              : in std_logic;
-        
+
         algo_i                      : in std_logic;
         algo_del_i                  : in std_logic;
-        
+
         prescale_factor             : in std_logic_vector(PRESCALE_FACTOR_WIDTH-1 DOWNTO 0);
         prescale_factor_preview     : in std_logic_vector(PRESCALE_FACTOR_WIDTH-1 DOWNTO 0);
 
         algo_bx_mask : in std_logic;
-        veto_mask    : in std_logic;
 
         rate_cnt_before_prescaler        : out std_logic_vector(RATE_COUNTER_WIDTH-1 DOWNTO 0);
         rate_cnt_after_prescaler         : out std_logic_vector(RATE_COUNTER_WIDTH-1 DOWNTO 0);
@@ -73,9 +73,7 @@ entity algo_slice is
 
         algo_after_bxomask           : out std_logic;
         algo_after_prescaler         : out std_logic;
-        algo_after_prescaler_preview : out std_logic;
-
-        veto : out std_logic
+        algo_after_prescaler_preview : out std_logic
     );
 end algo_slice;
 
@@ -83,8 +81,10 @@ architecture rtl of algo_slice is
 
     signal algo_after_algo_bx_mask_int      : std_logic;
     signal algo_after_prescaler_int         : std_logic;
-    signal algo_after_prescaler_preview_int : std_logic;    
+    signal algo_after_prescaler_preview_int : std_logic;
     signal begin_lumi_per_del1              : std_logic;
+    signal veto_vec                         : std_logic_vector(0  downto 0);
+    signal veto_int                         : std_logic_vector(0  downto 0);
 
 
 begin
@@ -128,8 +128,6 @@ begin
             prescale_factor             => prescale_factor,
             prescaled_algo_o            => algo_after_prescaler_int
         );
-
-    veto <= algo_after_prescaler_int and veto_mask;
 
     -- HB 2016-08-31: renamed algo_rate_counter after finor-mask to algo_rate_counter after presclaer.
     rate_cnt_after_prescaler_i: entity work.algo_rate_counter
@@ -177,8 +175,8 @@ begin
             algo_i          => algo_after_prescaler_preview_int,
             counter_o       => rate_cnt_after_prescaler_preview
         );
-        
-    
+
+
 
     rate_cnt_post_dead_time_i: entity work.algo_rate_counter_pdt
         generic map(
