@@ -38,7 +38,7 @@ variables:
 
 test:serenity:
   extends: .test_base
-  #image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
+  image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
   variables:
     HARDWARE_TEST_SERENITY_SITE: x0
     SMASH_DEFAULT_CONFIG: /board.smash
@@ -92,12 +92,12 @@ test:serenity:
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_prescaler_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3 ${CI_PROJECT_DIR}/gt-final-or/scripts/RateChecker.py p random -t prescaler
+    - python ${CI_PROJECT_DIR}/gt-final-or/scripts/RateChecker.py p random -t prescaler
     # Trigger masks test
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_trigg_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3 ${CI_PROJECT_DIR}/gt-final-or/scripts/RateChecker.py p random -t trigger_mask
+    - python ${CI_PROJECT_DIR}/gt-final-or/scripts/RateChecker.py p random -t trigger_mask
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
