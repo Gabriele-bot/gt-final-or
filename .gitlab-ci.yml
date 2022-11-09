@@ -38,7 +38,8 @@ variables:
 
 test:serenity:
   extends: .test_base
-  image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
+  #image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
+  image: gitlab-registry.cern.ch/cms-cactus/phase2/pyswatch/centos/algo-test-runner:${HARDWARE_TEST_IMAGE_TAG}
   variables:
     HARDWARE_TEST_SERENITY_SITE: x0
     SMASH_DEFAULT_CONFIG: /board.smash
