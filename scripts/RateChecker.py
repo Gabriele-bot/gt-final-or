@@ -1,4 +1,4 @@
- Script for checking pre-scale correct behaviour of the Phase-2 Finor Board.
+# Script for checking pre-scale correct behaviour of the Phase-2 Finor Board.
 # Developed  by Gabriele Bortolato (Padova  University)
 # gabriele.bortolato@cern.ch
 
