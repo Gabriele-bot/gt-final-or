@@ -46,13 +46,15 @@ entity m_module is
         algos_in                 : in  std_logic_vector(NR_ALGOS-1 downto 0);
         algos_after_prescaler_o  : out std_logic_vector(NR_ALGOS-1 downto 0);
         trgg_o                   : out std_logic_vector(N_TRIGG-1  downto 0);
-        trgg_with_veto_o         : out std_logic_vector(N_TRIGG-1  downto 0)
+        veto_o                   : out std_logic
 
     );
 end m_module;
 
 
 architecture rtl of m_module is
+    
+    constant NULL_VETO_MASK    : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
@@ -77,11 +79,11 @@ architecture rtl of m_module is
     signal rate_cnt_after_prescaler_preview : ipb_reg_v(NR_ALGOS - 1 downto 0);
     signal rate_cnt_post_dead_time          : ipb_reg_v(NR_ALGOS - 1 downto 0);
 
-    signal masks_ipbus_regs      : ipb_reg_v(NR_ALGOS/32*N_TRIGG - 1 downto 0) := (others => (others => '1'));
-    signal masks                 : mask_arr := (others => (others => '1'));
+    signal masks_ipbus_regs        : ipb_reg_v(NR_ALGOS/32*N_TRIGG - 1 downto 0) := (others => (others => '1'));
+    signal masks                   : mask_arr := (others => (others => '1'));
 
-    signal veto_ipbus_regs       : ipb_reg_v(NR_ALGOS/32 - 1 downto 0) := (others => (others => '0'));
-    signal veto_mask             : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    signal veto_ipbus_regs         : ipb_reg_v(NR_ALGOS/32 - 1 downto 0) := (others => (others => '0'));
+    signal veto_mask,veto_mask_int : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
     signal request_factor_update    : std_logic;
     signal new_prescale_column      : std_logic;
@@ -132,6 +134,9 @@ architecture rtl of m_module is
     signal suppress_cal_trigger     : std_logic;
     signal supp_cal_BX_low          : std_logic_vector(11 downto 0);
     signal supp_cal_BX_high         : std_logic_vector(11 downto 0);
+    
+    signal veto                     : std_logic_vector(NR_ALGOS-1 downto 0);
+    signal veto_out_s               : std_logic;
 
     signal trigger_out              : std_logic_vector(N_TRIGG-1 downto 0);
     signal trigger_with_veto_out    : std_logic_vector(N_TRIGG-1 downto 0);
@@ -236,26 +241,6 @@ begin
     end process;
 
 
-    -- process to read from ipbus-RAMs
-    process (lhc_clk)
-    begin
-        if rising_edge(lhc_clk) then
-            -----------Prescalers----------------------------
-            prscl_fct(to_integer     (unsigned(addr_prscl_w)))  <= q_prscl_fct;
-            prscl_fct_prvw(to_integer(unsigned(addr_prscl_w)))  <= q_prscl_fct_prvw;
-            -----------Trigger masks---------------------------------
-            masks_ipbus_regs(to_integer(unsigned(addr_mask_w))) <= q_mask;
-            -----------Veto masks------------------------------------
-            veto_ipbus_regs(to_integer(unsigned(addr_veto_w)))  <= q_veto;
-        end if;
-    end process;
-
-    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler       (to_integer(unsigned(addr)));
-    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler        (to_integer(unsigned(addr)));
-    d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(unsigned(addr)));
-    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time         (to_integer(unsigned(addr)));
-
-
     fabric_i: entity work.ipbus_fabric_sel
         generic map(
             NSLV      => N_SLAVES,
@@ -312,6 +297,16 @@ begin
             q       => q_prscl_fct_prvw,
             addr    => std_logic_vector(addr_prscl)
         );
+        
+    -- process to read from ipbus-RAMs
+    process (lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            -----------Prescalers----------------------------
+            prscl_fct(to_integer     (unsigned(addr_prscl_w)))  <= q_prscl_fct;
+            prscl_fct_prvw(to_integer(unsigned(addr_prscl_w)))  <= q_prscl_fct_prvw;
+        end if;
+    end process;
 
     ----------------------------------------------------------------------------------
     ---------------RATE COUNTER BEFORE PRE-SCALE REGISTERS----------------------------
@@ -400,6 +395,13 @@ begin
             q       => open,
             addr    => std_logic_vector(addr)
         );
+        
+        
+    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler       (to_integer(unsigned(addr)));
+    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler        (to_integer(unsigned(addr)));
+    d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(unsigned(addr)));
+    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time         (to_integer(unsigned(addr)));
+    
 
     CSR_regs : entity work.ipbus_ctrlreg_v
         generic map(
@@ -610,6 +612,14 @@ begin
             q       => q_mask,
             addr    => std_logic_vector(addr_mask)
         );
+        
+    process (lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            -----------Trigger masks---------------------------------
+            masks_ipbus_regs(to_integer(unsigned(addr_mask_w))) <= q_mask;
+        end if;
+    end process;
 
     mask_l : for i in N_TRIGG - 1 downto 0 generate
         process(lhc_clk)
@@ -633,7 +643,7 @@ begin
 
 
     ----------------------------------------------------------------------------------
-    ---------------TRIGGER MASKS REGISTERS--------------------------------------------
+    ------------------VETO MASKS REGISTERS--------------------------------------------
     ----------------------------------------------------------------------------------
 
     veto_regs : entity work.ipbus_initialized_dpram
@@ -653,24 +663,46 @@ begin
             q       => q_veto,
             addr    => std_logic_vector(addr_veto)
         );
+    
+    process (lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            -----------Veto masks------------------------------------
+            veto_ipbus_regs(to_integer(unsigned(addr_veto_w)))  <= q_veto;
+        end if;
+    end process;
 
     process(lhc_clk)
     begin
         if rising_edge(lhc_clk) then
             if (ready_veto = '1' and ready_veto_1 = '0') then --rising edge
                 veto_mask  <= (veto_ipbus_regs(17), veto_ipbus_regs(16),
-                              veto_ipbus_regs(15), veto_ipbus_regs(14),
-                              veto_ipbus_regs(13), veto_ipbus_regs(12),
-                              veto_ipbus_regs(11), veto_ipbus_regs(10),
-                              veto_ipbus_regs(9) , veto_ipbus_regs(8) ,
-                              veto_ipbus_regs(7) , veto_ipbus_regs(6) ,
-                              veto_ipbus_regs(5) , veto_ipbus_regs(4) ,
-                              veto_ipbus_regs(3) , veto_ipbus_regs(2) ,
-                              veto_ipbus_regs(1) , veto_ipbus_regs(0) );
+                              veto_ipbus_regs(15) , veto_ipbus_regs(14),
+                              veto_ipbus_regs(13) , veto_ipbus_regs(12),
+                              veto_ipbus_regs(11) , veto_ipbus_regs(10),
+                              veto_ipbus_regs(9)  , veto_ipbus_regs(8) ,
+                              veto_ipbus_regs(7)  , veto_ipbus_regs(6) ,
+                              veto_ipbus_regs(5)  , veto_ipbus_regs(4) ,
+                              veto_ipbus_regs(3)  , veto_ipbus_regs(2) ,
+                              veto_ipbus_regs(1)  , veto_ipbus_regs(0) );
             end if;
         end if;
     end process;
     -- TODO Make it interchangable
+    
+    
+    veto_update_i: entity work.update_process
+        generic map(
+            WIDTH      => NR_ALGOS,
+            INIT_VALUE => NULL_VETO_MASK
+        )
+        port map(
+            clk                  => lhc_clk,
+            request_update_pulse => request_veto_update,
+            update_pulse         => begin_lumi_per,
+            data_i               => veto_mask,
+            data_o               => veto_mask_int
+        );
 
     ----------------------------------------------------------------------------------
     ---------------COUNTERS INTERNAL---------------------------------------------------
@@ -785,13 +817,15 @@ begin
                 prescale_factor                  => prscl_fct(i)(PRESCALE_FACTOR_WIDTH-1 downto 0),
                 prescale_factor_preview          => prscl_fct_prvw(i)(PRESCALE_FACTOR_WIDTH-1 downto 0),
                 algo_bx_mask                     => algo_bx_mask_mem_out(i),
+                veto_mask                        => veto_mask_int(i),
                 rate_cnt_before_prescaler        => rate_cnt_before_prescaler(i),
                 rate_cnt_after_prescaler         => rate_cnt_after_prescaler(i),
                 rate_cnt_after_prescaler_preview => rate_cnt_after_prescaler_preview(i),
                 rate_cnt_post_dead_time          => rate_cnt_post_dead_time(i),
                 algo_after_bxomask               => algos_after_bxmask(i),
                 algo_after_prescaler             => algos_after_prescaler(i),
-                algo_after_prescaler_preview     => algos_after_prescaler_preview(i)
+                algo_after_prescaler_preview     => algos_after_prescaler_preview(i),
+                veto                             => veto(i)
             );
     end generate;
 
@@ -809,18 +843,21 @@ begin
         port map(
             clk                             => lhc_clk,
             algos_in                        => algos_after_prescaler,
-            veto_in                         => veto_mask,
             masks                           => masks,
             request_masks_update_pulse      => request_masks_update,
-            request_veto_update_pulse       => request_veto_update,
             update_pulse                    => begin_lumi_per,
-            trigger_out                     => trigger_out,
-            trigger_with_veto_out           => trigger_with_veto_out
+            trigger_out                     => trigger_out
         );
+        
+    veto_reg_p : process(lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            veto_out_s <= or veto;
+        end if;
+    end process;
 
     trgg_o           <= trigger_out;
-    trgg_with_veto_o <= trigger_with_veto_out;
-
+    veto_o           <= veto_out_s;
 
 
 end rtl;

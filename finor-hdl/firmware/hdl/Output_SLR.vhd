@@ -35,12 +35,12 @@ entity Output_SLR is
 
         ctrs                     : in  ttc_stuff_t;
 
-        q           : out ldata(0 downto 0);             -- data out
-        trgg_0           : in std_logic_vector(N_TRIGG-1 downto 0);
-        trgg_1           : in std_logic_vector(N_TRIGG-1 downto 0);
-        trgg_with_veto_0 : in std_logic_vector(N_TRIGG-1 downto 0);
-        trgg_with_veto_1 : in std_logic_vector(N_TRIGG-1 downto 0)
+        trgg_0 : in std_logic_vector(N_TRIGG-1 downto 0);
+        trgg_1 : in std_logic_vector(N_TRIGG-1 downto 0);
+        veto_0 : in std_logic;
+        veto_1 : in std_logic;
 
+        q           : out ldata(0 downto 0)             -- data out
     );
 end entity Output_SLR;
 
@@ -213,8 +213,16 @@ begin
     Final_OR_p : process (trgg_0, trgg_1)
     begin
         Final_OR           <= trgg_0 or trgg_1;
-        Final_OR_with_veto <= trgg_with_veto_0 or trgg_with_veto_1;
     end process;
+
+    Final_OR_with_veto_l : for i in 0 to N_TRIGG -1 generate
+        Final_OR_with_veto_p : process (trgg_0, trgg_1, veto_0, veto_1)
+        begin
+            Final_OR_with_veto(i) <= (trgg_0(i) or trgg_1(i)) and not(veto_0 or veto_1);
+        end process;
+    end generate;
+
+
 
     gen_rate_counters_l : for i in 0 to N_TRIGG - 1 generate
         rate_counters_i : entity work.algo_rate_counter

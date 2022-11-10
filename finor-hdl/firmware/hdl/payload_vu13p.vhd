@@ -54,10 +54,11 @@ architecture rtl of emp_payload is
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
-    signal trgg_SLR3_regs            : SLRCross_trigg_t;
-    signal trgg_with_veto_SLR3_regs  : SLRCross_trigg_t;
-    signal trgg_SLR2_regs            : SLRCross_trigg_t;
-    signal trgg_with_veto_SLR2_regs  : SLRCross_trigg_t;
+    signal trgg_SLR3_regs  : SLRCross_trigg_t;
+    signal veto_SLR3_regs  : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    signal trgg_SLR2_regs  : SLRCross_trigg_t;
+    signal veto_SLR2_regs  : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+
 
     signal algos_SLR3       : std_logic_vector(64*9-1 downto 0);
     signal algos_SLR2       : std_logic_vector(64*9-1 downto 0);
@@ -73,15 +74,19 @@ architecture rtl of emp_payload is
     attribute keep : boolean;
     attribute keep of trgg_SLR3_regs : signal is true;
     attribute keep of trgg_SLR2_regs : signal is true;
+    attribute keep of veto_SLR3_regs : signal is true;
+    attribute keep of veto_SLR2_regs : signal is true;
 
     attribute keep of algos_SLR3_regs       : signal is DEBUG;
     attribute keep of algos_presc_SLR3_regs : signal is DEBUG;
     attribute keep of algos_SLR2_regs       : signal is DEBUG;
     attribute keep of algos_presc_SLR2_regs : signal is DEBUG;
 
-    attribute shreg_extract                       : string;
-    attribute shreg_extract of trgg_SLR3_regs     : signal is "no";
-    attribute shreg_extract of trgg_SLR2_regs     : signal is "no";
+    attribute shreg_extract                   : string;
+    attribute shreg_extract of trgg_SLR3_regs : signal is "no";
+    attribute shreg_extract of trgg_SLR2_regs : signal is "no";
+    attribute shreg_extract of veto_SLR3_regs : signal is "no";
+    attribute shreg_extract of veto_SLR2_regs : signal is "no";
 
     attribute shreg_extract of algos_SLR3_regs       : signal is "no";
     attribute shreg_extract of algos_presc_SLR3_regs : signal is "no";
@@ -127,7 +132,7 @@ begin
             d(11 downto 0)   => d(59 downto 48), -- regions[12,13,14]
             d(23 downto 12)  => d(79 downto 68), -- regions[17,18,19]
             trgg             => trgg_SLR3_regs(0),
-            trgg_with_veto   => trgg_with_veto_SLR3_regs(0),
+            veto             => veto_SLR3_regs(0),
             algos            => algos_SLR3_regs(0),
             algos_prescaled  => algos_presc_SLR3_regs(0)
         );
@@ -150,7 +155,7 @@ begin
             d(11 downto 0)   => d(47 downto 36),
             d(23 downto 12)  => d(91 downto 80),
             trgg             => trgg_SLR2_regs(0),
-            trgg_with_veto   => trgg_with_veto_SLR2_regs(0),
+            veto             => veto_SLR2_regs(0),
             algos            => algos_SLR2_regs(0),
             algos_prescaled  => algos_presc_SLR2_regs(0)
         );
@@ -161,8 +166,8 @@ begin
             trgg_SLR3_regs(trgg_SLR3_regs'high downto 1) <= trgg_SLR3_regs(trgg_SLR3_regs'high - 1 downto 0);
             trgg_SLR2_regs(trgg_SLR2_regs'high downto 1) <= trgg_SLR2_regs(trgg_SLR2_regs'high - 1 downto 0);
             
-            trgg_with_veto_SLR3_regs(trgg_with_veto_SLR3_regs'high downto 1) <= trgg_with_veto_SLR3_regs(trgg_with_veto_SLR3_regs'high - 1 downto 0);
-            trgg_with_veto_SLR2_regs(trgg_with_veto_SLR2_regs'high downto 1) <= trgg_with_veto_SLR2_regs(trgg_with_veto_SLR2_regs'high - 1 downto 0);
+            veto_SLR3_regs(veto_SLR3_regs'high downto 1) <= veto_SLR3_regs(veto_SLR3_regs'high - 1 downto 0);
+            veto_SLR2_regs(veto_SLR2_regs'high downto 1) <= veto_SLR2_regs(veto_SLR2_regs'high - 1 downto 0);
         end if;
     end process;
 
@@ -182,10 +187,10 @@ begin
             lhc_rst => rst_payload(2),
             ctrs    => ctrs(8),
             q(0)    => q(35),
-            trgg_0  => trgg_SLR3_regs(trgg_SLR3_regs'high),
-            trgg_1  => trgg_SLR2_regs(trgg_SLR2_regs'high),
-            trgg_with_veto_0  => trgg_with_veto_SLR3_regs(trgg_with_veto_SLR3_regs'high),
-            trgg_with_veto_1  => trgg_with_veto_SLR2_regs(trgg_with_veto_SLR2_regs'high)
+            trgg_0  => trgg_SLR2_regs(trgg_SLR2_regs'high),
+            trgg_1  => trgg_SLR3_regs(trgg_SLR3_regs'high),
+            veto_0  => veto_SLR2_regs(veto_SLR2_regs'high),
+            veto_1  => veto_SLR3_regs(veto_SLR3_regs'high)
         );
 
 
