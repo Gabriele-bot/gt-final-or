@@ -65,7 +65,7 @@ begin
 
     trigger_out_l : for i in 0 to N_TRIGG -1 generate
         trigger_s(i)           <= or (algos_in and masks_int(i));
-        trigger_with_veto_s(i) <= (or (algos_in and masks_int(i))) and (nor veto_in);
+        trigger_with_veto_s(i) <= (or (algos_in and masks_int(i))) and (nor veto_int);
     end generate;
 
 
