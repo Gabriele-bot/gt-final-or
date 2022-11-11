@@ -9,7 +9,7 @@
     <node id="ctrl" address="0x0">
       <node id="new_prescale_column"    mask="0x00000001"/>
       <node id="new_trigger_masks"      mask="0x00000002"/>
-      <node id="new_veto"               mask="0x00000004"/>
+      <node id="new_veto_mask"          mask="0x00000004"/>
       <node id="l1_latency_delay"       mask="0xfffffff8"/>
       <node id="BX_begin" address="0x1" mask="0x00000fff"/>
       <node id="BX_end"   address="0x1" mask="0x00fff000"/>
