@@ -20,7 +20,8 @@ use work.math_pkg.all;
 entity SLR_FinOR_unit is
     generic(
         NR_LINKS   : natural := INPUT_LINKS;
-        NR_MON_REG : natural := MON_REG
+        NR_MON_REG : natural := MON_REG;
+        MAX_DELAY  : natural := MAX_DELAY_PDT
     );
     port(
         clk     : in  std_logic;
@@ -108,6 +109,9 @@ begin
         ) ;
 
     deser_i : entity work.In_deser
+        generic map(
+            OUT_REG => FALSE
+        )
         port map(
             clk360       => clk360,
             lhc_clk      => lhc_clk,
@@ -123,7 +127,7 @@ begin
         generic map(
             NR_ALGOS             => 64*9,
             PRESCALE_FACTOR_INIT => X"00000064", --1.00
-            MAX_DELAY            => 127
+            MAX_DELAY            => MAX_DELAY
         )
         port map(
             clk                     => clk,

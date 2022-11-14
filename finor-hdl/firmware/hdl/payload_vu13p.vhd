@@ -40,10 +40,6 @@ end emp_payload;
 
 architecture rtl of emp_payload is
 
-    constant DEBUG : boolean := false;
-
-    constant SLR_CROSSING_LATENCY : natural := 9;
-
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
@@ -116,7 +112,8 @@ begin
 
     SLR3_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS => INPUT_LINKS
+            NR_LINKS => INPUT_LINKS,
+            MAX_DELAY => MAX_DELAY_PDT
         )
         port map(
             clk              => clk,
@@ -139,7 +136,8 @@ begin
 
     SLR2_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS => INPUT_LINKS
+            NR_LINKS => INPUT_LINKS,
+            MAX_DELAY => MAX_DELAY_PDT
         )
         port map(
             clk              => clk,
@@ -174,7 +172,7 @@ begin
 
     SLR2_FinalOR_or : entity work.Output_SLR
         generic map(
-            MAX_DELAY => 127
+            MAX_DELAY => MAX_DELAY_PDT
         )
         port map(
             clk     => clk,

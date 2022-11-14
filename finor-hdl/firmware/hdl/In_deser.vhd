@@ -7,6 +7,9 @@ use unisim.VComponents.all;
 use work.emp_data_types.all;
 use work.emp_ttc_decl.all;
 entity In_deser is
+    generic(
+        OUT_REG : boolean := TRUE
+    );
     port(
         clk360             : in std_logic;
         lhc_clk            : in std_logic;
@@ -49,16 +52,16 @@ begin
             end if;
         end if;
     end process frame_counter_p;
-    
+
     frame_counter_temp_p : process (clk360)
     begin
         if rising_edge(clk360) then
             if data_in_valid_del_arr(9) = '0' then
-                    frame_cntr_temp <= 0;
+                frame_cntr_temp <= 0;
             elsif frame_cntr_temp < 8 then
-                    frame_cntr_temp <= frame_cntr_temp + 1;
+                frame_cntr_temp <= frame_cntr_temp + 1;
             else
-                    frame_cntr_temp <= 0;
+                frame_cntr_temp <= 0;
             end if;
         end if;
     end process frame_counter_temp_p;
@@ -75,12 +78,16 @@ begin
         end if;
     end process load_data_p;
 
-    data_40mhz_p: process(lhc_clk)
-    begin
-        if rising_edge(lhc_clk) then
-            demux_data_o <= data_deserialized;
-        end if;
-    end process;
 
+    out_reg_g : if OUT_REG generate
+        data_40mhz_p: process(lhc_clk)
+        begin
+            if rising_edge(lhc_clk) then
+                demux_data_o <= data_deserialized;
+            end if;
+        end process;
+    else generate
+        demux_data_o <= data_deserialized;
+    end generate;
 
 end architecture rtl;

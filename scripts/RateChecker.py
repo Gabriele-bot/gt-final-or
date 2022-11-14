@@ -16,7 +16,9 @@ parser = argparse.ArgumentParser(description='GT-Final OR board Rate Checker')
 parser.add_argument('-p', '--ps_column', metavar='N', type=str, default='random',
                     help='random --> random pre-scale values,\nlinear --> equally spaced pre-scale values')
 parser.add_argument('-t', '--test', metavar='N', type=str, default='prescaler',
-                    help='prescaler --> launch  a prescaler test,\ntrigger_mask --> launch a trigger mask test')
+                    help='prescaler      --> start a prescaler test, '
+                         '\ntrigger_mask --> start a trigger mask test '
+                         '\nveto_test    --> start a veto mask test ')
 
 args = parser.parse_args()
 
@@ -263,7 +265,7 @@ if args.test =='prescaler':
     print("SLR 2 mark = %d" % ls_veto_mark[0])
     print("SLR 3 mark = %d" % ls_veto_mark[1])
     
-    HWtest.send_new_trigger_mask_flag()
+    HWtest.send_new_veto_mask_flag()
     time.sleep(2)
     
     ls_veto_mark = HWtest.read_lumi_sec_veto_mask_mark()
@@ -460,7 +462,7 @@ elif args.test == 'trigger_mask':
     print("SLR 2 mark = %d" % ls_veto_mark[0])
     print("SLR 3 mark = %d" % ls_veto_mark[1])
     
-    HWtest.send_new_trigger_mask_flag()
+    HWtest.send_new_veto_mask_flag()
     time.sleep(2)
     
     ls_veto_mark = HWtest.read_lumi_sec_veto_mask_mark()
@@ -469,9 +471,9 @@ elif args.test == 'trigger_mask':
 
     # Read counters from board
     cnt_before = HWtest.read_cnt_arr(0)
-    cnt_after = HWtest.read_cnt_arr(1)
-    cnt_prvw = HWtest.read_cnt_arr(2)
-    cnt_pdt = HWtest.read_cnt_arr(3)
+    cnt_after  = HWtest.read_cnt_arr(1)
+    cnt_prvw   = HWtest.read_cnt_arr(2)
+    cnt_pdt    = HWtest.read_cnt_arr(3)
 
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
@@ -507,9 +509,145 @@ elif args.test == 'trigger_mask':
                 print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
                 
             for trigg_index, cnt in enumerate(trigg_cnt_wveto):
-                print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
+                print('Trigger with veto %d-th counter value = %d' % (trigg_index, cnt))
                 
             for trigg_index, cnt in enumerate(trigg_cnt_pdt_wveto):
-                print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
+                print('Trigger %d-th with veto counter post dead time value = %d' % (trigg_index, cnt))
 
             sys.stdout.flush()
+
+# -------------------------------------------------------------------------------------
+# -----------------------------------VETO TEST-----------------------------------------
+# -------------------------------------------------------------------------------------
+elif args.test == 'veto_mask':
+
+    # load data from PaternProducer metadata
+    cnts = np.loadtxt('Pattern_files/metadata/Veto_test/finor_counts.txt')
+    finor_cnts = cnts[0]
+    finor_with_veto_cnts = cnts[1]
+
+    veto_indeces = np.loadtxt('Pattern_files/metadata/Veto_test/veto_indeces.txt')
+
+    bxmask = np.empty((2, 18, 4096), dtype=np.uint32)
+    bxmask[0] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+    bxmask[1] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+
+    HWtest.load_BXmask_arr(bxmask)
+    # Set the masks to match trigg_index
+    trigger_mask = np.ones((2, 144), dtype=np.uint32)*2**32-1
+
+    # Set pre-scaler factors
+    prsc_fct = np.uint32(100 * np.ones((2, 576)))  # 1.00
+    prsc_fct_prvw = np.uint32(100 * np.ones((2, 576)))  # 1.00
+
+    HWtest.load_prsc_in_RAM(prsc_fct, 0)
+    HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
+
+    ls_prescale_mark = HWtest.read_lumi_sec_prescale_mark()
+    print("SLR 2 mark = %d" % ls_prescale_mark[0])
+    print("SLR 3 mark = %d" % ls_prescale_mark[1])
+
+    HWtest.send_new_prescale_column_flag()
+    time.sleep(2)
+
+    ls_prescale_mark = HWtest.read_lumi_sec_prescale_mark()
+    print("SLR 2 mark = %d" % ls_prescale_mark[0])
+    print("SLR 3 mark = %d" % ls_prescale_mark[1])
+
+    HWtest.load_mask_arr(trigger_mask)
+
+    ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
+    print("SLR 2 mark = %d" % ls_trigg_mark[0])
+    print("SLR 3 mark = %d" % ls_trigg_mark[1])
+
+    HWtest.send_new_trigger_mask_flag()
+    time.sleep(2)
+
+    ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
+    print("SLR 2 mark = %d" % ls_trigg_mark[0])
+    print("SLR 3 mark = %d" % ls_trigg_mark[1])
+
+    # Set the veto mask
+    veto_mask = np.zeros((2, 18), dtype=np.uint32)
+    for index in veto_indeces:
+        if index < 576:
+            reg_index = np.uint16(np.floor(index / 32))
+            print(reg_index)
+            veto_mask[0][np.uint16(reg_index)] = veto_mask[0][np.uint32(reg_index)] | (
+                        1 << np.uint32(index - 32 * np.floor(index / 32)))
+            print(hex(veto_mask[0][np.uint16(reg_index)]))
+        else:
+            reg_index = np.uint16(np.floor((index - 576) / 32))
+            print(reg_index)
+            veto_mask[1][np.uint16(reg_index)] = veto_mask[1][np.uint32(reg_index)] | (
+                        1 << np.uint32((index - 576) - 32 * np.floor((index - 576) / 32)))
+            print(hex(veto_mask[1][np.uint16(reg_index)]))
+
+    HWtest.load_veto_mask(veto_mask)
+
+    ls_veto_mark = HWtest.read_lumi_sec_veto_mask_mark()
+    print("SLR 2 mark = %d" % ls_veto_mark[0])
+    print("SLR 3 mark = %d" % ls_veto_mark[1])
+
+    HWtest.send_new_veto_mask_flag()
+    time.sleep(2)
+
+    ls_veto_mark = HWtest.read_lumi_sec_veto_mask_mark()
+    print("SLR 2 mark = %d" % ls_veto_mark[0])
+    print("SLR 3 mark = %d" % ls_veto_mark[1])
+
+    # Read counters from board
+    cnt_before = HWtest.read_cnt_arr(0)
+    cnt_after = HWtest.read_cnt_arr(1)
+    cnt_prvw = HWtest.read_cnt_arr(2)
+    cnt_pdt = HWtest.read_cnt_arr(3)
+
+    # compute expected rate
+    trigg_rate_theo = np.float64(np.zeros(8))
+    trigg_rate_with_veto_theo = np.float64(np.zeros(8))
+    for i in range(8):
+        trigg_rate_theo[i] = np.uint32(finor_cnts * (2 ** 18))
+        trigg_rate_with_veto_theo[i] = np.uint32(finor_with_veto_cnts * (2 ** 18))
+
+    time.sleep(47)
+
+    o_ctr_temp = 0
+
+    for i in range(0, 200):
+
+        ttcStatus = ttcNode.readStatus()
+        time.sleep(1)
+        if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+            os.system('clear')
+            print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            o_ctr_temp = ttcStatus.orbitCount
+
+            trigg_cnt = HWtest.read_trigg_cnt(0)
+            trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
+            trigg_cnt_wveto = HWtest.read_trigg_cnt(2)
+            trigg_cnt_pdt_wveto = HWtest.read_trigg_cnt(3)
+
+            for trigg_index, cnt in enumerate(trigg_cnt):
+                error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
+                print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
+                if error_trgg > 1:
+                    print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
+                    print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
+
+            for trigg_index, cnt in enumerate(trigg_cnt_pdt):
+                print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
+
+            for trigg_index, cnt in enumerate(trigg_cnt_wveto):
+                error_trgg = np.abs(trigg_rate_with_veto_theo[trigg_index] - cnt)
+                print('Trigger with veto %d-th counter value = %d' % (trigg_index, cnt))
+                if error_trgg > 1:
+                    print('Mismatch found on %d-th trigger rate with veto, error= %d' % (trigg_index, error_trgg))
+                    print('Expected value %d, Value got= %d' % (trigg_rate_with_veto_theo[trigg_index], cnt))
+
+            for trigg_index, cnt in enumerate(trigg_cnt_pdt_wveto):
+                print('Trigger %d-th with veto counter post dead time value = %d' % (trigg_index, cnt))
+
+            sys.stdout.flush()
+
+else:
+    print('No suitable test was selected!')
