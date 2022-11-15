@@ -24,7 +24,7 @@ package P2GT_finor_pkg is
     constant INPUT_LINKS            : integer := 24;
     constant MON_REG                : integer := 6;
     constant N_TRIGG                : integer := 8;
-    constant BEGIN_LUMI_SECTION_BIT : integer := 1;
+    constant BEGIN_LUMI_SECTION_BIT : integer := 18;
     constant MAX_DELAY_PDT          : integer := 255;
     constant SLR_CROSSING_LATENCY   : integer := 5;
     

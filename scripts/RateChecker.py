@@ -649,5 +649,143 @@ elif args.test == 'veto_mask':
 
             sys.stdout.flush()
 
+# -------------------------------------------------------------------------------------
+# -----------------------------------BX MASK TEST--------------------------------------
+# -------------------------------------------------------------------------------------
+elif args.test == 'BXmask':
+
+    # load data from PaternProducer metadata
+    algo_data = np.loadtxt('Pattern_files/metadata/BXmask_test/algo_rep.txt')
+    indeces = algo_data[0]
+    repetitions = algo_data[1]
+
+    BX_mask = np.load('Pattern_files/metadata/BXmask_test/BX_mask.npy')
+
+    bxmask = np.zeros((2, 18, 4096), dtype=np.uint32)
+
+    # set the BX mask accordingly
+    for BX_nr in range(np.shape(BX_mask)[1]):
+        if BX_nr != 0:
+            for index, mask in enumerate(BX_mask[:, BX_nr]):
+                if index < 576:
+                    reg_index = np.uint16(np.floor(index / 32))
+                    bit_pos = np.uint16(index - reg_index * 32)
+                    bxmask[0, reg_index, BX_nr] = (bxmask[0, reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
+                else:
+                    reg_index = np.uint16(np.floor((index - 576) / 32))
+                    bit_pos = np.uint16((index - 576) - reg_index * 32)
+                    bxmask[1, reg_index, BX_nr] = (bxmask[1, reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
+
+    HWtest.load_BXmask_arr(bxmask)
+
+    # Set the trigger masks as a pass though
+    trigger_mask = np.ones((2, 144), dtype=np.uint32)*2**32-1
+
+    # Set pre-scaler factors
+    prsc_fct = np.uint32(100 * np.ones((2, 576)))  # 1.00
+    prsc_fct_prvw = np.uint32(100 * np.ones((2, 576)))  # 1.00
+
+    HWtest.load_prsc_in_RAM(prsc_fct, 0)
+    HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
+
+    ls_prescale_mark = HWtest.read_lumi_sec_prescale_mark()
+    print("SLR 2 mark = %d" % ls_prescale_mark[0])
+    print("SLR 3 mark = %d" % ls_prescale_mark[1])
+
+    HWtest.send_new_prescale_column_flag()
+    time.sleep(4)
+
+    ls_prescale_mark = HWtest.read_lumi_sec_prescale_mark()
+    print("SLR 2 mark = %d" % ls_prescale_mark[0])
+    print("SLR 3 mark = %d" % ls_prescale_mark[1])
+
+    HWtest.load_mask_arr(trigger_mask)
+
+    ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
+    print("SLR 2 mark = %d" % ls_trigg_mark[0])
+    print("SLR 3 mark = %d" % ls_trigg_mark[1])
+
+    HWtest.send_new_trigger_mask_flag()
+    time.sleep(4)
+
+    ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
+    print("SLR 2 mark = %d" % ls_trigg_mark[0])
+    print("SLR 3 mark = %d" % ls_trigg_mark[1])
+
+    # Set the veto mask
+    veto_mask = np.zeros((2, 18), dtype=np.uint32)
+
+    HWtest.load_veto_mask(veto_mask)
+
+    ls_veto_mark = HWtest.read_lumi_sec_veto_mask_mark()
+    print("SLR 2 mark = %d" % ls_veto_mark[0])
+    print("SLR 3 mark = %d" % ls_veto_mark[1])
+
+    HWtest.send_new_veto_mask_flag()
+    time.sleep(4)
+
+    ls_veto_mark = HWtest.read_lumi_sec_veto_mask_mark()
+    print("SLR 2 mark = %d" % ls_veto_mark[0])
+    print("SLR 3 mark = %d" % ls_veto_mark[1])
+
+    # Read counters from board
+    cnt_before = HWtest.read_cnt_arr(0)
+    cnt_after = HWtest.read_cnt_arr(1)
+    cnt_prvw = HWtest.read_cnt_arr(2)
+    cnt_pdt = HWtest.read_cnt_arr(3)
+
+    # compute expected rate
+    rate_before_theo = np.float64(np.zeros(1152))
+    rate_after_theo = np.float64(np.zeros(1152))
+    rate_prvw_theo = np.float64(np.zeros(1152))
+
+    rate_before_theo[np.uint32(indeces)] = np.uint32(repetitions * (2 ** 18))
+    rate_after_theo[np.uint32(indeces)] = np.uint32(repetitions * (2 ** 18) / prsc_fct.flatten()[np.int16(indeces)] * 100)
+    rate_prvw_theo[np.uint32(indeces)] = np.uint32(repetitions * (2 ** 18) / prsc_fct_prvw.flatten()[np.int16(indeces)] * 100)
+
+    time.sleep(47)
+
+    o_ctr_temp = 0
+
+    for i in range(0, 200):
+
+        ttcStatus = ttcNode.readStatus()
+        time.sleep(1)
+        if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+            os.system('clear')
+            print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            o_ctr_temp = ttcStatus.orbitCount
+
+            cnt_before = HWtest.read_cnt_arr(0)
+            cnt_after = HWtest.read_cnt_arr(1)
+            cnt_prvw = HWtest.read_cnt_arr(2)
+            cnt_pdt = HWtest.read_cnt_arr(3)
+
+            trigg_cnt = HWtest.read_trigg_cnt(0)
+            trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
+
+            rate_before_exp = cnt_before
+            rate_after_exp = cnt_after
+            rate_prvw_exp = cnt_prvw
+
+            error_before = np.abs(rate_before_exp - rate_before_theo)
+            error_after = np.abs(rate_after_exp - rate_after_theo)
+            error_preview = np.abs(rate_prvw_exp - rate_prvw_theo)
+
+            for current_i, error in enumerate(error_before):
+                if error > 1:
+                    print('Mismatch found on rate before pescaler %d, error= %d' % (current_i, error))
+                    print(
+                        'Expected value %d, Value got= %d' % (rate_before_theo[current_i], rate_before_exp[current_i]))
+            for current_i, error in enumerate(error_after):
+                if error > 1:
+                    print('Mismatch found on rate after pescaler %d, error= %d' % (current_i, error))
+                    print('Expected value %d, Value got= %d' % (rate_after_theo[current_i], rate_after_exp[current_i]))
+            for current_i, error in enumerate(error_preview):
+                if error > 1:
+                    print('Mismatch found on rate after pescaler preview %d, error= %d' % (current_i, error))
+                    print('Expected value %d, Value got= %d' % (rate_prvw_theo[current_i], rate_prvw_exp[current_i]))
+
+        sys.stdout.flush()
 else:
     print('No suitable test was selected!')
