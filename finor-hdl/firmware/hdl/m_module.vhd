@@ -677,14 +677,14 @@ begin
         if rising_edge(lhc_clk) then
             if (ready_veto = '1' and ready_veto_1 = '0') then --rising edge
                 veto_mask  <= (veto_ipbus_regs(17), veto_ipbus_regs(16),
-                              veto_ipbus_regs(15) , veto_ipbus_regs(14),
-                              veto_ipbus_regs(13) , veto_ipbus_regs(12),
-                              veto_ipbus_regs(11) , veto_ipbus_regs(10),
-                              veto_ipbus_regs(9)  , veto_ipbus_regs(8) ,
-                              veto_ipbus_regs(7)  , veto_ipbus_regs(6) ,
-                              veto_ipbus_regs(5)  , veto_ipbus_regs(4) ,
-                              veto_ipbus_regs(3)  , veto_ipbus_regs(2) ,
-                              veto_ipbus_regs(1)  , veto_ipbus_regs(0) );
+                               veto_ipbus_regs(15), veto_ipbus_regs(14),
+                               veto_ipbus_regs(13), veto_ipbus_regs(12),
+                               veto_ipbus_regs(11), veto_ipbus_regs(10),
+                               veto_ipbus_regs(9) , veto_ipbus_regs(8) ,
+                               veto_ipbus_regs(7) , veto_ipbus_regs(6) ,
+                               veto_ipbus_regs(5) , veto_ipbus_regs(4) ,
+                               veto_ipbus_regs(3) , veto_ipbus_regs(2) ,
+                               veto_ipbus_regs(1) , veto_ipbus_regs(0) );
             end if;
         end if;
     end process;
@@ -733,7 +733,7 @@ begin
             we      => '0',
             d       => (others => '1'),
             q       => algo_bx_mask_mem_out,
-            addr    => ctrs_internal.bctr
+            addr    => ctrs.bctr -- note that this one is not delayed
         ) ;
 
 

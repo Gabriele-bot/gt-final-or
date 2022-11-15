@@ -16,7 +16,7 @@ package tb_decl is
   -- Capture offset, number of the first clock cycle to be captured
   constant CAPTURE_OFFSET : natural := 0;
   -- Toggle loop playback: continuously loop data
-  constant PLAYBACK_LOOP : boolean := true;
+  constant PLAYBACK_LOOP : boolean := false;
   -- Strip the heaer i.e. first valid frame of the packet before injecting the data into the algorithms
   constant STRIP_HEADER : boolean := false;
   -- Insert the heaer i.e. attach 1 valid frame before the first frame in the packet

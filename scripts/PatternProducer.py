@@ -298,6 +298,25 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, board='vu13p', debug=Fa
     return finor_counts, veto_indeces
 
 
+def pattern_producer_BXmask_test(p_algo, p_mask, board='vu13p', debug=False):
+
+    BX_mask = np.random.choice(a=[False, True], size=(1152, 113), p=[p_mask, 1 - p_mask])
+    algo_matrix = np.random.choice(a=[False, True], size=(1152, 113), p=[p_algo, 1 - p_algo])
+    algo_matrix_masked = np.logical_and(algo_matrix, BX_mask).astype(bool)
+
+    rep_tot = np.sum(algo_matrix_masked, 1).astype(np.uint32)
+    indeces = np.where(rep_tot > 0)[0]
+    repetitions = rep_tot[indeces]
+    finor_counts = np.sum(np.logical_or.reduce(algo_matrix_masked, 0).astype(bool)).astype(np.uint32)
+    print(finor_counts)
+
+    Available_links = get_Available_links(board)
+
+    pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_BXmask_test.txt", Available_links, debug)
+
+    return indeces, repetitions, BX_mask, finor_counts
+
+
 index, repetition = pattern_producer_prescale_test(args.indexes, board, False)
 indir     = "Pattern_files"
 fname     = indir + "/metadata/Prescaler_test/algo_rep.txt"
@@ -317,4 +336,16 @@ fname     = indir + "/metadata/Veto_test/finor_counts.txt"
 np.savetxt(fname, finor_cnts, fmt='%d')
 fname     = indir + "/metadata/Veto_test/veto_indeces.txt"
 np.savetxt(fname, veto_indeces, fmt='%d')
+
+index, repetition, mask, finor_cnts = pattern_producer_BXmask_test(0.999, 0.600, board, False)
+indir     = "Pattern_files"
+fname     = indir + "/metadata/BXmask_test/algo_rep.txt"
+algo_data = np.vstack((index,repetition))
+np.savetxt(fname, algo_data, fmt='%d')
+indir     = "Pattern_files"
+fname     = indir + "/metadata/BXmask_test/finor_counts.npy"
+np.save(fname, finor_cnts)
+indir     = "Pattern_files"
+fname     = indir + "/metadata/BXmask_test/BX_mask.npy"
+np.save(fname, mask)
 
