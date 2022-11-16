@@ -258,9 +258,10 @@ begin
     ---------------PRE-SCALE REGISTERS------------------------------------------------
     ----------------------------------------------------------------------------------
 
-    prscl_fct_regs : entity work.ipbus_initialized_dpram
+    prscl_fct_regs : entity work.ipbus_file_init_dpram 
         generic map(
-            INIT_VALUE => PRESCALE_FACTOR_INIT,
+            DATA_FILE     => "Pre-scale_init.mif",
+            DEFAULT_VALUE => PRESCALE_FACTOR_INIT,
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -280,9 +281,10 @@ begin
     ---------------PRE-SCALE PREVIEW REGISTERS----------------------------------------
     ----------------------------------------------------------------------------------
 
-    prscl_fct_prvw_regs : entity work.ipbus_initialized_dpram
+    prscl_fct_prvw_regs : entity work.ipbus_file_init_dpram 
         generic map(
-            INIT_VALUE => PRESCALE_FACTOR_INIT,
+            DATA_FILE     => "Pre-scale_init.mif",
+            DEFAULT_VALUE => PRESCALE_FACTOR_INIT,
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -312,9 +314,10 @@ begin
     ---------------RATE COUNTER BEFORE PRE-SCALE REGISTERS----------------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_before_prsc_regs : entity work.ipbus_initialized_dpram
+    rate_cnt_before_prsc_regs : entity work.ipbus_file_init_dpram 
         generic map(
-            INIT_VALUE => X"00000000",
+            DATA_FILE     => "Counter_init.mif",
+            DEFAULT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -334,9 +337,10 @@ begin
     ---------------RATE COUNTER AFTER PRE-SCALE REGISTERS-----------------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_after_prsc_regs : entity work.ipbus_initialized_dpram
+    rate_cnt_after_prsc_regs : entity work.ipbus_file_init_dpram 
         generic map(
-            INIT_VALUE => X"00000000",
+            DATA_FILE     => "Counter_init.mif",
+            DEFAULT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -356,9 +360,10 @@ begin
     ---------------RATE COUNTER AFTER PRE-SCALE PREVIEW REGISTERS---------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_after_prsc_prvw_regs : entity work.ipbus_initialized_dpram
+    rate_cnt_after_prsc_prvw_regs : entity work.ipbus_file_init_dpram 
         generic map(
-            INIT_VALUE => X"00000000",
+            DATA_FILE     => "Counter_init.mif",
+            DEFAULT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -378,9 +383,10 @@ begin
     ---------------RATE COUNTER POST DEAD-TIME REGISTERS------------------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_post_dead_time_regs : entity work.ipbus_initialized_dpram
+    rate_cnt_post_dead_time_regs : entity work.ipbus_file_init_dpram 
         generic map(
-            INIT_VALUE => X"00000000",
+            DATA_FILE     => "Counter_init.mif",
+            DEFAULT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -595,11 +601,12 @@ begin
     ---------------TRIGGER MASKS REGISTERS--------------------------------------------
     ----------------------------------------------------------------------------------
 
-    masks_regs : entity work.ipbus_initialized_dpram
+    masks_regs : entity work.ipbus_file_init_dpram 
         generic map(
-            INIT_VALUE => X"ffffffff",
-            ADDR_WIDTH => log2c(NR_ALGOS/32*N_TRIGG),
-            DATA_WIDTH => 32
+            DATA_FILE     => "Trigger_masks_init.mif",
+            DEFAULT_VALUE => (others => '0'),
+            ADDR_WIDTH    => log2c(NR_ALGOS/32*N_TRIGG),
+            DATA_WIDTH    => 32
         )
         port map(
             clk     => clk,
@@ -646,9 +653,10 @@ begin
     ------------------VETO MASKS REGISTERS--------------------------------------------
     ----------------------------------------------------------------------------------
 
-    veto_regs : entity work.ipbus_initialized_dpram
+    veto_regs : entity work.ipbus_file_init_dpram 
         generic map(
-            INIT_VALUE => X"00000000",
+            DATA_FILE     => "Veto_mask_init.mif",
+            DEFAULT_VALUE => (others => '0'),
             ADDR_WIDTH => log2c(NR_ALGOS/32),
             DATA_WIDTH => 32
         )
