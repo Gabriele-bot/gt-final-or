@@ -45,7 +45,8 @@ entity m_module is
 
         algos_in                 : in  std_logic_vector(NR_ALGOS-1 downto 0);
         algos_after_prescaler_o  : out std_logic_vector(NR_ALGOS-1 downto 0);
-        trgg_o                   : out std_logic_vector(N_TRIGG-1  downto 0);
+        trigger_o                : out std_logic_vector(N_TRIGG-1  downto 0);
+        trigger_preview_o        : out std_logic_vector(N_TRIGG-1  downto 0);
         veto_o                   : out std_logic
 
     );
@@ -139,7 +140,7 @@ architecture rtl of m_module is
     signal veto_out_s               : std_logic;
 
     signal trigger_out              : std_logic_vector(N_TRIGG-1 downto 0);
-    signal trigger_with_veto_out    : std_logic_vector(N_TRIGG-1 downto 0);
+    signal trigger_out_preview      : std_logic_vector(N_TRIGG-1 downto 0);
 
 begin
 
@@ -796,6 +797,7 @@ begin
     gen_algos_slice_l : for i in 0 to NR_ALGOS - 1 generate
         algos_slice_i : entity work.algo_slice
             generic map(
+                EXCLUDE_ALGO_VETOED   => TRUE,
                 RATE_COUNTER_WIDTH    => RATE_COUNTER_WIDTH,
                 PRESCALE_FACTOR_WIDTH => PRESCALE_FACTOR_WIDTH,
                 PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT
@@ -849,6 +851,20 @@ begin
             trigger_out                     => trigger_out
         );
         
+    Mask_previev_i : entity work.Mask
+        generic map(
+            NR_ALGOS => NR_ALGOS,
+            OUT_REG  => TRUE
+        )
+        port map(
+            clk                             => lhc_clk,
+            algos_in                        => algos_after_prescaler_preview,
+            masks                           => masks,
+            request_masks_update_pulse      => request_masks_update,
+            update_pulse                    => begin_lumi_per,
+            trigger_out                     => trigger_out_preview
+        );
+        
     veto_reg_p : process(lhc_clk)
     begin
         if rising_edge(lhc_clk) then
@@ -856,8 +872,9 @@ begin
         end if;
     end process;
 
-    trgg_o           <= trigger_out;
-    veto_o           <= veto_out_s;
+    trigger_o         <= trigger_out;
+    trigger_preview_o <= trigger_out_preview;
+    veto_o            <= veto_out_s;
 
 
 end rtl;

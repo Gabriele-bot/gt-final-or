@@ -13,17 +13,21 @@ use ieee.numeric_std.all;
 
 package ipbus_decode_Output_SLR is
 
-  constant IPBUS_SEL_WIDTH: positive := 3;
+  constant IPBUS_SEL_WIDTH: positive := 4;
   subtype ipbus_sel_t is std_logic_vector(IPBUS_SEL_WIDTH - 1 downto 0);
   function ipbus_sel_Output_SLR(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
 
--- START automatically generated VHDL (Sat Nov  5 21:48:07 2022)
+-- START automatically generated VHDL (Fri Nov 18 14:35:56 2022)
   constant N_SLV_CNT_RATE_FINOR: integer := 0;
   constant N_SLV_CNT_RATE_FINOR_PDT: integer := 1;
-  constant N_SLV_CNT_RATE_FINOR_WITH_VETO: integer := 2;
-  constant N_SLV_CNT_RATE_FINOR_WITH_VETO_PDT: integer := 3;
-  constant N_SLV_CSR: integer := 4;
-  constant N_SLAVES: integer := 5;
+  constant N_SLV_CNT_RATE_FINOR_PREVIEW: integer := 2;
+  constant N_SLV_CNT_RATE_FINOR_PREVIEW_PDT: integer := 3;
+  constant N_SLV_CNT_RATE_FINOR_WITH_VETO: integer := 4;
+  constant N_SLV_CNT_RATE_FINOR_WITH_VETO_PDT: integer := 5;
+  constant N_SLV_CNT_RATE_FINOR_PREVIEW_WITH_VETO: integer := 6;
+  constant N_SLV_CNT_RATE_FINOR_PREVIEW_WITH_VETO_PDT: integer := 7;
+  constant N_SLV_CSR: integer := 8;
+  constant N_SLAVES: integer := 9;
 -- END automatically generated VHDL
 
     
@@ -35,17 +39,25 @@ package body ipbus_decode_Output_SLR is
     variable sel: ipbus_sel_t;
   begin
 
--- START automatically generated VHDL (Sat Nov  5 21:48:07 2022)
-    if    std_match(addr, "-------------------------000----") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR, IPBUS_SEL_WIDTH)); -- cnt_rate_finor / base 0x00000000 / mask 0x00000070
-    elsif std_match(addr, "-------------------------001----") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_PDT, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_pdt / base 0x00000010 / mask 0x00000070
-    elsif std_match(addr, "-------------------------010----") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_WITH_VETO, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_with_veto / base 0x00000020 / mask 0x00000070
-    elsif std_match(addr, "-------------------------011----") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_WITH_VETO_PDT, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_with_veto_pdt / base 0x00000030 / mask 0x00000070
-    elsif std_match(addr, "-------------------------100----") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_CSR, IPBUS_SEL_WIDTH)); -- CSR / base 0x00000040 / mask 0x00000070
+-- START automatically generated VHDL (Fri Nov 18 14:35:56 2022)
+    if    std_match(addr, "------------------------0000----") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR, IPBUS_SEL_WIDTH)); -- cnt_rate_finor / base 0x00000000 / mask 0x000000f0
+    elsif std_match(addr, "------------------------0001----") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_PDT, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_pdt / base 0x00000010 / mask 0x000000f0
+    elsif std_match(addr, "------------------------0010----") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_PREVIEW, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_preview / base 0x00000020 / mask 0x000000f0
+    elsif std_match(addr, "------------------------0011----") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_PREVIEW_PDT, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_preview_pdt / base 0x00000030 / mask 0x000000f0
+    elsif std_match(addr, "------------------------0100----") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_WITH_VETO, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_with_veto / base 0x00000040 / mask 0x000000f0
+    elsif std_match(addr, "------------------------0101----") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_WITH_VETO_PDT, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_with_veto_pdt / base 0x00000050 / mask 0x000000f0
+    elsif std_match(addr, "------------------------0110----") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_PREVIEW_WITH_VETO, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_preview_with_veto / base 0x00000060 / mask 0x000000f0
+    elsif std_match(addr, "------------------------0111----") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_FINOR_PREVIEW_WITH_VETO_PDT, IPBUS_SEL_WIDTH)); -- cnt_rate_finor_preview_with_veto_pdt / base 0x00000070 / mask 0x000000f0
+    elsif std_match(addr, "------------------------1000----") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CSR, IPBUS_SEL_WIDTH)); -- CSR / base 0x00000080 / mask 0x000000f0
 -- END automatically generated VHDL
 
     else

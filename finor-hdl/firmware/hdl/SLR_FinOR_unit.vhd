@@ -35,10 +35,11 @@ entity SLR_FinOR_unit is
         lhc_rst : in std_logic;
         ctrs    : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
         d       : in  ldata(NR_LINKS - 1 downto 0);  -- data in
-        trgg            : out std_logic_vector(N_TRIGG-1 downto 0);
-        veto            : out std_logic;
-        algos           : out std_logic_vector(64*9-1 downto 0);
-        algos_prescaled : out std_logic_vector(64*9-1 downto 0)
+        trigger_o         : out std_logic_vector(N_TRIGG-1 downto 0);
+        trigger_preview_o : out std_logic_vector(N_TRIGG-1 downto 0);
+        veto_o            : out std_logic;
+        algos             : out std_logic_vector(64*9-1 downto 0);
+        algos_prescaled   : out std_logic_vector(64*9-1 downto 0)
 
     );
 end entity SLR_FinOR_unit;
@@ -55,6 +56,7 @@ architecture RTL of SLR_FinOR_unit is
     signal d_res : lword;
 
     signal trigger_out            : std_logic_vector(N_TRIGG-1 downto 0);
+    signal trigger_out_preview    : std_logic_vector(N_TRIGG-1 downto 0);
     signal veto_out               : std_logic;
 
 begin
@@ -139,11 +141,13 @@ begin
             ctrs                    => ctrs(0),
             algos_in                => algos_in,
             algos_after_prescaler_o => algos_prescaled,
-            trgg_o                  => trigger_out,
+            trigger_o               => trigger_out,
+            trigger_preview_o       => trigger_out_preview,
             veto_o                  => veto_out
         );
 
-    trgg <= trigger_out;
-    veto <= veto_out;
+    trigger_o         <= trigger_out;
+    trigger_preview_o <= trigger_out_preview;
+    veto_o            <= veto_out;
 
 end architecture RTL;
