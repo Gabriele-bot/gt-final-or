@@ -59,18 +59,12 @@ test:serenity:
     - python3 -m pip install argparse
     - export LC_ALL=en_GB.utf8 LANG=en_GB.utf8
     - yum -y install git
-    - git clone --recurse-submodules https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/p2-xware/software/emp-toolbox.git
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/cms-cactus/phase2/demonstrator-utilities.git
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git -b ${BRANCH}
     # Remove SERENITY_CONFIG variable to avoid need for Serenity YML file
     - unset SERENITY_CONFIG
-    - cp emp-toolbox/docs/yum-dependencies/*.repo /etc/yum.repos.d/
     - yum -y install boost-devel pugixml-devel python36-devel cactuscore-uhal-* cactuscore-build-utils-0.2.6 tkinter
     - python3 -m pip install --upgrade click==8.0.4 click_didyoumean==0.3.0 pytest==7.0.1 python-dateutil==2.8.2 pyyaml==5.1.2 colorama==0.4.5
-    - cd emp-toolbox
-    - make
-    - source scripts/env.sh
-    - cd
     # Extract bitfile & address tables
     - ls -al gt-final-or/Test_files/*
     - cp -rv $(find gt-final-or/Test_files/* -name "addrtab") .
@@ -107,7 +101,7 @@ test:serenity:
     # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
     # python ${CI_PROJECT_DIR}/gt-final-or/scripts/RateChecker.py p random -t trigger_mask
-    - python3 ${CI_PROJECT_DIR}/gt-final-or/scripts/test_imports.py
+    - python3.6 ${CI_PROJECT_DIR}/gt-final-or/scripts/test_imports.py
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
