@@ -89,20 +89,19 @@ test:serenity:
     - export SMASH_PATH=/opt/smash 
     - export PATH=/opt/cactus/bin/emp:/opt/cactus/bin/serenity:$PATH 
     - serenitybutler info
-    # serenitybutler program ${HARDWARE_TEST_SERENITY_SITE} gt-final-or/Test_files/p2gt_finor_serenity-vu13p.bit -r
-    # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} info
-    # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} reset internal
-    # Pre-scaler test
-    # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_prescaler_test.txt
-    # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    # python ${CI_PROJECT_DIR}/gt-final-or/scripts/RateChecker.py p random -t prescaler
-    # Trigger masks test
-    # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_trigg_test.txt
-    # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    # python ${CI_PROJECT_DIR}/gt-final-or/scripts/RateChecker.py p random -t trigger_mask
-    - python3.6 ${CI_PROJECT_DIR}/gt-final-or/scripts/test_imports.py
+    - serenitybutler program ${HARDWARE_TEST_SERENITY_SITE} gt-final-or/Test_files/p2gt_finor_serenity-vu13p.bit -r
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} info
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} reset internal
+    - Pre-scaler test
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_prescaler_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - python ${CI_PROJECT_DIR}/gt-final-or/scripts/RateChecker.py p random -t prescaler
+    - Trigger masks test
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_trigg_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - python3.6 ${CI_PROJECT_DIR}/gt-final-or/scripts/RateChecker.py p random -t trigger_mask
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
