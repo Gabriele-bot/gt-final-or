@@ -337,7 +337,7 @@ np.savetxt(fname, finor_cnts, fmt='%d')
 fname     = indir + "/metadata/Veto_test/veto_indeces.txt"
 np.savetxt(fname, veto_indeces, fmt='%d')
 
-index, repetition, mask, finor_cnts = pattern_producer_BXmask_test(0.999, 0.600, board, False)
+index, repetition, mask, finor_cnts = pattern_producer_BXmask_test(0.998, 0.600, board, True)
 indir     = "Pattern_files"
 fname     = indir + "/metadata/BXmask_test/algo_rep.txt"
 algo_data = np.vstack((index,repetition))
