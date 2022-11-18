@@ -51,6 +51,11 @@ test:serenity:
     HARDWARE_TEST_OUTPUT_CHANNELS: 0-15,24-59,68-103,112-127
     HARDWARE_TEST_CAPTURE_LENGTH: 1024
   before_script:
+    - sudo yum -y localinstall ${CI_PROJECT_DIR}/ci_build_results/repos/${OUTPUT_REPO_SUBDIR}/cactusboards-serenity-*.rpm
+    - source /opt/cactus/bin/serenity/serenity_env.sh
+    - "printf 'address:\n    artix: /opt/smash/etc/serenity/base/uHAL/v0.3/top_artix.xml' > serenity.yml"
+    - dctype=$(eval "echo \${SERENITY_DCTYPE_${HARDWARE_TEST_SERENITY_SITE}}" | tr '[:upper:]' '[:lower:]')
+    - curl -O https://emp-fwk.web.cern.ch/fw/${EMP_FW_LOCATION}/serenity_${dctype}.tgz
     - if ! [[ "$HARDWARE_TEST_SERENITY_SITE" =~ ^(x0|x1)$ ]]; then echo "HARDWARE_TEST_SERENITY_SITE variable has invalid value, ${HARDWARE_TEST_SERENITY_SITE}!   (should be x0 or x1)."; exit 1; fi
     # Install dependency: Demonstrator utilities
     - yum -y install python3
