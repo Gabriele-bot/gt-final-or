@@ -72,10 +72,11 @@ test:serenity:
     - echo '<connections>' > my_connections.xml
     - echo '  <connection id="'${HARDWARE_TEST_SERENITY_SITE}'"' >> my_connections.xml
     - echo '              uri="ipbuspcie-2.0:///dev/serenity_pcie/'${HARDWARE_TEST_SERENITY_SITE}'/h2c,/dev/serenity_pcie/'${HARDWARE_TEST_SERENITY_SITE}'/c2h"' >> my_connections.xml
-    - echo '              address_table="file://gt-final-or/Test_files/addrtab/top_emp.xml"/>' >> my_connections.xml
+    - echo '              address_table="file://addrtab/top_emp.xml"/>' >> my_connections.xml
     - echo '</connections>' >> my_connections.xml
     - cat my_connections.xml
     - cp my_connections.xml ${CI_PROJECT_DIR}/gt-final-or/scripts/
+    - cp -r addrtab ${CI_PROJECT_DIR}/gt-final-or/scripts/
     - export PATH=/opt/cactus/bin/uhal/tools:$PATH 
     - export LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH 
     - export LD_LIBRARY_PATH=/opt/cactus/lib:/opt/smash/lib:$LD_LIBRARY_PATH 
