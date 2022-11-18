@@ -51,11 +51,6 @@ test:serenity:
     HARDWARE_TEST_OUTPUT_CHANNELS: 0-15,24-59,68-103,112-127
     HARDWARE_TEST_CAPTURE_LENGTH: 1024
   before_script:
-    - sudo yum -y localinstall ${CI_PROJECT_DIR}/ci_build_results/repos/${OUTPUT_REPO_SUBDIR}/cactusboards-serenity-*.rpm
-    - source /opt/cactus/bin/serenity/serenity_env.sh
-    - "printf 'address:\n    artix: /opt/smash/etc/serenity/base/uHAL/v0.3/top_artix.xml' > serenity.yml"
-    - dctype=$(eval "echo \${SERENITY_DCTYPE_${HARDWARE_TEST_SERENITY_SITE}}" | tr '[:upper:]' '[:lower:]')
-    - curl -O https://emp-fwk.web.cern.ch/fw/${EMP_FW_LOCATION}/serenity_${dctype}.tgz
     - if ! [[ "$HARDWARE_TEST_SERENITY_SITE" =~ ^(x0|x1)$ ]]; then echo "HARDWARE_TEST_SERENITY_SITE variable has invalid value, ${HARDWARE_TEST_SERENITY_SITE}!   (should be x0 or x1)."; exit 1; fi
     # Install dependency: Demonstrator utilities
     - yum -y install python3
@@ -80,18 +75,19 @@ test:serenity:
     - echo '              address_table="file://gt-final-or/Test_files/addrtab/top_emp.xml"/>' >> my_connections.xml
     - echo '</connections>' >> my_connections.xml
     - cat my_connections.xml
-    - export PATH=/opt/cactus/bin/uhal/tools:$PATH
+    - export PATH=/opt/cactus/bin/uhal/tools:$PATH 
+    - export LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH 
     - export LD_LIBRARY_PATH=/opt/cactus/lib:/opt/smash/lib:$LD_LIBRARY_PATH 
-    - export PATH=/opt/cactus/bin/emp:$PATH 
+    - export PATH=/opt/cactus/bin/emp:$PATH
+    - export SMASH_PATH=/opt/smash 
+    - export PATH=/opt/cactus/bin/emp:/opt/cactus/bin/serenity:$PATH
+  script:
+    - export PATH=/opt/cactus/bin/uhal/tools:$PATH 
+    - export LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH 
+    - export LD_LIBRARY_PATH=/opt/cactus/lib:/opt/smash/lib:$LD_LIBRARY_PATH 
+    - export PATH=/opt/cactus/bin/emp:$PATH
     - export SMASH_PATH=/opt/smash 
     - export PATH=/opt/cactus/bin/emp:/opt/cactus/bin/serenity:$PATH 
-  script:
-    - export PATH=/opt/cactus/bin/uhal/tools:$PATH LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH &&
-    - LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH &&
-    - export LD_LIBRARY_PATH=/opt/cactus/lib:/opt/smash/lib:$LD_LIBRARY_PATH &&
-    - export PATH=/opt/cactus/bin/emp:$PATH &&
-    - export SMASH_PATH=/opt/smash &&
-    - export PATH=/opt/cactus/bin/emp:/opt/cactus/bin/serenity:$PATH &&
     - serenitybutler info
     # serenitybutler program ${HARDWARE_TEST_SERENITY_SITE} gt-final-or/Test_files/p2gt_finor_serenity-vu13p.bit -r
     # empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} info
