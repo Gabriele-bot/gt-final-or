@@ -12,7 +12,30 @@ variables:
   VIVADO_VERSION: "2021.1"
   BUILD_DIR: "build"
   MTI_VCO_MODE: "64"
-  # HARDWARE_TEST_IMAGE_TAG: v0-3-17
+  HARDWARE_TEST_IMAGE_TAG: v0-3-17
+
+.test_base:
+  stage: test
+  # Default values for HARDWARE_TEST_ variables
+  variables:
+    HARDWARE_TEST_INPUT_CHANNELS: all
+    HARDWARE_TEST_OUTPUT_CHANNELS: all
+    HARDWARE_TEST_CAPTURE_LENGTH: 1024
+  #artifacts:
+    #when: always
+    #paths:
+    #  - '**/*.log'
+    #  - '**/*.txt'
+    #expire_in: 1 week
+  tags:
+    - docker
+    - $HARDWARE_TEST_TYPE
+  resource_group: ${HARDWARE_TEST_LOCATION}/${HARDWARE_TEST_TYPE}
+  environment:
+    name: test/${HARDWARE_TEST_TYPE}
+    deployment_tier: testing
+
+
 
 serenity_vu13p:build:
   extends: .vivado_build_emp
@@ -20,3 +43,90 @@ serenity_vu13p:build:
     PROJECT_NAME: p2gt_finor_serenity-vu13p
     PROJECT_DIR_PATH: finor-hdl
     PROJECT_DEPFILE: top_serenity_vu13p-so2.d3
+
+test:serenity:
+  extends: .test_base
+  image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
+  variables:
+    HARDWARE_TEST_SERENITY_SITE: x0
+    SMASH_DEFAULT_CONFIG: /board.smash
+    BRANCH: feature/veto
+    PROJECT_NAME: p2gt_finor_serenity-vu13p
+    HARDWARE_TEST_TYPE: serenity-vu13p-so2
+    HARDWARE_TEST_LOCATION: b904
+    HARDWARE_TEST_INPUT_CHANNELS: 36-47,48-59,68-79,80-91
+    HARDWARE_TEST_OUTPUT_CHANNELS: 0-15,24-59,68-103,112-127
+    HARDWARE_TEST_CAPTURE_LENGTH: 1024
+  before_script:
+    - if ! [[ "$HARDWARE_TEST_SERENITY_SITE" =~ ^(x0|x1)$ ]]; then echo "HARDWARE_TEST_SERENITY_SITE variable has invalid value, ${HARDWARE_TEST_SERENITY_SITE}!   (should be x0 or x1)."; exit 1; fi
+    # Install dependency: Demonstrator utilities
+    - yum -y install python3
+    - python3 -m pip install click
+    - python3 -m pip install numpy
+    - python3 -m pip install argparse
+    - python3 -m pip install bitstring
+    - export LC_ALL=en_GB.utf8 LANG=en_GB.utf8
+    - yum -y install git
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/cms-cactus/phase2/demonstrator-utilities.git
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git -b ${BRANCH}
+    # Remove SERENITY_CONFIG variable to avoid need for Serenity YML file
+    - unset SERENITY_CONFIG
+    - yum -y install boost-devel pugixml-devel python36-devel cactuscore-uhal-* cactuscore-build-utils-0.2.6 tkinter
+    - python3 -m pip install --upgrade click==8.0.4 click_didyoumean==0.3.0 pytest==7.0.1 python-dateutil==2.8.2 pyyaml==5.1.2 colorama==0.4.5
+    - cd ${CI_PROJECT_DIR}/gt-final-or/scripts
+    # Generate pattern files
+    - python3 PatternProducer.py -i 700 -s Serenity3
+    - cd ${CI_PROJECT_DIR}
+    # Extract bitfile & address tables
+    - ls -al gt-final-or/Test_files/*
+    - cp -rv $(find gt-final-or/Test_files/* -name "addrtab") .
+    #- mv  gt-final-or/Test_files/p2gt_finor_serenity-vu13p.bit .
+    # Extract bitfile & address tables
+    - mv -v work_area/proj/${PROJECT_NAME}/package/${PROJECT_NAME}*.tgz .
+    - tar xzfv ${PROJECT_NAME}*.tgz
+    - ls -al ${PROJECT_NAME}*
+    - cp -rv $(find ${PROJECT_NAME}* -name "addrtab") .
+    - echo '<connections>' > my_connections.xml
+    - echo '  <connection id="'${HARDWARE_TEST_SERENITY_SITE}'"' >> my_connections.xml
+    - echo '              uri="ipbuspcie-2.0:///dev/serenity_pcie/'${HARDWARE_TEST_SERENITY_SITE}'/h2c,/dev/serenity_pcie/'${HARDWARE_TEST_SERENITY_SITE}'/c2h"' >> my_connections.xml
+    - echo '              address_table="file://addrtab/top_emp.xml"/>' >> my_connections.xml
+    - echo '</connections>' >> my_connections.xml
+    - cat my_connections.xml
+    - cp my_connections.xml ${CI_PROJECT_DIR}/gt-final-or/scripts/
+    - cp -r addrtab ${CI_PROJECT_DIR}/gt-final-or/scripts/
+  script:
+    - export PATH=/opt/cactus/bin/uhal/tools:$PATH 
+    - export LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH 
+    - export LD_LIBRARY_PATH=/opt/cactus/lib:/opt/smash/lib:$LD_LIBRARY_PATH 
+    - export PATH=/opt/cactus/bin/emp:$PATH
+    - export SMASH_PATH=/opt/smash 
+    - export PATH=/opt/cactus/bin/emp:/opt/cactus/bin/serenity:$PATH 
+    - serenitybutler info
+    - serenitybutler program ${HARDWARE_TEST_SERENITY_SITE} ${PROJECT_NAME}.bit -r
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} info
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} reset internal
+    # Pre-scaler test
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_prescaler_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - cd ${CI_PROJECT_DIR}/gt-final-or/scripts
+    - python3.6 RateChecker.py -p random -t prescaler
+    # Trigger masks test
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_trigg_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - python3.6 RateChecker.py -p random -t trigger_mask
+    # Veto masks test
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_veto_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - python3.6 RateChecker.py -p random -t veto_mask
+    # BX mask test
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_BXmask_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - python3.6 RateChecker.py -p random -t BXmask
+  rules:
+    - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
+      when: manual
+
