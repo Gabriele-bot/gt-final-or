@@ -402,14 +402,14 @@ elif args.test == 'trigger_mask':
         for index in indeces:
             if index < 576:
                 reg_index = np.uint16(np.floor(index/32) + mask_i * 18)
-                print(reg_index)
+                #print(reg_index)
                 trigger_mask[0][np.uint16(reg_index)] = trigger_mask[0][np.uint32(reg_index)] | (1 << np.uint32(index - 32*np.floor(index/32)))
-                print(hex(trigger_mask[0][np.uint16(reg_index)]))
+                #print(hex(trigger_mask[0][np.uint16(reg_index)]))
             else:
                 reg_index = np.uint16(np.floor((index-576)/32) + mask_i * 18)
-                print(reg_index)
+                #print(reg_index)
                 trigger_mask[1][np.uint16(reg_index)] = trigger_mask[1][np.uint32(reg_index)] | (1 << np.uint32((index-576) - 32 * np.floor((index-576)/32)))
-                print(hex(trigger_mask[1][np.uint16(reg_index)]))
+                #print(hex(trigger_mask[1][np.uint16(reg_index)]))
 
     # Set pre-scaler factors
     prsc_fct = np.uint32(100 * np.ones((2, 576)))  # 1.00
@@ -449,14 +449,14 @@ elif args.test == 'trigger_mask':
         for index in indeces[:4]:
             if index < 576:
                 reg_index = np.uint16(np.floor(index/32))
-                print(reg_index)
+                #print(reg_index)
                 veto_mask[0][np.uint16(reg_index)] = veto_mask[0][np.uint32(reg_index)] | (1 << np.uint32(index - 32*np.floor(index/32)))
-                print(hex(veto_mask[0][np.uint16(reg_index)]))
+                #print(hex(veto_mask[0][np.uint16(reg_index)]))
             else:
                 reg_index = np.uint16(np.floor((index-576)/32))
-                print(reg_index)
+                #print(reg_index)
                 veto_mask[1][np.uint16(reg_index)] = veto_mask[1][np.uint32(reg_index)] | (1 << np.uint32((index-576) - 32 * np.floor((index-576)/32)))
-                print(hex(veto_mask[1][np.uint16(reg_index)]))
+                #print(hex(veto_mask[1][np.uint16(reg_index)]))
 
     
     
@@ -580,16 +580,16 @@ elif args.test == 'veto_mask':
     for index in veto_indeces:
         if index < 576:
             reg_index = np.uint16(np.floor(index / 32))
-            print(reg_index)
+            #print(reg_index)
             veto_mask[0][np.uint16(reg_index)] = veto_mask[0][np.uint32(reg_index)] | (
                         1 << np.uint32(index - 32 * np.floor(index / 32)))
-            print(hex(veto_mask[0][np.uint16(reg_index)]))
+            #print(hex(veto_mask[0][np.uint16(reg_index)]))
         else:
             reg_index = np.uint16(np.floor((index - 576) / 32))
-            print(reg_index)
+            #print(reg_index)
             veto_mask[1][np.uint16(reg_index)] = veto_mask[1][np.uint32(reg_index)] | (
                         1 << np.uint32((index - 576) - 32 * np.floor((index - 576) / 32)))
-            print(hex(veto_mask[1][np.uint16(reg_index)]))
+            #print(hex(veto_mask[1][np.uint16(reg_index)]))
 
     HWtest.load_veto_mask(veto_mask)
 
