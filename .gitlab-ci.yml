@@ -12,7 +12,7 @@ variables:
   VIVADO_VERSION: "2021.1"
   BUILD_DIR: "build"
   MTI_VCO_MODE: "64"
-  HARDWARE_TEST_IMAGE_TAG: v0-3-39
+  HARDWARE_TEST_IMAGE_TAG: v0-3-37
 
 .test_base:
   stage: test
