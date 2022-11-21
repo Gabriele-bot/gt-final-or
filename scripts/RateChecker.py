@@ -326,6 +326,8 @@ if args.test =='prescaler':
     time.sleep(47)
 
     o_ctr_temp = 0
+    
+    error_cnt = 0
 
     for i in range(0, 200):
         #ttcStatus = ttcNode.readStatus()
@@ -358,19 +360,22 @@ if args.test =='prescaler':
 
             for current_i, error in enumerate(error_before):
                 if error > 1:
+                    error_cnt += 1
                     print('Mismatch found on rate before pescaler %d, error= %d' % (current_i, error))
                     print('Expected value %d, Value got= %d' % (rate_before_theo[current_i], rate_before_exp[current_i]))
             for current_i, error in enumerate(error_after):
                 if error > 1:
+                    error_cnt += 1
                     print('Mismatch found on rate after pescaler %d, error= %d' % (current_i, error))
                     print('Expected value %d, Value got= %d' % (rate_after_theo[current_i], rate_after_exp[current_i]))
             for current_i, error in enumerate(error_preview):
                 if error > 1:
+                    error_cnt += 1
                     print('Mismatch found on rate after pescaler preview %d, error= %d' % (current_i, error))
                     print('Expected value %d, Value got= %d' % (rate_prvw_theo[current_i], rate_prvw_exp[current_i]))
 
 
-        sys.stdout.flush()
+    #sys.stdout.flush()
 
 
     ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
@@ -381,6 +386,8 @@ if args.test =='prescaler':
     print("SLR 2 mark = %d" % ls_prescale_mark[0])
     print("SLR 3 mark = %d" % ls_prescale_mark[1])
 
+    if error_cnt != 0:
+        raise Exception("Error found! Check the counters!")
 
 #-------------------------------------------------------------------------------------
 #-----------------------------------TRIGG MASK TEST-----------------------------------
@@ -402,14 +409,14 @@ elif args.test == 'trigger_mask':
         for index in indeces:
             if index < 576:
                 reg_index = np.uint16(np.floor(index/32) + mask_i * 18)
-                print(reg_index)
+                #print(reg_index)
                 trigger_mask[0][np.uint16(reg_index)] = trigger_mask[0][np.uint32(reg_index)] | (1 << np.uint32(index - 32*np.floor(index/32)))
-                print(hex(trigger_mask[0][np.uint16(reg_index)]))
+                #print(hex(trigger_mask[0][np.uint16(reg_index)]))
             else:
                 reg_index = np.uint16(np.floor((index-576)/32) + mask_i * 18)
-                print(reg_index)
+                #print(reg_index)
                 trigger_mask[1][np.uint16(reg_index)] = trigger_mask[1][np.uint32(reg_index)] | (1 << np.uint32((index-576) - 32 * np.floor((index-576)/32)))
-                print(hex(trigger_mask[1][np.uint16(reg_index)]))
+                #print(hex(trigger_mask[1][np.uint16(reg_index)]))
 
     # Set pre-scaler factors
     prsc_fct = np.uint32(100 * np.ones((2, 576)))  # 1.00
@@ -449,14 +456,14 @@ elif args.test == 'trigger_mask':
         for index in indeces[:4]:
             if index < 576:
                 reg_index = np.uint16(np.floor(index/32))
-                print(reg_index)
+                #print(reg_index)
                 veto_mask[0][np.uint16(reg_index)] = veto_mask[0][np.uint32(reg_index)] | (1 << np.uint32(index - 32*np.floor(index/32)))
-                print(hex(veto_mask[0][np.uint16(reg_index)]))
+                #print(hex(veto_mask[0][np.uint16(reg_index)]))
             else:
                 reg_index = np.uint16(np.floor((index-576)/32))
-                print(reg_index)
+                #print(reg_index)
                 veto_mask[1][np.uint16(reg_index)] = veto_mask[1][np.uint32(reg_index)] | (1 << np.uint32((index-576) - 32 * np.floor((index-576)/32)))
-                print(hex(veto_mask[1][np.uint16(reg_index)]))
+                #print(hex(veto_mask[1][np.uint16(reg_index)]))
 
     
     
@@ -487,9 +494,11 @@ elif args.test == 'trigger_mask':
     time.sleep(47)
 
     o_ctr_temp = 0
+    
+    error_cnt = 0
 
     for i in range(0, 200):
-	    #ttcStatus = ttcNode.readStatus()
+	#ttcStatus = ttcNode.readStatus()
         o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
         HWtest.hw.dispatch()
         time.sleep(1)
@@ -510,6 +519,7 @@ elif args.test == 'trigger_mask':
                 error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
                 print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
                 if error_trgg > 1:
+                    error_cnt += 1
                     print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
                     print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
 
@@ -522,7 +532,10 @@ elif args.test == 'trigger_mask':
             for trigg_index, cnt in enumerate(trigg_cnt_pdt_wveto):
                 print('Trigger %d-th with veto counter post dead time value = %d' % (trigg_index, cnt))
 
-            sys.stdout.flush()
+    #sys.stdout.flush()
+           
+    if error_cnt != 0:
+        raise Exception("Error found! Check the counters!")
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------VETO TEST-----------------------------------------
@@ -620,6 +633,8 @@ elif args.test == 'veto_mask':
     time.sleep(47)
 
     o_ctr_temp = 0
+    
+    error_cnt = 0
 
     for i in range(0, 200):
         #ttcStatus = ttcNode.readStatus()
@@ -643,6 +658,7 @@ elif args.test == 'veto_mask':
                 error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
                 print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
                 if error_trgg > 1:
+                    error_cnt += 1
                     print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
                     print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
 
@@ -653,13 +669,17 @@ elif args.test == 'veto_mask':
                 error_trgg = np.abs(trigg_rate_with_veto_theo[trigg_index] - cnt)
                 print('Trigger with veto %d-th counter value = %d' % (trigg_index, cnt))
                 if error_trgg > 1:
+                    error_cnt += 1
                     print('Mismatch found on %d-th trigger rate with veto, error= %d' % (trigg_index, error_trgg))
                     print('Expected value %d, Value got= %d' % (trigg_rate_with_veto_theo[trigg_index], cnt))
 
             for trigg_index, cnt in enumerate(trigg_cnt_pdt_wveto):
                 print('Trigger %d-th with veto counter post dead time value = %d' % (trigg_index, cnt))
 
-            sys.stdout.flush()
+    #sys.stdout.flush()
+            
+    if error_cnt != 0:
+        raise Exception("Error found! Check the counters!")
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------BX MASK TEST--------------------------------------
@@ -757,6 +777,8 @@ elif args.test == 'BXmask':
     time.sleep(47)
 
     o_ctr_temp = 0
+    
+    error_cnt = 0
 
     for i in range(0, 200):
         #ttcStatus = ttcNode.readStatus()
@@ -789,19 +811,25 @@ elif args.test == 'BXmask':
 
             for current_i, error in enumerate(error_before):
                 if error > 1:
+                    error_cnt += 1
                     print('Mismatch found on rate before pescaler %d, error= %d' % (current_i, error))
-                    print(
-                        'Expected value %d, Value got= %d' % (rate_before_theo[current_i], rate_before_exp[current_i]))
+                    print('Expected value %d, Value got= %d' % (rate_before_theo[current_i], rate_before_exp[current_i]))
             for current_i, error in enumerate(error_after):
                 if error > 1:
+                    error_cnt += 1
                     print('Mismatch found on rate after pescaler %d, error= %d' % (current_i, error))
                     print('Expected value %d, Value got= %d' % (rate_after_theo[current_i], rate_after_exp[current_i]))
             for current_i, error in enumerate(error_preview):
                 if error > 1:
+                    error_cnt += 1
                     print('Mismatch found on rate after pescaler preview %d, error= %d' % (current_i, error))
                     print('Expected value %d, Value got= %d' % (rate_prvw_theo[current_i], rate_prvw_exp[current_i]))
 
-        sys.stdout.flush()
+    #sys.stdout.flush()
+        
+    if error_cnt != 0:
+        raise Exception("Error found! Check the counters!")
+        
 else:
     print('No suitable test was selected!')
 
