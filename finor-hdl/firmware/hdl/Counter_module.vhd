@@ -31,7 +31,7 @@ architecture RTL of Counter_module is
     signal o_cnt   : eoctr_t := (others => '0');
     signal ls_cnt  : eoctr_t := (others => '0');
     signal l1a    : std_logic;
-    signal o_cntbls_temp,  o_cntbls : std_logic;
+    signal o_cntbls_temp,  o_cntbls : std_logic := '0';
     
     signal bc0_s, oc0_s, ec0_s : std_logic := '0';
     

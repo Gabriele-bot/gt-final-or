@@ -14,4 +14,6 @@ src -c ipbus-firmware:components/ipbus_core ipbus_package.vhd
 include -c gt-final-or:finor-hdl top.d3
 src -c gt-final-or:finor-hdl payload_vu13p.vhd
 
+src --vhdl2008 P2GT_finor_pkg.vhd
+
 include top.d3

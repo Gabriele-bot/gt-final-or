@@ -20,7 +20,7 @@ entity algo_pre_scaler is
     generic(
         PRESCALE_FACTOR_WIDTH : integer;
         PRESCALE_FACTOR_INIT  : std_logic_vector(31 DOWNTO 0) := X"00000064"; --1.00
-        SIM : boolean := false
+        SIM : boolean := FALSE
     );
     port(
         clk                         : in std_logic;

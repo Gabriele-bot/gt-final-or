@@ -1,5 +1,3 @@
-
-
 -- Description:
 -- Prescale and rate monitoring structure for one algo (slice) for the P2GT FinalOR board
 -- algo-bx-mask at algo input
@@ -32,6 +30,7 @@ use work.math_pkg.all;
 
 entity algo_slice is
     generic(
+        EXCLUDE_ALGO_VETOED   : boolean := TRUE;
         RATE_COUNTER_WIDTH    : integer := 32;
         PRESCALE_FACTOR_WIDTH : integer := 24;
         PRESCALE_FACTOR_INIT  : std_logic_vector(31 DOWNTO 0) := X"00000064" --1.00
@@ -75,7 +74,7 @@ entity algo_slice is
         algo_after_bxomask           : out std_logic;
         algo_after_prescaler         : out std_logic;
         algo_after_prescaler_preview : out std_logic;
-        
+
         veto                         : out std_logic
     );
 end algo_slice;
@@ -164,7 +163,7 @@ begin
             prescale_factor             => prescale_factor_preview,
             prescaled_algo_o            => algo_after_prescaler_preview_int
         );
-        
+
     veto <= algo_after_prescaler_int and veto_mask;
 
     rate_cnt_after_prescaler_preview_i: entity work.algo_rate_counter
@@ -201,9 +200,14 @@ begin
 
     -- ****************************************************************************************************
 
-    algo_after_bxomask           <= algo_after_algo_bx_mask_int;
-    algo_after_prescaler         <= algo_after_prescaler_int;
-    algo_after_prescaler_preview <= algo_after_prescaler_preview_int;
+    veto_exclusion: if EXCLUDE_ALGO_VETOED generate
+        algo_after_bxomask           <= algo_after_algo_bx_mask_int      and not veto_mask;
+        algo_after_prescaler         <= algo_after_prescaler_int         and not veto_mask;
+        algo_after_prescaler_preview <= algo_after_prescaler_preview_int and not veto_mask;
+    else generate
+        algo_after_bxomask           <= algo_after_algo_bx_mask_int;
+        algo_after_prescaler         <= algo_after_prescaler_int;
+        algo_after_prescaler_preview <= algo_after_prescaler_preview_int;
+    end generate;
 
 end architecture rtl;
-

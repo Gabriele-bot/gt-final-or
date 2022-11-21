@@ -5,6 +5,8 @@ include -c emp-fwk:boards/serenity/dc_vu13p dc_vu13p_so2.dep
 src ../ucf/payload_serenity-vu13p.tcl
 src ../ucf/payload_timings.tcl
 
+src --vhdl2008 P2GT_finor_pkg.vhd
+
 include top.d3
 src payload_vu13p.vhd
 

@@ -2,8 +2,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use std.textio.all;
-
 library xpm;
 use xpm.vcomponents.all;
 
@@ -25,13 +23,16 @@ use work.P2GT_finor_pkg.all;
 
 use work.math_pkg.all;
 
+use std.textio.all;
+
 
 
 entity m_module is
     generic(
         NR_ALGOS             : natural;
         PRESCALE_FACTOR_INIT : std_logic_vector(31 DOWNTO 0) := X"00000064"; --1.00
-        MAX_DELAY            : natural := 127
+        MAX_DELAY            : natural := 127;
+        OUT_FILE             : string  :=  "rate_counts.txt"
     );
     port(
         -- =========================IPbus================================================
@@ -47,7 +48,8 @@ entity m_module is
 
         algos_in                 : in  std_logic_vector(NR_ALGOS-1 downto 0);
         algos_after_prescaler_o  : out std_logic_vector(NR_ALGOS-1 downto 0);
-        trgg_o                   : out std_logic_vector(N_TRIGG-1  downto 0);
+        trigger_o                : out std_logic_vector(N_TRIGG-1  downto 0);
+        trigger_preview_o        : out std_logic_vector(N_TRIGG-1  downto 0);
         veto_o                   : out std_logic
 
     );
@@ -55,7 +57,7 @@ end m_module;
 
 
 architecture rtl of m_module is
-
+    
     constant NULL_VETO_MASK    : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
     -- fabric signals        
@@ -136,12 +138,12 @@ architecture rtl of m_module is
     signal suppress_cal_trigger     : std_logic;
     signal supp_cal_BX_low          : std_logic_vector(11 downto 0);
     signal supp_cal_BX_high         : std_logic_vector(11 downto 0);
-
+    
     signal veto                     : std_logic_vector(NR_ALGOS-1 downto 0);
     signal veto_out_s               : std_logic;
 
     signal trigger_out              : std_logic_vector(N_TRIGG-1 downto 0);
-    signal trigger_with_veto_out    : std_logic_vector(N_TRIGG-1 downto 0);
+    signal trigger_out_preview      : std_logic_vector(N_TRIGG-1 downto 0);
 
 begin
 
@@ -260,10 +262,9 @@ begin
     ---------------PRE-SCALE REGISTERS------------------------------------------------
     ----------------------------------------------------------------------------------
 
-    prscl_fct_regs : entity work.ipbus_file_init_dpram
+    prscl_fct_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE     => "Pre-scale_init.mif",
-            DEFAULT_VALUE => PRESCALE_FACTOR_INIT,
+            INIT_VALUE => PRESCALE_FACTOR_INIT,
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -283,10 +284,9 @@ begin
     ---------------PRE-SCALE PREVIEW REGISTERS----------------------------------------
     ----------------------------------------------------------------------------------
 
-    prscl_fct_prvw_regs : entity work.ipbus_file_init_dpram
+    prscl_fct_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE     => "Pre-scale_init.mif",
-            DEFAULT_VALUE => PRESCALE_FACTOR_INIT,
+            INIT_VALUE => PRESCALE_FACTOR_INIT,
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -301,7 +301,7 @@ begin
             q       => q_prscl_fct_prvw,
             addr    => std_logic_vector(addr_prscl)
         );
-
+        
     -- process to read from ipbus-RAMs
     process (lhc_clk)
     begin
@@ -316,10 +316,9 @@ begin
     ---------------RATE COUNTER BEFORE PRE-SCALE REGISTERS----------------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_before_prsc_regs : entity work.ipbus_file_init_dpram
+    rate_cnt_before_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE     => "Counter_init.mif",
-            DEFAULT_VALUE => X"00000000",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -339,10 +338,9 @@ begin
     ---------------RATE COUNTER AFTER PRE-SCALE REGISTERS-----------------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_after_prsc_regs : entity work.ipbus_file_init_dpram
+    rate_cnt_after_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE     => "Counter_init.mif",
-            DEFAULT_VALUE => X"00000000",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -362,10 +360,9 @@ begin
     ---------------RATE COUNTER AFTER PRE-SCALE PREVIEW REGISTERS---------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_after_prsc_prvw_regs : entity work.ipbus_file_init_dpram
+    rate_cnt_after_prsc_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE     => "Counter_init.mif",
-            DEFAULT_VALUE => X"00000000",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -385,10 +382,9 @@ begin
     ---------------RATE COUNTER POST DEAD-TIME REGISTERS------------------------------
     ----------------------------------------------------------------------------------
 
-    rate_cnt_post_dead_time_regs : entity work.ipbus_file_init_dpram
+    rate_cnt_post_dead_time_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE     => "Counter_init.mif",
-            DEFAULT_VALUE => X"00000000",
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS),
             DATA_WIDTH => 32
         )
@@ -403,13 +399,13 @@ begin
             q       => open,
             addr    => std_logic_vector(addr)
         );
-
-
+        
+        
     d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler       (to_integer(unsigned(addr)));
     d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler        (to_integer(unsigned(addr)));
     d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(unsigned(addr)));
     d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time         (to_integer(unsigned(addr)));
-
+    
 
     CSR_regs : entity work.ipbus_ctrlreg_v
         generic map(
@@ -603,12 +599,11 @@ begin
     ---------------TRIGGER MASKS REGISTERS--------------------------------------------
     ----------------------------------------------------------------------------------
 
-    masks_regs : entity work.ipbus_file_init_dpram
+    masks_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE     => "Trigger_masks_init.mif",
-            DEFAULT_VALUE => (others => '0'),
-            ADDR_WIDTH    => log2c(NR_ALGOS/32*N_TRIGG),
-            DATA_WIDTH    => 32
+            INIT_VALUE => X"ffffffff",
+            ADDR_WIDTH => log2c(NR_ALGOS/32*N_TRIGG),
+            DATA_WIDTH => 32
         )
         port map(
             clk     => clk,
@@ -621,7 +616,7 @@ begin
             q       => q_mask,
             addr    => std_logic_vector(addr_mask)
         );
-
+        
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
@@ -655,10 +650,9 @@ begin
     ------------------VETO MASKS REGISTERS--------------------------------------------
     ----------------------------------------------------------------------------------
 
-    veto_regs : entity work.ipbus_file_init_dpram
+    veto_regs : entity work.ipbus_initialized_dpram
         generic map(
-            DATA_FILE     => "Veto_mask_init.mif",
-            DEFAULT_VALUE => (others => '0'),
+            INIT_VALUE => X"00000000",
             ADDR_WIDTH => log2c(NR_ALGOS/32),
             DATA_WIDTH => 32
         )
@@ -673,7 +667,7 @@ begin
             q       => q_veto,
             addr    => std_logic_vector(addr_veto)
         );
-
+    
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
@@ -687,20 +681,20 @@ begin
         if rising_edge(lhc_clk) then
             if (ready_veto = '1' and ready_veto_1 = '0') then --rising edge
                 veto_mask  <= (veto_ipbus_regs(17), veto_ipbus_regs(16),
-                              veto_ipbus_regs(15), veto_ipbus_regs(14),
-                              veto_ipbus_regs(13), veto_ipbus_regs(12),
-                              veto_ipbus_regs(11), veto_ipbus_regs(10),
-                              veto_ipbus_regs(9) , veto_ipbus_regs(8) ,
-                              veto_ipbus_regs(7) , veto_ipbus_regs(6) ,
-                              veto_ipbus_regs(5) , veto_ipbus_regs(4) ,
-                              veto_ipbus_regs(3) , veto_ipbus_regs(2) ,
-                              veto_ipbus_regs(1) , veto_ipbus_regs(0) );
+                               veto_ipbus_regs(15), veto_ipbus_regs(14),
+                               veto_ipbus_regs(13), veto_ipbus_regs(12),
+                               veto_ipbus_regs(11), veto_ipbus_regs(10),
+                               veto_ipbus_regs(9) , veto_ipbus_regs(8) ,
+                               veto_ipbus_regs(7) , veto_ipbus_regs(6) ,
+                               veto_ipbus_regs(5) , veto_ipbus_regs(4) ,
+                               veto_ipbus_regs(3) , veto_ipbus_regs(2) ,
+                               veto_ipbus_regs(1) , veto_ipbus_regs(0) );
             end if;
         end if;
     end process;
     -- TODO Make it interchangable
-
-
+    
+    
     veto_update_i: entity work.update_process
         generic map(
             WIDTH      => NR_ALGOS,
@@ -806,6 +800,7 @@ begin
     gen_algos_slice_l : for i in 0 to NR_ALGOS - 1 generate
         algos_slice_i : entity work.algo_slice
             generic map(
+                EXCLUDE_ALGO_VETOED   => TRUE,
                 RATE_COUNTER_WIDTH    => RATE_COUNTER_WIDTH,
                 PRESCALE_FACTOR_WIDTH => PRESCALE_FACTOR_WIDTH,
                 PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT
@@ -858,7 +853,21 @@ begin
             update_pulse                    => begin_lumi_per,
             trigger_out                     => trigger_out
         );
-
+        
+    Mask_previev_i : entity work.Mask
+        generic map(
+            NR_ALGOS => NR_ALGOS,
+            OUT_REG  => TRUE
+        )
+        port map(
+            clk                             => lhc_clk,
+            algos_in                        => algos_after_prescaler_preview,
+            masks                           => masks,
+            request_masks_update_pulse      => request_masks_update,
+            update_pulse                    => begin_lumi_per,
+            trigger_out                     => trigger_out_preview
+        );
+        
     veto_reg_p : process(lhc_clk)
     begin
         if rising_edge(lhc_clk) then
@@ -866,8 +875,10 @@ begin
         end if;
     end process;
 
-    trgg_o           <= trigger_out;
-    veto_o           <= veto_out_s;
+    trigger_o         <= trigger_out;
+    trigger_preview_o <= trigger_out_preview;
+    veto_o            <= veto_out_s;
+
 
     ---------------------------------------------------------------------------------------
     ------------------------------------------SIMULATION-----------------------------------
@@ -875,19 +886,17 @@ begin
 
     dump_process : if SIM generate
         p_dump  : process(lhc_clk, lhc_rst)
-            file test_vector      : text open write_mode is "rate_counter.txt";
+            file test_vector      : text open write_mode is OUT_FILE;
             variable row          : line;
         begin
 
             if(rising_edge(lhc_clk)) then
 
                 if(we = '1') then
-
-                    write(row, to_integer(unsigned(d_rate_cnt_before_prescaler, 32))       , right, 6);
-                    write(row, to_integer(unsigned(d_rate_cnt_after_prescaler, 32))        , right, 6);
-                    write(row, to_integer(unsigned(d_rate_cnt_after_prescaler_preview, 32)), right, 6);
-                    write(row, to_integer(unsigned(d_rate_cnt_post_dead_time, 32))         , right, 6);
-
+                    write(row, to_integer(unsigned(d_rate_cnt_before_prescaler))       , right, 6);
+                    write(row, to_integer(unsigned(d_rate_cnt_after_prescaler))        , right, 6);
+                    write(row, to_integer(unsigned(d_rate_cnt_after_prescaler_preview)), right, 6);
+                    write(row, to_integer(unsigned(d_rate_cnt_post_dead_time))         , right, 6);
 
                     writeline(test_vector,row);
 

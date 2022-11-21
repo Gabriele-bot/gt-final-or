@@ -50,10 +50,12 @@ architecture rtl of emp_payload is
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
-    signal trgg_SLR3_regs  : SLRCross_trigg_t;
-    signal veto_SLR3_regs  : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
-    signal trgg_SLR2_regs  : SLRCross_trigg_t;
-    signal veto_SLR2_regs  : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    signal trgg_SLR2_regs      : SLRCross_trigg_t;
+    signal trgg_prvw_SLR2_regs : SLRCross_trigg_t;
+    signal veto_SLR2_regs      : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    signal trgg_SLR3_regs      : SLRCross_trigg_t;
+    signal trgg_prvw_SLR3_regs : SLRCross_trigg_t;
+    signal veto_SLR3_regs      : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
 
 
     signal algos_SLR3       : std_logic_vector(64*9-1 downto 0);
@@ -68,10 +70,12 @@ architecture rtl of emp_payload is
     signal algos_presc_SLR2_regs : SLRCross_algos_t;
 
     attribute keep : boolean;
-    attribute keep of trgg_SLR3_regs : signal is true;
-    attribute keep of trgg_SLR2_regs : signal is true;
-    attribute keep of veto_SLR3_regs : signal is true;
-    attribute keep of veto_SLR2_regs : signal is true;
+    attribute keep of trgg_SLR3_regs      : signal is true;
+    attribute keep of trgg_SLR2_regs      : signal is true;
+    attribute keep of trgg_prvw_SLR3_regs : signal is true;
+    attribute keep of trgg_prvw_SLR2_regs : signal is true;
+    attribute keep of veto_SLR3_regs      : signal is true;
+    attribute keep of veto_SLR2_regs      : signal is true;
 
     attribute keep of algos_SLR3_regs       : signal is DEBUG;
     attribute keep of algos_presc_SLR3_regs : signal is DEBUG;
@@ -79,10 +83,12 @@ architecture rtl of emp_payload is
     attribute keep of algos_presc_SLR2_regs : signal is DEBUG;
 
     attribute shreg_extract                   : string;
-    attribute shreg_extract of trgg_SLR3_regs : signal is "no";
-    attribute shreg_extract of trgg_SLR2_regs : signal is "no";
-    attribute shreg_extract of veto_SLR3_regs : signal is "no";
-    attribute shreg_extract of veto_SLR2_regs : signal is "no";
+    attribute shreg_extract of trgg_SLR3_regs      : signal is "no";
+    attribute shreg_extract of trgg_SLR2_regs      : signal is "no";
+    attribute shreg_extract of trgg_prvw_SLR3_regs : signal is "no";
+    attribute shreg_extract of trgg_prvw_SLR2_regs : signal is "no";
+    attribute shreg_extract of veto_SLR3_regs      : signal is "no";
+    attribute shreg_extract of veto_SLR2_regs      : signal is "no";
 
     attribute shreg_extract of algos_SLR3_regs       : signal is "no";
     attribute shreg_extract of algos_presc_SLR3_regs : signal is "no";
@@ -113,7 +119,8 @@ begin
     SLR3_module : entity work.SLR_FinOR_unit
         generic map(
             NR_LINKS => INPUT_LINKS,
-            MAX_DELAY => MAX_DELAY_PDT
+            MAX_DELAY => MAX_DELAY_PDT,
+            RATE_DUMP_FILE => "rate_counts_slr3.txt"
         )
         port map(
             clk              => clk,
@@ -128,34 +135,37 @@ begin
             ctrs(5 downto 3) => ctrs(19 downto 17),
             d(11 downto 0)   => d(59 downto 48), -- regions[12,13,14]
             d(23 downto 12)  => d(79 downto 68), -- regions[17,18,19]
-            trgg             => trgg_SLR3_regs(0),
-            veto             => veto_SLR3_regs(0),
-            algos            => algos_SLR3_regs(0),
-            algos_prescaled  => algos_presc_SLR3_regs(0)
+            trigger_o         => trgg_SLR3_regs(0),
+            trigger_preview_o => trgg_prvw_SLR3_regs(0),
+            veto_o            => veto_SLR3_regs(0),
+            algos             => algos_SLR3_regs(0),
+            algos_prescaled   => algos_presc_SLR3_regs(0)
         );
 
     SLR2_module : entity work.SLR_FinOR_unit
         generic map(
             NR_LINKS => INPUT_LINKS,
-            MAX_DELAY => MAX_DELAY_PDT
+            MAX_DELAY => MAX_DELAY_PDT,
+            RATE_DUMP_FILE => "rate_counts_slr2.txt"
         )
         port map(
-            clk              => clk,
-            rst              => rst,
-            ipb_in           => ipb_to_slaves(N_SLV_SLR2_MONITOR),
-            ipb_out          => ipb_from_slaves(N_SLV_SLR2_MONITOR),
-            clk360           => clk_p,
-            rst360           => rst_loc(9),
-            lhc_clk          => clk_payload(2),
-            lhc_rst          => rst_payload(2),
-            ctrs(2 downto 0) => ctrs(11 downto 9),
-            ctrs(5 downto 3) => ctrs(22 downto 20),
-            d(11 downto 0)   => d(47 downto 36),
-            d(23 downto 12)  => d(91 downto 80),
-            trgg             => trgg_SLR2_regs(0),
-            veto             => veto_SLR2_regs(0),
-            algos            => algos_SLR2_regs(0),
-            algos_prescaled  => algos_presc_SLR2_regs(0)
+            clk               => clk,
+            rst               => rst,
+            ipb_in            => ipb_to_slaves(N_SLV_SLR2_MONITOR),
+            ipb_out           => ipb_from_slaves(N_SLV_SLR2_MONITOR),
+            clk360            => clk_p,
+            rst360            => rst_loc(9),
+            lhc_clk           => clk_payload(2),
+            lhc_rst           => rst_payload(2),
+            ctrs(2 downto 0)  => ctrs(11 downto 9),
+            ctrs(5 downto 3)  => ctrs(22 downto 20),
+            d(11 downto 0)    => d(47 downto 36),
+            d(23 downto 12)   => d(91 downto 80),
+            trigger_o         => trgg_SLR2_regs(0),
+            trigger_preview_o => trgg_prvw_SLR2_regs(0),
+            veto_o            => veto_SLR2_regs(0),
+            algos             => algos_SLR2_regs(0),
+            algos_prescaled   => algos_presc_SLR2_regs(0)
         );
 
     cross_SLR : process(clk_p)
@@ -163,7 +173,10 @@ begin
         if rising_edge(clk_p) then
             trgg_SLR3_regs(trgg_SLR3_regs'high downto 1) <= trgg_SLR3_regs(trgg_SLR3_regs'high - 1 downto 0);
             trgg_SLR2_regs(trgg_SLR2_regs'high downto 1) <= trgg_SLR2_regs(trgg_SLR2_regs'high - 1 downto 0);
-            
+
+            trgg_prvw_SLR3_regs(trgg_prvw_SLR3_regs'high downto 1) <= trgg_prvw_SLR3_regs(trgg_prvw_SLR3_regs'high - 1 downto 0);
+            trgg_prvw_SLR2_regs(trgg_prvw_SLR2_regs'high downto 1) <= trgg_prvw_SLR2_regs(trgg_prvw_SLR2_regs'high - 1 downto 0);
+
             veto_SLR3_regs(veto_SLR3_regs'high downto 1) <= veto_SLR3_regs(veto_SLR3_regs'high - 1 downto 0);
             veto_SLR2_regs(veto_SLR2_regs'high downto 1) <= veto_SLR2_regs(veto_SLR2_regs'high - 1 downto 0);
         end if;
@@ -172,23 +185,26 @@ begin
 
     SLR2_FinalOR_or : entity work.Output_SLR
         generic map(
-            MAX_DELAY => MAX_DELAY_PDT
+            MAX_DELAY => MAX_DELAY_PDT,
+            FINOR_COUNTS_DUMP_FILE => "finor_counts.txt"
         )
         port map(
-            clk     => clk,
-            rst     => rst,
-            ipb_in  => ipb_to_slaves(N_SLV_SLR2_FINOR),
-            ipb_out => ipb_from_slaves(N_SLV_SLR2_FINOR),
-            clk_p   => clk_p,
-            rst_p   => rst_loc(8),
-            lhc_clk => clk_payload(2),
-            lhc_rst => rst_payload(2),
-            ctrs    => ctrs(8),
-            q(0)    => q(35),
-            trgg_0  => trgg_SLR2_regs(trgg_SLR2_regs'high),
-            trgg_1  => trgg_SLR3_regs(trgg_SLR3_regs'high),
-            veto_0  => veto_SLR2_regs(veto_SLR2_regs'high),
-            veto_1  => veto_SLR3_regs(veto_SLR3_regs'high)
+            clk         => clk,
+            rst         => rst,
+            ipb_in      => ipb_to_slaves(N_SLV_SLR2_FINOR),
+            ipb_out     => ipb_from_slaves(N_SLV_SLR2_FINOR),
+            clk_p       => clk_p,
+            rst_p       => rst_loc(8),
+            lhc_clk     => clk_payload(2),
+            lhc_rst     => rst_payload(2),
+            ctrs        => ctrs(8),
+            trgg_0      => trgg_SLR2_regs(trgg_SLR2_regs'high),
+            trgg_1      => trgg_SLR3_regs(trgg_SLR3_regs'high),
+            trgg_prvw_0 => trgg_prvw_SLR2_regs(trgg_prvw_SLR2_regs'high),
+            trgg_prvw_1 => trgg_prvw_SLR3_regs(trgg_prvw_SLR3_regs'high),
+            veto_0      => veto_SLR2_regs(veto_SLR2_regs'high),
+            veto_1      => veto_SLR3_regs(veto_SLR3_regs'high),
+            q(0)        => q(35)
         );
 
 
@@ -259,3 +275,4 @@ begin
     gpio_en <= (others => '0');
 
 end rtl;
+
