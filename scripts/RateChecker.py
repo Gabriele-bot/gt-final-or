@@ -7,7 +7,7 @@ import os
 import numpy as np
 import random
 import uhal
-import emp
+#import emp
 import sys
 import time
 import argparse
@@ -191,17 +191,17 @@ class HWtest_class:
 
         return np.array(cnt, dtype=np.uint32)
 
-    def get_device(self):
-        device = emp.Controller(self.hw)
-
-        return device
+    #def get_device(self):
+    #    device = emp.Controller(self.hw)
+    #
+    #    return device
 
 
 HWtest = HWtest_class('Serenity3', 'my_connections.xml', 'x0')
 
-EMPdevice = HWtest.get_device()
-ttcNode   = EMPdevice.getTTC()
-# ttcNode.forceBCmd(0x24) #Send test enable command
+#EMPdevice = HWtest.get_device()
+#ttcNode   = EMPdevice.getTTC()
+#ttcNode.forceBCmd(0x24) #Send test enable command
 
 # Set the l1a-latency delay
 l1_latency_delay = int(100)
@@ -328,13 +328,17 @@ if args.test =='prescaler':
     o_ctr_temp = 0
 
     for i in range(0, 200):
-
-        ttcStatus = ttcNode.readStatus()
+        #ttcStatus = ttcNode.readStatus()
+        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+        HWtest.hw.dispatch()
         time.sleep(1)
-        if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        #if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        if ((o_ctr - o_ctr_temp) > (2 ** 18)):
             os.system('clear')
-            print("Current orbit counter = %d" % ttcStatus.orbitCount)
-            o_ctr_temp = ttcStatus.orbitCount
+            print("Current orbit counter = %d" % o_ctr)
+            #print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            #o_ctr_temp = ttcStatus.orbitCount
+            o_ctr_temp = o_ctr
 
             cnt_before = HWtest.read_cnt_arr(0)
             cnt_after = HWtest.read_cnt_arr(1)
@@ -485,13 +489,17 @@ elif args.test == 'trigger_mask':
     o_ctr_temp = 0
 
     for i in range(0, 200):
-
-        ttcStatus = ttcNode.readStatus()
+	    #ttcStatus = ttcNode.readStatus()
+        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+        HWtest.hw.dispatch()
         time.sleep(1)
-        if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        #if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        if ((o_ctr - o_ctr_temp) > (2 ** 18)):
             os.system('clear')
-            print("Current orbit counter = %d" % ttcStatus.orbitCount)
-            o_ctr_temp = ttcStatus.orbitCount
+            print("Current orbit counter = %d" % o_ctr)
+            #print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            #o_ctr_temp = ttcStatus.orbitCount
+            o_ctr_temp = o_ctr
 
             trigg_cnt     = HWtest.read_trigg_cnt(0)
             trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
@@ -614,13 +622,17 @@ elif args.test == 'veto_mask':
     o_ctr_temp = 0
 
     for i in range(0, 200):
-
-        ttcStatus = ttcNode.readStatus()
+        #ttcStatus = ttcNode.readStatus()
+        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+        HWtest.hw.dispatch()
         time.sleep(1)
-        if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        #if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        if ((o_ctr - o_ctr_temp) > (2 ** 18)):
             os.system('clear')
-            print("Current orbit counter = %d" % ttcStatus.orbitCount)
-            o_ctr_temp = ttcStatus.orbitCount
+            print("Current orbit counter = %d" % o_ctr)
+            #print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            #o_ctr_temp = ttcStatus.orbitCount
+            o_ctr_temp = o_ctr
 
             trigg_cnt = HWtest.read_trigg_cnt(0)
             trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
@@ -665,16 +677,15 @@ elif args.test == 'BXmask':
 
     # set the BX mask accordingly
     for BX_nr in range(np.shape(BX_mask)[1]):
-        if BX_nr != 0:
-            for index, mask in enumerate(BX_mask[:, BX_nr]):
-                if index < 576:
-                    reg_index = np.uint16(np.floor(index / 32))
-                    bit_pos = np.uint16(index - reg_index * 32)
-                    bxmask[0, reg_index, BX_nr] = (bxmask[0, reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
-                else:
-                    reg_index = np.uint16(np.floor((index - 576) / 32))
-                    bit_pos = np.uint16((index - 576) - reg_index * 32)
-                    bxmask[1, reg_index, BX_nr] = (bxmask[1, reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
+        for index, mask in enumerate(BX_mask[:, BX_nr]):
+            if index < 576:
+                reg_index = np.uint16(np.floor(index / 32))
+                bit_pos = np.uint16(index - reg_index * 32)
+                bxmask[0, reg_index, BX_nr] = (bxmask[0, reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
+            else:
+                reg_index = np.uint16(np.floor((index - 576) / 32))
+                bit_pos = np.uint16((index - 576) - reg_index * 32)
+                bxmask[1, reg_index, BX_nr] = (bxmask[1, reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
 
     HWtest.load_BXmask_arr(bxmask)
 
@@ -748,13 +759,17 @@ elif args.test == 'BXmask':
     o_ctr_temp = 0
 
     for i in range(0, 200):
-
-        ttcStatus = ttcNode.readStatus()
+        #ttcStatus = ttcNode.readStatus()
+        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+        HWtest.hw.dispatch()
         time.sleep(1)
-        if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        #if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        if ((o_ctr - o_ctr_temp) > (2 ** 18)):
             os.system('clear')
-            print("Current orbit counter = %d" % ttcStatus.orbitCount)
-            o_ctr_temp = ttcStatus.orbitCount
+            print("Current orbit counter = %d" % o_ctr)
+            #print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            #o_ctr_temp = ttcStatus.orbitCount
+            o_ctr_temp = o_ctr
 
             cnt_before = HWtest.read_cnt_arr(0)
             cnt_after = HWtest.read_cnt_arr(1)
@@ -789,3 +804,4 @@ elif args.test == 'BXmask':
         sys.stdout.flush()
 else:
     print('No suitable test was selected!')
+
