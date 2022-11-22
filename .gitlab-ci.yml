@@ -76,7 +76,7 @@ test:serenity:
     - cd ${CI_PROJECT_DIR}/gt-final-or/scripts
     # Generate pattern files
     - python3 PatternProducer.py -i 700 -s Serenity3
-    - cd ${CI_PROJECT_DIR}
+    - cd
     # Extract bitfile & address tables
     - mv -v work_area/proj/${PROJECT_NAME}/package/${PROJECT_NAME}*.tgz .
     - tar xzfv ${PROJECT_NAME}*.tgz
