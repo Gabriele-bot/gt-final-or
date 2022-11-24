@@ -37,12 +37,12 @@ variables:
 
 
 
-serenity_vu13p:build:
-  extends: .vivado_build_emp
-  variables:
-    PROJECT_NAME: p2gt_finor_serenity-vu13p
-    PROJECT_DIR_PATH: finor-hdl
-    PROJECT_DEPFILE: top_serenity_vu13p-so2.d3
+#serenity_vu13p:build:
+#  extends: .vivado_build_emp
+#  variables:
+#    PROJECT_NAME: p2gt_finor_serenity-vu13p
+#    PROJECT_DIR_PATH: finor-hdl
+#    PROJECT_DEPFILE: top_serenity_vu13p-so2.d3
 
 test:serenity:
   extends: .test_base
@@ -77,8 +77,9 @@ test:serenity:
     # Generate pattern files
     - python3 PatternProducer.py -i 700 -s Serenity3
     - cd
+    - ls
     # Extract bitfile & address tables
-    - mv -v work_area/proj/${PROJECT_NAME}/package/${PROJECT_NAME}*.tgz .
+    - mv -v Artifacts/work_area/proj/${PROJECT_NAME}/package/${PROJECT_NAME}*.tgz .
     - tar xzfv ${PROJECT_NAME}*.tgz
     - ls -al ${PROJECT_NAME}*
     - cp -rv $(find ${PROJECT_NAME}* -name "addrtab") .
