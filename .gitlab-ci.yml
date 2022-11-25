@@ -77,10 +77,11 @@ test:serenity:
     - cd ${CI_PROJECT_DIR}
     # Extract bitfile & address tables
     - ls
-    - mv -v work_area/proj/${PROJECT_NAME}/package/${PROJECT_NAME}.tgz .
+    - mv -v ${CI_PROJECT_DIR}/work_area/proj/${PROJECT_NAME}/package/*.tgz  .
     - tar xzfv ${PROJECT_NAME}*.tgz
     - ls -al ${PROJECT_NAME}*
     - cp -rv $(find ${PROJECT_NAME}* -name "addrtab") .
+    - cp -v $(find ${PROJECT_NAME}* -name "${PROJECT_NAME}.bit") .
     - echo '<connections>' > my_connections.xml
     - echo '  <connection id="'${HARDWARE_TEST_SERENITY_SITE}'"' >> my_connections.xml
     - echo '              uri="ipbuspcie-2.0:///dev/serenity_pcie/'${HARDWARE_TEST_SERENITY_SITE}'/h2c,/dev/serenity_pcie/'${HARDWARE_TEST_SERENITY_SITE}'/c2h"' >> my_connections.xml
