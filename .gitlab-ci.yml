@@ -76,7 +76,8 @@ test:serenity:
     - python3 PatternProducer.py -i 1000 -s Serenity3
     - cd ${CI_PROJECT_DIR}
     # Extract bitfile & address tables
-    - mv -v work_area/proj/${PROJECT_NAME}/package/${PROJECT_NAME}*.tgz .
+    - ls
+    - mv -v work_area/proj/${PROJECT_NAME}/package/${PROJECT_NAME}.tgz .
     - tar xzfv ${PROJECT_NAME}*.tgz
     - ls -al ${PROJECT_NAME}*
     - cp -rv $(find ${PROJECT_NAME}* -name "addrtab") .
