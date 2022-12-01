@@ -17,7 +17,7 @@ variables:
   PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
 
 serenity_vu13p:build:
-  extends: .vivado_build_emp
+  extends: build
   variables:
     PROJECT_NAME: p2gt_finor_serenity-vu13p
     PROJECT_DIR_PATH: finor-hdl
