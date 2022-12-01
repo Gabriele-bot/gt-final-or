@@ -4,6 +4,7 @@ include:
     file: 
       - pipelines/workflow.yml
       - pipelines/vivado-build-emp.yml
+      - templates/xilinx/build-emp.yml
     
 .ci_templates_ref: v0.1.3
 
@@ -17,7 +18,7 @@ variables:
   PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
 
 serenity_vu13p:build:
-  #extends: build
+  extends: .vivado_build_emp
   variables:
     PROJECT_NAME: p2gt_finor_serenity-vu13p
     PROJECT_DIR_PATH: finor-hdl
