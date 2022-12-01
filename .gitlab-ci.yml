@@ -24,7 +24,8 @@ serenity_vu13p:build:
     PROJECT_DEPFILE: top_serenity_vu13p-so2.d3
 
 test:serenity:
-  extends: .vivado_build_emp
+  extends: .test_base
+  image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
   variables:
     HARDWARE_TEST_SERENITY_SITE: x0
     SMASH_DEFAULT_CONFIG: /board.smash
