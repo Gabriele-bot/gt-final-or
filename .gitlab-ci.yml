@@ -17,15 +17,40 @@ variables:
   # Set PARENT_PIPELINE_ID as used in vivado-build-emp.yml in place of CI_PIPELINE_ID
   PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
 
+.test_base:
+  stage: test
+  # Default values for HARDWARE_TEST_ variables
+  variables:
+    HARDWARE_TEST_INPUT_CHANNELS: all
+    HARDWARE_TEST_OUTPUT_CHANNELS: all
+    HARDWARE_TEST_CAPTURE_LENGTH: 1024
+  artifacts:
+    when: always
+    paths:
+      - '**/*.log'
+      - '**/*.txt'
+    expire_in: 1 week
+  tags:
+    - docker
+    - $HARDWARE_TEST_TYPE
+  resource_group: ${HARDWARE_TEST_LOCATION}/${HARDWARE_TEST_TYPE}
+  environment:
+    name: test/${HARDWARE_TEST_TYPE}
+    deployment_tier: testing
+  needs:
+    - serenity_vu13p:build
+
+
+
 serenity_vu13p:build:
-  #extends: .vivado_build_emp
+  extends: .vivado_build_emp
   variables:
     PROJECT_NAME: p2gt_finor_serenity-vu13p
     PROJECT_DIR_PATH: finor-hdl
     PROJECT_DEPFILE: top_serenity_vu13p-so2.d3
 
 serenity_vu13p:test:
-  extends: test:serenity
+  extends: .test_base
   image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
   variables:
     HARDWARE_TEST_SERENITY_SITE: x0
