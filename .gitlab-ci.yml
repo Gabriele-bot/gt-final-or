@@ -5,39 +5,14 @@ include:
       - pipelines/workflow.yml
       - templates/xilinx/build-emp.yml
 
-.ci_templates_ref: v0.1.4
-
 variables:
   QUESTASIM_VERSION: "2021.1_2"
   VIVADO_VERSION: "2021.1"
   BUILD_DIR: "build"
   MTI_VCO_MODE: "64"
   HARDWARE_TEST_IMAGE_TAG: v0-3-17
-
-.test_base:
-  stage: test
-  # Default values for HARDWARE_TEST_ variables
-  variables:
-    HARDWARE_TEST_INPUT_CHANNELS: all
-    HARDWARE_TEST_OUTPUT_CHANNELS: all
-    HARDWARE_TEST_CAPTURE_LENGTH: 1024
-  artifacts:
-    when: always
-    paths:
-      - '**/*.log'
-      - '**/*.txt'
-    expire_in: 1 week
-  tags:
-    - docker
-    - $HARDWARE_TEST_TYPE
-  resource_group: ${HARDWARE_TEST_LOCATION}/${HARDWARE_TEST_TYPE}
-  environment:
-    name: test/${HARDWARE_TEST_TYPE}
-    deployment_tier: testing
-  needs:
-    - build
-
-
+  # Set PARENT_PIPELINE_ID as used in vivado-build-emp.yml in place of CI_PIPELINE_ID
+  PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
 
 serenity_vu13p:build:
   extends: .vivado_build_emp
@@ -47,8 +22,7 @@ serenity_vu13p:build:
     PROJECT_DEPFILE: top_serenity_vu13p-so2.d3
 
 test:serenity:
-  extends: .test_base
-  image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
+  extends: .vivado_build_emp
   variables:
     HARDWARE_TEST_SERENITY_SITE: x0
     SMASH_DEFAULT_CONFIG: /board.smash
