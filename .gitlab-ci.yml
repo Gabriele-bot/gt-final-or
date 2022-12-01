@@ -21,12 +21,12 @@ variables:
     HARDWARE_TEST_INPUT_CHANNELS: all
     HARDWARE_TEST_OUTPUT_CHANNELS: all
     HARDWARE_TEST_CAPTURE_LENGTH: 1024
-  #artifacts:
-    #when: always
-    #paths:
-    #  - '**/*.log'
-    #  - '**/*.txt'
-    #expire_in: 1 week
+  artifacts:
+    when: always
+    paths:
+      - '**/*.log'
+      - '**/*.txt'
+    expire_in: 1 week
   tags:
     - docker
     - $HARDWARE_TEST_TYPE
@@ -34,6 +34,8 @@ variables:
   environment:
     name: test/${HARDWARE_TEST_TYPE}
     deployment_tier: testing
+  needs:
+    - build
 
 
 
