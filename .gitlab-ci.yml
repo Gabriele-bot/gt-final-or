@@ -3,8 +3,8 @@ include:
     ref: v0.1.3
     file: 
       - pipelines/workflow.yml
-      - pipelines/vivado-build-emp.yml
-      #- templates/xilinx/build-emp.yml
+      #- pipelines/vivado-build-emp.yml
+      - templates/xilinx/build-emp.yml
     
 .ci_templates_ref: v0.1.3
 
