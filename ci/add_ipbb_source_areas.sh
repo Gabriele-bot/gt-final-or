@@ -1,6 +1,6 @@
 #! /bin/env bash
 
-#ipbb add git https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/dth_p1-v2/slinkrocket.git -b v03.10
+ipbb add git https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/dth_p1-v2/slinkrocket.git -b v03.10
 
 # If using GBT/lpGBT cores, also run:
 #ipbb add git https://gitlab.cern.ch/gbt-fpga/gbt-fpga.git -b gbt_fpga_6_1_0
