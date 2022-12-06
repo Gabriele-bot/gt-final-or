@@ -3,20 +3,17 @@
 
 | Board | FPGA | Depfile name | 
 | ---      | ---      | ---      |
-| Serenity | VU9P-2-e-flga2577[^1] | `top_serenity_vu9p-so2.d3` |
 | Serenity | VU13P-2-e-flga2577 | `top_serenity_vu13p-so2.d3` |
-
-[^1]:Works only with half of the input links  
 
 # Requirements
 
 * Vivado 2020.1 or later
 * ipbb 2021j or later
-* uHAL[^2]
+* uHAL[^1]
 * Access to the TCDS2 Gitlab repository. (Can be requested at https://cmstcds2.docs.cern.ch/.)
 * Access to the EMP repository.
 
-[^2]: https://ipbus.web.cern.ch/doc/user/html/software/installation.html
+[^1]: https://ipbus.web.cern.ch/doc/user/html/software/installation.html
 
 # Setup instructions
 
@@ -28,7 +25,7 @@ source ipbb-dev-2021j/env.sh
 
 ipbb init gt-fw-work
 cd gt-fw-work
-ipbb add git https://:@gitlab.cern.ch:8443/p2-xware/firmware/emp-fwk.git -b v0.6.8
+ipbb add git https://:@gitlab.cern.ch:8443/p2-xware/firmware/emp-fwk.git -b v0.7.3
 ipbb add git https://github.com/ipbus/ipbus-firmware -b v1.9
 ipbb add git https://:@gitlab.cern.ch:8443/cms-tcds/cms-tcds2-firmware.git -b v0_1_1
 ipbb add git https://gitlab.cern.ch/HPTD/tclink.git -r fda0bcf
@@ -39,7 +36,7 @@ ipbb add git https://:@gitlab.cern.ch:8443/cms-cactus/phase2/firmware/gt-final-o
 # Build instructions
 ### Create firmware project
 ```bash
-ipbb proj create vivado gt-final-or gt-final-or:finor-hdl [depfile name]  # See above for possible choices.
+ipbb proj create vivado gt-final-or gt-final-or:finor-hdl top_serenity_vu13p-so2.d3
 cd proj/gt-final-or
 
 # Make uhal tools available
@@ -62,7 +59,7 @@ Get required packages as in the previous section.
 
 ### Create the simulation project
 ```bash
-ipbb proj create vivado finor_sim gt-final-or:simulation [depfile name]  # See above for possible choices.
+ipbb proj create vivado finor_sim gt-final-or:simulation top_serenity_vu13p-so2.d3
 cd proj/finor_sim
 ipbb vivado generate-project
 ```
