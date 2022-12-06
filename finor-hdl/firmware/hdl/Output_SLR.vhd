@@ -89,6 +89,10 @@ architecture RTL of Output_SLR is
     signal d_rate_cnt_finor_with_veto, d_rate_cnt_finor_with_veto_pdt       : std_logic_vector(31 downto 0);
     signal d_rate_cnt_finor_prvw_with_veto, d_rate_cnt_finor_prvw_with_veto_pdt       : std_logic_vector(31 downto 0);
 
+    signal veto_out_s               : std_logic;
+    signal veto_cnt                 : std_logic_vector(RATE_COUNTER_WIDTH-1 DOWNTO 0);
+    signal veto_stat_reg            : ipb_reg_v(0 downto 0);
+
 begin
 
     fabric_i: entity work.ipbus_fabric_sel
@@ -260,6 +264,55 @@ begin
         end process;
     end generate;
 
+    veto_out_s <= veto_0 or veto_1;
+
+    ----------------------------------------------------------------------------------
+    -----------------------------Veto Rate Counter------------------------------------
+    ----------------------------------------------------------------------------------   
+
+    Veto_rate_counter_i: entity work.algo_rate_counter
+        generic map(
+            COUNTER_WIDTH => RATE_COUNTER_WIDTH
+        )
+        port map(
+            sys_clk         => clk,
+            clk             => lhc_clk,
+            sres_counter    => '0',
+            store_cnt_value => begin_lumi_per_del1,
+            algo_i          => veto_out_s,
+            counter_o       => veto_cnt
+        );
+
+    xpm_cdc_veto_cnt_reg : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => RATE_COUNTER_WIDTH
+        )
+        port map (
+            dest_out => veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0),
+            dest_clk => clk,
+            src_clk  => lhc_clk,
+            src_in   => veto_cnt
+        );
+
+    Veto_cnt_regs : entity work.ipbus_ctrlreg_v
+        generic map(
+            N_CTRL     => 0,
+            N_STAT     => 1
+        )
+        port map(
+            clk       => clk,
+            reset     => rst,
+            ipbus_in  => ipb_to_slaves(N_SLV_VETO_REG),
+            ipbus_out => ipb_from_slaves(N_SLV_VETO_REG),
+            d         => veto_stat_reg,
+            q         => open,
+            qmask     => open,
+            stb       => open
+        );
 
 
     gen_rate_counters_l : for i in 0 to N_TRIGG - 1 generate

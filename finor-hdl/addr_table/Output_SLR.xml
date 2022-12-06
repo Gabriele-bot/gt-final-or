@@ -15,5 +15,10 @@
       <node id="ready"  mask="0x0001"/>
     </node>
    </node>
+  <node id="Veto_reg" address="0x90" fwinfo="endpoint;width=1">
+    <node id="stat">
+      <node id="Veto_cnt"/>
+    </node>
+  </node>  
 </node>
 

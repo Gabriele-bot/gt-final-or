@@ -17,7 +17,7 @@ package ipbus_decode_m_module is
   subtype ipbus_sel_t is std_logic_vector(IPBUS_SEL_WIDTH - 1 downto 0);
   function ipbus_sel_m_module(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
 
--- START automatically generated VHDL (Sat Nov  5 21:45:54 2022)
+-- START automatically generated VHDL (Tue Dec  6 10:36:41 2022)
   constant N_SLV_PRESCALE_FACTOR: integer := 0;
   constant N_SLV_PRESCALE_FACTOR_PRVW: integer := 1;
   constant N_SLV_CNT_RATE_BEFORE_PRSC: integer := 2;
@@ -25,10 +25,11 @@ package ipbus_decode_m_module is
   constant N_SLV_CNT_RATE_AFTER_PRSC_PRVW: integer := 4;
   constant N_SLV_CNT_RATE_PDT: integer := 5;
   constant N_SLV_CSR: integer := 6;
-  constant N_SLV_TRGG_MASK: integer := 7;
-  constant N_SLV_VETO_MASK: integer := 8;
-  constant N_SLV_ALGO_BX_MASKS: integer := 9;
-  constant N_SLAVES: integer := 10;
+  constant N_SLV_VETO_REG: integer := 7;
+  constant N_SLV_TRGG_MASK: integer := 8;
+  constant N_SLV_VETO_MASK: integer := 9;
+  constant N_SLV_ALGO_BX_MASKS: integer := 10;
+  constant N_SLAVES: integer := 11;
 -- END automatically generated VHDL
 
     
@@ -40,7 +41,7 @@ package body ipbus_decode_m_module is
     variable sel: ipbus_sel_t;
   begin
 
--- START automatically generated VHDL (Sat Nov  5 21:45:54 2022)
+-- START automatically generated VHDL (Tue Dec  6 10:36:41 2022)
     if    std_match(addr, "--------------0-0000------------") then
       sel := ipbus_sel_t(to_unsigned(N_SLV_PRESCALE_FACTOR, IPBUS_SEL_WIDTH)); -- prescale_factor / base 0x00000000 / mask 0x0002f000
     elsif std_match(addr, "--------------0-0001------------") then
@@ -53,8 +54,10 @@ package body ipbus_decode_m_module is
       sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_AFTER_PRSC_PRVW, IPBUS_SEL_WIDTH)); -- cnt_rate_after_prsc_prvw / base 0x00004000 / mask 0x0002f000
     elsif std_match(addr, "--------------0-0101------------") then
       sel := ipbus_sel_t(to_unsigned(N_SLV_CNT_RATE_PDT, IPBUS_SEL_WIDTH)); -- cnt_rate_pdt / base 0x00005000 / mask 0x0002f000
-    elsif std_match(addr, "--------------0-0110------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_CSR, IPBUS_SEL_WIDTH)); -- CSR / base 0x00006000 / mask 0x0002f000
+    elsif std_match(addr, "--------------0-01100-----------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CSR, IPBUS_SEL_WIDTH)); -- CSR / base 0x00006000 / mask 0x0002f800
+    elsif std_match(addr, "--------------0-01101-----------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_VETO_REG, IPBUS_SEL_WIDTH)); -- Veto_reg / base 0x00006800 / mask 0x0002f800
     elsif std_match(addr, "--------------0-0111------------") then
       sel := ipbus_sel_t(to_unsigned(N_SLV_TRGG_MASK, IPBUS_SEL_WIDTH)); -- trgg_mask / base 0x00007000 / mask 0x0002f000
     elsif std_match(addr, "--------------0-1000------------") then
