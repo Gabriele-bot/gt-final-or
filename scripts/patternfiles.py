@@ -11,28 +11,20 @@ import numpy as np
 
 # Function creating header needed for patter file
 # The lengths vector is used to determine the number of links as well as their width
-def header(boardname, lengths, links=[0]):
-    txt = "Board " + boardname + "\n"
-    txt += " Quad/Chan : "
+def header(ID, lengths, links=[0]):
+    txt = "ID: " + ID + "\n"
+    txt += "Metadata: (strobe,) start of orbit, start of packet, end of packet, valid\n"
+    
+    j = 0
+    i = links[j]
+    txt += "\n      Link    "
     j = 0
     i = links[j]
     for characters in lengths:
         i = links[j]
-        characters = characters - 2
-        txt += ' ' * int(characters / 2)
-        txt += 'q{:02d}c{}'.format(i // 4, i % 4)
-        txt += ' ' * int(characters / 2)
-        if (characters % 2 != 0): txt += ' '
-        j += 1
-
-    txt += "\n      Link : "
-    j = 0
-    i = links[j]
-    for characters in lengths:
-        i = links[j]
-        txt += ' ' * int(characters / 2)
+        txt += ' ' * int((characters + 4)/ 2)
         txt += '{:03d}'.format(i)
-        txt += ' ' * int(characters / 2)
+        txt += ' ' * int((characters + 4) / 2)
         if (characters % 2 != 0): txt += ' '
         j += 1
 
@@ -42,15 +34,19 @@ def header(boardname, lengths, links=[0]):
 
 # Writing pattern file lines from numpy array of bitstrings
 # TODO: Currently, the 'valid' bin is not used. If decided how to use it, this needs to be changed
-def body(data):
+def body(metadata, data):
     txt = ""
     iframe = 0
-    for data_line in data:
-        txt += 'Frame {:04d} :'.format(iframe)
-        for value in data_line:
-            v = "1"  # TODO set v
-            txt += ' ' + v + 'v'
-            txt += value
+    for data_line in zip(metadata,data):
+        txt += 'Frame {:04d}   '.format(iframe)
+        for metavalue, value in zip(data_line[0],data_line[1]):
+            bits = metavalue
+            start_of_orbit = bits[0]*1
+            start          = bits[1]*1
+            last           = bits[2]*1
+            valid          = bits[3]*1
+            txt += ' ' + start_of_orbit + start + last + valid + ' '
+            txt += value + ' '
         txt += ' \n'
         iframe += 1
     return txt
@@ -66,13 +62,13 @@ def len_vec(data):
 # Use linkOffset to specify the number of the first link to be used
 # Use padding to define a fixed length of string (will crash if too small, use 0 for no padding)
 # Attention: this is defined WITHOUT the validity bit!
-def write_pattern_file(data, boardname="x0", outputfile="pattern.txt", links=0):
+def write_pattern_file(metadata, data, boardname="x0", outputfile="pattern.txt", links=0):
     f = open(outputfile, 'w')
 
     # Writing header
     f.write(header(boardname, len_vec(data[0]), links))
     # Writing body
-    f.write(body(data))
+    f.write(body(metadata, data))
 
     f.close()
 
