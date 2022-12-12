@@ -11,10 +11,11 @@ entity Link_merger is
         NR_LINKS : natural := 3
     );
     port(
-        clk_p : in std_logic;
-        rst_p : in std_logic;
-        d     : in   ldata(NR_LINKS - 1 downto 0);  -- data in
-        q     : out  lword  -- data out
+        clk_p     : in std_logic;
+        rst_p     : in std_logic;
+        link_mask : in std_logic_vector(NR_LINKS - 1 downto 0);
+        d         : in   ldata(NR_LINKS - 1 downto 0);  -- data in
+        q         : out  lword  -- data out
     );
 end entity Link_merger;
 
@@ -42,7 +43,6 @@ architecture RTL of Link_merger is
     signal or_start          : std_logic;
     signal or_last           : std_logic;
 
-    signal link_mask : std_logic_vector(NR_LINKS - 1 downto 0) := (others => '1');
 
 begin
 
@@ -54,13 +54,8 @@ begin
         d_lasts(i)           <= d(i).last;
         d_strobes(i)         <= d(i).strobe;
     end generate;
-
-    --TODO manage the alignement error flag when links are masked
-    or_valid          <= or d_valids;
-    or_start_of_orbit <= or d_starts_of_orbit;
-    or_start          <= or d_starts;
-    or_last           <= or d_lasts;
-
+    
+    -- TODO waht to do if a link is masked??
     valid_error <= xor d_valids;
     start_of_orbit_error <= xor d_starts_of_orbit;
     start_error <= xor d_starts;

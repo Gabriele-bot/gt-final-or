@@ -3,6 +3,7 @@ src -c ipbus-firmware:components/ipbus_core ipbus_fabric_sel.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_reg_types.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_ctrlreg_v.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_dpram.vhd
+src --vhdl2008 -c emp-fwk:components/links/slink emp_slink_types.vhd
 
 src --vhdl2008 math_pkg.vhd
 src --vhdl2008 P2GT_finor_pkg.vhd
@@ -15,6 +16,7 @@ src --vhdl2008 decoders/ipbus_decode_Output_SLR.vhd
 src --vhdl2008 ipbus/ipbus_initialized_dpram.vhd
 src --vhdl2008 ipbus/ipbus_dpram_4096x576.vhd
 
+src --vhdl2008 Counter_module.vhd
 src --vhdl2008 update_process.vhd
 src --vhdl2008 algo_pre_scaler.vhd
 src --vhdl2008 algo_rate_counter.vhd
@@ -25,7 +27,6 @@ src --vhdl2008 Mask.vhd
 src --vhdl2008 read_FSM.vhd
 src --vhdl2008 write_FSM.vhd
 src --vhdl2008 m_module.vhd
-src --vhdl2008 Counter_module.vhd
 src --vhdl2008 Link_merger.vhd
 src --vhdl2008 In_deser.vhd
 src --vhdl2008 mux.vhd

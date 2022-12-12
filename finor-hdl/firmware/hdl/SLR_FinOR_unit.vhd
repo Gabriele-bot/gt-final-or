@@ -73,10 +73,11 @@ begin
             NR_LINKS => NR_LINKS/2
         )
         port map(
-            clk_p => clk360,
-            rst_p => rst360,
-            d     => d_reg(NR_LINKS/2 - 1 downto 0),
-            q     => d_right(0)
+            clk_p     => clk360,
+            rst_p     => rst360,
+            link_mask => (others => '1'),
+            d         => d_reg(NR_LINKS/2 - 1 downto 0),
+            q         => d_right(0)
         ) ;
 
     Left_merge : entity work.Link_merger
@@ -84,10 +85,11 @@ begin
             NR_LINKS => NR_LINKS/2
         )
         port map(
-            clk_p => clk360,
-            rst_p => rst360,
-            d     => d_reg(NR_LINKS - 1 downto NR_LINKS/2),
-            q     => d_left(0)
+            clk_p     => clk360,
+            rst_p     => rst360,
+            link_mask => (others => '1'),
+            d         => d_reg(NR_LINKS - 1 downto NR_LINKS/2),
+            q         => d_left(0)
         ) ;
 
     process(clk360)
@@ -103,11 +105,12 @@ begin
             NR_LINKS => 2
         )
         port map(
-            clk_p => clk360,
-            rst_p => rst360,
-            d(0)  => d_left(1),
-            d(1)  => d_right(1),
-            q     => d_res
+            clk_p     => clk360,
+            rst_p     => rst360,
+            link_mask => (others => '1'),
+            d(0)      => d_left(1),
+            d(1)      => d_right(1),
+            q         => d_res
         ) ;
 
     deser_i : entity work.In_deser
