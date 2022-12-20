@@ -19,9 +19,10 @@ use work.math_pkg.all;
 
 entity SLR_FinOR_unit is
     generic(
-        NR_LINKS   : natural := INPUT_LINKS;
-        NR_MON_REG : natural := MON_REG;
-        MAX_DELAY  : natural := MAX_DELAY_PDT
+        NR_LINKS              : natural := INPUT_LINKS;
+        NR_MON_REG            : natural := MON_REG;
+        BEGIN_LUMI_TOGGLE_BIT : natural := 18;
+        MAX_DELAY             : natural := MAX_DELAY_PDT
     );
     port(
         clk     : in  std_logic;
@@ -35,6 +36,7 @@ entity SLR_FinOR_unit is
         lhc_rst : in std_logic;
         ctrs    : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
         d       : in  ldata(NR_LINKS - 1 downto 0);  -- data in
+        valid_out         : out std_logic;
         trigger_o         : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_preview_o : out std_logic_vector(N_TRIGG-1 downto 0);
         veto_o            : out std_logic;
@@ -45,6 +47,11 @@ entity SLR_FinOR_unit is
 end entity SLR_FinOR_unit;
 
 architecture RTL of SLR_FinOR_unit is
+
+    constant LATENCY_360 : integer := 9  + 1;
+
+    signal valid_shreg : std_logic_vector(LATENCY_360 downto 0);
+    signal d_valids    : std_logic_vector(NR_LINKS - 1 downto 0);
 
     signal d_reg : ldata(NR_LINKS - 1 downto 0);
     signal links_data : data_arr;
@@ -59,7 +66,22 @@ architecture RTL of SLR_FinOR_unit is
     signal trigger_out_preview    : std_logic_vector(N_TRIGG-1 downto 0);
     signal veto_out               : std_logic;
 
+    signal ctrs_int               : ttc_stuff_t;
+    signal ctrs_del               : ttc_stuff_array(1 downto 0);
+
+    signal link_mask              : std_logic_vector(NR_LINKS -1 downto 0) := (others => '1');
+
 begin
+
+    valid_shreg(0) <= d_res.valid;
+
+    process(clk360)
+    begin
+        if rising_edge(clk360) then
+            valid_shreg(LATENCY_360 downto 1) <= valid_shreg(LATENCY_360-1 downto 0);
+        end if;
+    end process;
+
 
     process(clk360)
     begin
@@ -75,7 +97,7 @@ begin
         port map(
             clk_p     => clk360,
             rst_p     => rst360,
-            link_mask => (others => '1'),
+            link_mask => link_mask(NR_LINKS/2 - 1 downto 0),
             d         => d_reg(NR_LINKS/2 - 1 downto 0),
             q         => d_right(0)
         ) ;
@@ -87,7 +109,7 @@ begin
         port map(
             clk_p     => clk360,
             rst_p     => rst360,
-            link_mask => (others => '1'),
+            link_mask => link_mask(NR_LINKS - 1 downto NR_LINKS/2),
             d         => d_reg(NR_LINKS - 1 downto NR_LINKS/2),
             q         => d_left(0)
         ) ;
@@ -115,7 +137,7 @@ begin
 
     deser_i : entity work.In_deser
         generic map(
-            OUT_REG => FALSE
+            OUT_REG => DESER_OUT_REG
         )
         port map(
             clk360       => clk360,
@@ -128,11 +150,35 @@ begin
 
     algos <= algos_in;
 
+
+    ----------------------------------------------------------------------------------
+    ---------------COUNTERS INTERNAL---------------------------------------------------
+    ----------------------------------------------------------------------------------
+    --TODO Where to stat counting, need some latency? How much?
+
+    ctrs_del(0) <= ctrs(0);
+    ctrs_del_p: process(lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            ctrs_del(1) <= ctrs_del(0);
+        end if;
+    end process;
+
+
+    crts_del_g: if DESER_OUT_REG generate
+        ctrs_int <= ctrs_del(1);
+    else generate
+        ctrs_int <= ctrs_del(0);
+    end generate;
+
+
+
     monitoring_module : entity work.m_module
         generic map(
-            NR_ALGOS             => 64*9,
-            PRESCALE_FACTOR_INIT => X"00000064", --1.00
-            MAX_DELAY            => MAX_DELAY
+            NR_ALGOS              => 64*9,
+            PRESCALE_FACTOR_INIT  => X"00000064", --1.00,
+            BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
+            MAX_DELAY             => MAX_DELAY
         )
         port map(
             clk                     => clk,
@@ -141,13 +187,24 @@ begin
             ipb_out                 => ipb_out,
             lhc_clk                 => lhc_clk,
             lhc_rst                 => lhc_rst,
-            ctrs                    => ctrs(0),
+            ctrs                    => ctrs_int,
             algos_in                => algos_in,
             algos_after_prescaler_o => algos_prescaled,
             trigger_o               => trigger_out,
             trigger_preview_o       => trigger_out_preview,
             veto_o                  => veto_out
         );
+
+    out_reg_g : if DESER_OUT_REG generate
+        data_40mhz_p: process(lhc_clk)
+        begin
+            if rising_edge(lhc_clk) then
+                valid_out <= valid_shreg(valid_shreg'high);
+            end if;
+        end process;
+    else generate
+        valid_out <= valid_shreg(valid_shreg'high);
+    end generate;
 
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;

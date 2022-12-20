@@ -19,6 +19,9 @@ use work.emp_slink_types.all;
 use work.P2GT_finor_pkg.all;
 
 entity emp_payload is
+    generic(
+        BEGIN_LUMI_TOGGLE_BIT : integer := BEGIN_LUMI_SEC_BIT
+    );
     port(
         clk         : in  std_logic;        -- ipbus signals
         rst         : in  std_logic;
@@ -51,6 +54,9 @@ architecture rtl of emp_payload is
     signal begin_lumi_section : std_logic := '0'; -- TODO extract the value from ctrs
     signal l1a_loc            : std_logic_vector(N_REGION - 1 downto 0);
     signal bcres              : std_logic := '0';
+    
+    signal valid_out_SLR2_regs, valid_out_SLR3_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    signal valid_in                                 : std_logic;
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
@@ -74,30 +80,35 @@ architecture rtl of emp_payload is
     signal algos_presc_SLR2_regs : SLRCross_algos_t;
 
     attribute keep : boolean;
-    attribute keep of trgg_SLR3_regs      : signal is true;
-    attribute keep of trgg_SLR2_regs      : signal is true;
-    attribute keep of trgg_prvw_SLR3_regs : signal is true;
-    attribute keep of trgg_prvw_SLR2_regs : signal is true;
-    attribute keep of veto_SLR3_regs      : signal is true;
-    attribute keep of veto_SLR2_regs      : signal is true;
+    attribute keep of trgg_SLR3_regs           : signal is true;
+    attribute keep of trgg_SLR2_regs           : signal is true;
+    attribute keep of trgg_prvw_SLR3_regs      : signal is true;
+    attribute keep of trgg_prvw_SLR2_regs      : signal is true;
+    attribute keep of veto_SLR3_regs           : signal is true;
+    attribute keep of veto_SLR2_regs           : signal is true;
+    attribute keep of valid_out_SLR2_regs      : signal is true;
+    attribute keep of valid_out_SLR3_regs      : signal is true;
 
-    attribute keep of algos_SLR3_regs       : signal is DEBUG;
-    attribute keep of algos_presc_SLR3_regs : signal is DEBUG;
-    attribute keep of algos_SLR2_regs       : signal is DEBUG;
-    attribute keep of algos_presc_SLR2_regs : signal is DEBUG;
+    attribute keep of algos_SLR3_regs          : signal is DEBUG;
+    attribute keep of algos_presc_SLR3_regs    : signal is DEBUG;
+    attribute keep of algos_SLR2_regs          : signal is DEBUG;
+    attribute keep of algos_presc_SLR2_regs    : signal is DEBUG;
 
-    attribute shreg_extract                   : string;
-    attribute shreg_extract of trgg_SLR3_regs      : signal is "no";
-    attribute shreg_extract of trgg_SLR2_regs      : signal is "no";
-    attribute shreg_extract of trgg_prvw_SLR3_regs : signal is "no";
-    attribute shreg_extract of trgg_prvw_SLR2_regs : signal is "no";
-    attribute shreg_extract of veto_SLR3_regs      : signal is "no";
-    attribute shreg_extract of veto_SLR2_regs      : signal is "no";
+    attribute shreg_extract                             : string;
+    attribute shreg_extract of trgg_SLR3_regs           : signal is "no";
+    attribute shreg_extract of trgg_SLR2_regs           : signal is "no";
+    attribute shreg_extract of trgg_prvw_SLR3_regs      : signal is "no";
+    attribute shreg_extract of trgg_prvw_SLR2_regs      : signal is "no";
+    attribute shreg_extract of veto_SLR3_regs           : signal is "no";
+    attribute shreg_extract of veto_SLR2_regs           : signal is "no";
+    attribute shreg_extract of valid_out_SLR2_regs      : signal is "no";
+    attribute shreg_extract of valid_out_SLR3_regs      : signal is "no";
+    
 
-    attribute shreg_extract of algos_SLR3_regs       : signal is "no";
-    attribute shreg_extract of algos_presc_SLR3_regs : signal is "no";
-    attribute shreg_extract of algos_SLR2_regs       : signal is "no";
-    attribute shreg_extract of algos_presc_SLR2_regs : signal is "no";
+    attribute shreg_extract of algos_SLR3_regs          : signal is "no";
+    attribute shreg_extract of algos_presc_SLR3_regs    : signal is "no";
+    attribute shreg_extract of algos_SLR2_regs          : signal is "no";
+    attribute shreg_extract of algos_presc_SLR2_regs    : signal is "no";
 
 begin
 
@@ -122,8 +133,9 @@ begin
 
     SLR3_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS => INPUT_LINKS,
-            MAX_DELAY => MAX_DELAY_PDT
+            NR_LINKS              => INPUT_LINKS,
+            BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
+            MAX_DELAY             => MAX_DELAY_PDT
         )
         port map(
             clk              => clk,
@@ -138,6 +150,7 @@ begin
             ctrs(5 downto 3) => ctrs(19 downto 17),
             d(11 downto 0)   => d(59 downto 48), -- regions[12,13,14]
             d(23 downto 12)  => d(79 downto 68), -- regions[17,18,19]
+            valid_out         => valid_out_SLR3_regs(0), 
             trigger_o         => trgg_SLR3_regs(0),
             trigger_preview_o => trgg_prvw_SLR3_regs(0),
             veto_o            => veto_SLR3_regs(0),
@@ -147,8 +160,9 @@ begin
 
     SLR2_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS => INPUT_LINKS,
-            MAX_DELAY => MAX_DELAY_PDT
+            NR_LINKS              => INPUT_LINKS,
+            BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
+            MAX_DELAY             => MAX_DELAY_PDT
         )
         port map(
             clk               => clk,
@@ -163,6 +177,7 @@ begin
             ctrs(5 downto 3)  => ctrs(22 downto 20),
             d(11 downto 0)    => d(47 downto 36),
             d(23 downto 12)   => d(91 downto 80),
+            valid_out         => valid_out_SLR2_regs(0), 
             trigger_o         => trgg_SLR2_regs(0),
             trigger_preview_o => trgg_prvw_SLR2_regs(0),
             veto_o            => veto_SLR2_regs(0),
@@ -173,6 +188,10 @@ begin
     cross_SLR : process(clk_p)
     begin
         if rising_edge(clk_p) then
+            valid_out_SLR2_regs(valid_out_SLR2_regs'high downto 1) <= valid_out_SLR2_regs(valid_out_SLR2_regs'high - 1 downto 0);
+            valid_out_SLR3_regs(valid_out_SLR3_regs'high downto 1) <= valid_out_SLR3_regs(valid_out_SLR3_regs'high - 1 downto 0);
+            
+            
             trgg_SLR3_regs(trgg_SLR3_regs'high downto 1) <= trgg_SLR3_regs(trgg_SLR3_regs'high - 1 downto 0);
             trgg_SLR2_regs(trgg_SLR2_regs'high downto 1) <= trgg_SLR2_regs(trgg_SLR2_regs'high - 1 downto 0);
 
@@ -183,10 +202,12 @@ begin
             veto_SLR2_regs(veto_SLR2_regs'high downto 1) <= veto_SLR2_regs(veto_SLR2_regs'high - 1 downto 0);
         end if;
     end process;
-
+    
+    valid_in <= valid_out_SLR2_regs(valid_out_SLR2_regs'high) or valid_out_SLR3_regs(valid_out_SLR3_regs'high);
 
     SLR2_FinalOR_or : entity work.Output_SLR
         generic map(
+            BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
             MAX_DELAY => MAX_DELAY_PDT
         )
         port map(
@@ -199,6 +220,7 @@ begin
             lhc_clk     => clk_payload(2),
             lhc_rst     => rst_payload(2),
             ctrs        => ctrs(8),
+            valid_in    => valid_in,
             trgg_0      => trgg_SLR2_regs(trgg_SLR2_regs'high),
             trgg_1      => trgg_SLR3_regs(trgg_SLR3_regs'high),
             trgg_prvw_0 => trgg_prvw_SLR2_regs(trgg_prvw_SLR2_regs'high),

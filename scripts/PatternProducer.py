@@ -294,13 +294,15 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, board='vu13p', debug=Fa
         raise Exception("n_algo_bits must be larger than n_veto_bits, \nvalues got %d and %d" % (n_algo_bits, n_veto_bits))
 
     algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, 1152, 113, True, debug)
+    algo_matrix_veto = np.copy(algo_matrix)
     veto_indeces = np.random.choice(indeces, size=n_veto_bits, replace=False)
     veto_matrix = np.zeros((n_veto_bits, 113), bool)
 
-    for i, index in enumerate(veto_indeces):\
+    for i, index in enumerate(veto_indeces):
         veto_matrix[i, :] = algo_matrix[index, :]
+        algo_matrix_veto[index, :] = 0
 
-    finor = np.logical_or.reduce(algo_matrix, 0).astype(bool)
+    finor = np.logical_or.reduce(algo_matrix_veto, 0).astype(bool)
     veto = np.logical_or.reduce(veto_matrix, 0).astype(bool)
     finor_with_veto = np.logical_and(finor, np.logical_not(veto)).astype(bool)
 
