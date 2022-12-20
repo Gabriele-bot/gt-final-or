@@ -27,9 +27,10 @@ use work.math_pkg.all;
 
 entity m_module is
     generic(
-        NR_ALGOS             : natural;
-        PRESCALE_FACTOR_INIT : std_logic_vector(31 DOWNTO 0) := X"00000064"; --1.00
-        MAX_DELAY            : natural := 127
+        NR_ALGOS              : natural;
+        PRESCALE_FACTOR_INIT  : std_logic_vector(31 DOWNTO 0) := X"00000064"; --1.00
+        BEGIN_LUMI_TOGGLE_BIT : natural := 18;
+        MAX_DELAY             : natural := 127
     );
     port(
         -- =========================IPbus================================================
@@ -92,15 +93,16 @@ architecture rtl of m_module is
     signal new_trgg_masks           : std_logic;
     signal request_veto_update      : std_logic;
     signal new_veto                 : std_logic;
-    signal ctrl_reg : ipb_reg_v(1 downto 0);
-    signal stat_reg : ipb_reg_v(3 downto 0);
+    signal ctrl_reg : ipb_reg_v(1 downto 0) := (others => (others => '0'));
+    signal stat_reg : ipb_reg_v(3 downto 0) := (others => (others => '0'));
 
     -- counters and bgos signals
     signal bc0, oc0, ec0               : std_logic := '0';
     signal begin_lumi_per              : std_logic;
     signal begin_lumi_per_del1         : std_logic;
+    signal end_lumi_per                : std_logic;
     signal l1a_latency_delay           : std_logic_vector(log2c(MAX_DELAY)-1 downto 0);
-
+    
     signal ctrs_internal               : ttc_stuff_t;
 
 
@@ -145,6 +147,43 @@ architecture rtl of m_module is
     signal trigger_out_preview      : std_logic_vector(N_TRIGG-1 downto 0);
 
 begin
+    
+    
+    ----------------------------------------------------------------------------------
+    ---------------COUNTERS INTERNAL---------------------------------------------------
+    ----------------------------------------------------------------------------------
+    --TODO Where to stat counting, need some latency? How much?
+    bx_cnt_int_p : process(lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            ctrs_internal <= ctrs;
+        end if;
+    end process;
+    
+    ----------------------------------------------------------------------------------
+    ---------------COUNTER MODULE------------------------------------------------------
+    ----------------------------------------------------------------------------------
+
+    Counters_i : entity work.Counter_module
+        generic map (
+            BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
+        )
+        port map (
+            lhc_clk        => lhc_clk,
+            lhc_rst        => lhc_rst,
+            ctrs_in        => ctrs_internal,
+            bc0            => bc0,
+            ec0            => ec0,
+            oc0            => oc0,
+            bx_nr          => open,
+            event_nr       => open,
+            orbit_nr       => orbit_nr,
+            lumi_sec_nr    => lumi_sec_nr,
+            begin_lumi_sec => begin_lumi_per,
+            end_lumi_sec   => end_lumi_per, 
+            test_en        => test_en
+        );
+    
 
 
     -- TODO check delay
@@ -165,7 +204,6 @@ begin
             clk        => lhc_clk,
             rst        => lhc_rst,
             write_flag => begin_lumi_per_del1,
-            orbit_nr   => orbit_nr,
             addr_o     => addr,
             addr_w_o   => open,
             we_o       => we
@@ -177,7 +215,7 @@ begin
     prescaler_read_FSM_i : entity work.read_FSM
         generic map(
             RAM_DEPTH      => NR_ALGOS,
-            BEGIN_LUMI_BIT => BEGIN_LUMI_SECTION_BIT
+            BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
             clk                => lhc_clk,
@@ -196,7 +234,7 @@ begin
     trgg_mask_read_FSM_i : entity work.read_FSM
         generic map(
             RAM_DEPTH      => NR_ALGOS/32*N_TRIGG,
-            BEGIN_LUMI_BIT => BEGIN_LUMI_SECTION_BIT
+            BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
             clk                => lhc_clk,
@@ -221,7 +259,7 @@ begin
     veto_read_FSM_i : entity work.read_FSM
         generic map(
             RAM_DEPTH      => NR_ALGOS/32,
-            BEGIN_LUMI_BIT => BEGIN_LUMI_SECTION_BIT
+            BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
             clk                => lhc_clk,
@@ -702,21 +740,11 @@ begin
         port map(
             clk                  => lhc_clk,
             request_update_pulse => request_veto_update,
-            update_pulse         => begin_lumi_per,
+            update_pulse         => end_lumi_per,
             data_i               => veto_mask,
             data_o               => veto_mask_int
         );
 
-    ----------------------------------------------------------------------------------
-    ---------------COUNTERS INTERNAL---------------------------------------------------
-    ----------------------------------------------------------------------------------
-    --TODO Where to stat counting, need some latency? How much?
-    bx_cnt_int_p : process(lhc_clk)
-    begin
-        if rising_edge(lhc_clk) then
-            ctrs_internal <= ctrs;
-        end if;
-    end process;
 
     ----------------------------------------------------------------------------------
     ---------------ALGO BX MASK MEM---------------------------------------------------
@@ -752,30 +780,6 @@ begin
             data_o => algos_delayed,
             delay  => l1a_latency_delay
         );
-
-    ----------------------------------------------------------------------------------
-    ---------------COUNTER MODULE------------------------------------------------------
-    ----------------------------------------------------------------------------------
-
-    Counters_i : entity work.Counter_module
-        generic map (
-            BEGIN_LUMI_BIT => BEGIN_LUMI_SECTION_BIT
-        )
-        port map (
-            lhc_clk        => lhc_clk,
-            lhc_rst        => lhc_rst,
-            ctrs_in        => ctrs_internal,
-            bc0            => bc0,
-            ec0            => ec0,
-            oc0            => oc0,
-            bx_nr          => open,
-            event_nr       => open,
-            orbit_nr       => orbit_nr,
-            lumi_sec_nr    => lumi_sec_nr,
-            begin_lumi_sec => begin_lumi_per,
-            test_en        => test_en
-        );
-
 
     ----------------------------------------------------------------------------------
     ---------------Suppress Trigger dureing Calibration-------------------------------
@@ -816,6 +820,7 @@ begin
                 request_update_factor_pulse      => request_factor_update,
                 request_update_veto_pulse        => request_veto_update,
                 begin_lumi_per                   => begin_lumi_per,
+                end_lumi_per                     => end_lumi_per,
                 algo_i                           => algos_in(i),
                 algo_del_i                       => algos_delayed(i),
                 prescale_factor                  => prscl_fct(i)(PRESCALE_FACTOR_WIDTH-1 downto 0),
@@ -849,7 +854,7 @@ begin
             algos_in                        => algos_after_prescaler,
             masks                           => masks,
             request_masks_update_pulse      => request_masks_update,
-            update_pulse                    => begin_lumi_per,
+            update_pulse                    => end_lumi_per,
             trigger_out                     => trigger_out
         );
 
@@ -863,7 +868,7 @@ begin
             algos_in                        => algos_after_prescaler_preview,
             masks                           => masks,
             request_masks_update_pulse      => request_masks_update,
-            update_pulse                    => begin_lumi_per,
+            update_pulse                    => end_lumi_per,
             trigger_out                     => trigger_out_preview
         );
 

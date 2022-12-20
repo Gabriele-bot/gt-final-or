@@ -2,9 +2,9 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 package tb_decl is
   -- Path of the source file
-  constant SOURCE_FILE : string := "inputPattern.mem";
+  constant SOURCE_FILE : string := "source.txt";
   -- Path of the sink file
-  constant SINK_FILE : string := "output.txt";
+  constant SINK_FILE : string := "sink.txt";
   -- Number of frames to be played back from source
   constant PLAYBACK_LENGTH : natural := 1024;
   -- Number of frames to be captured in sink

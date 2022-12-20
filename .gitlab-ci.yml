@@ -1,19 +1,19 @@
 include:
   - project: cms-cactus/phase2/firmware/ci-templates
-    ref: v0.1.3
+    ref: v0.1.4
     file: 
       - pipelines/workflow.yml
       - pipelines/vivado-build-emp.yml
       #- templates/xilinx/build-emp.yml
     
-.ci_templates_ref: v0.1.3
+.ci_templates_ref: v0.1.4
 
 variables:
-  QUESTASIM_VERSION: "2021.1_2"
+  #QUESTASIM_VERSION: "2021.1_2"
   VIVADO_VERSION: "2021.1"
   BUILD_DIR: "build"
   MTI_VCO_MODE: "64"
-  HARDWARE_TEST_IMAGE_TAG: v0-3-17
+  HARDWARE_TEST_IMAGE_TAG: v0-3-39
   # Set PARENT_PIPELINE_ID as used in vivado-build-emp.yml in place of CI_PIPELINE_ID
   PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
   PROJECT_NAME: p2gt_finor_serenity-vu13p
@@ -72,8 +72,8 @@ test:serenity:
     - echo '              address_table="file://addrtab/top_emp.xml"/>' >> my_connections.xml
     - echo '</connections>' >> my_connections.xml
     - cat my_connections.xml
-    - cp my_connections.xml ${CI_PROJECT_DIR}/gt-final-or/scripts/
-    - cp -r addrtab ${CI_PROJECT_DIR}/gt-final-or/scripts/
+    - cp my_connections.xml ${CI_PROJECT_DIR}/scripts/
+    - cp -r addrtab ${CI_PROJECT_DIR}/scripts/
   script:
     - export PATH=/opt/cactus/bin/uhal/tools:$PATH 
     - export LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH 
@@ -83,30 +83,31 @@ test:serenity:
     - export PATH=/opt/cactus/bin/emp:/opt/cactus/bin/serenity:$PATH 
     - serenitybutler info
     - serenitybutler program ${HARDWARE_TEST_SERENITY_SITE} ${PROJECT_NAME}.bit -r
+    - cd ${CI_PROJECT_DIR}/scripts/
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} info
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} reset internal
     # Pre-scaler test
-    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_prescaler_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_prescaler_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - cd ${CI_PROJECT_DIR}/gt-final-or/scripts
-    - python3.6 RateChecker.py -p random -t prescaler
+    - python3.6 RateChecker.py -p random -t prescaler -c my_connections.xml -ls 18
     # Trigger masks test
-    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_trigg_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_trigg_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3.6 RateChecker.py -p random -t trigger_mask
+    - python3.6 RateChecker.py -p random -t trigger_mask -c my_connections.xml -ls 18
     # Veto masks test
-    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_veto_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_veto_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3.6 RateChecker.py -p random -t veto_mask
+    - python3.6 RateChecker.py -p random -t veto_mask -c my_connections.xml -ls 18
     # BX mask test
-    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_BXmask_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_BXmask_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3.6 RateChecker.py -p random -t BXmask
+    - python3.6 RateChecker.py -p random -t BXmask -c my_connections.xml -ls 18
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
+
 

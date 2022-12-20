@@ -20,6 +20,7 @@ entity Counter_module is
         orbit_nr       : out eoctr_t;
         lumi_sec_nr    : out eoctr_t;
         begin_lumi_sec : out std_logic;
+        end_lumi_sec   : out std_logic;
         test_en        : out std_logic
     );
 end entity Counter_module;
@@ -32,43 +33,24 @@ architecture RTL of Counter_module is
     signal ls_cnt  : eoctr_t := (others => '0');
     signal l1a    : std_logic;
     signal o_cntbls_temp,  o_cntbls : std_logic;
-    
+
     signal bc0_s, oc0_s, ec0_s : std_logic := '0';
-    
+
     signal begin_lumi_sec_int : std_logic;
+    signal end_lumi_sec_int   : std_logic;
     signal test_en_int        : std_logic;
     
+    signal test : std_logic;
+
 begin
-    
-    
+
+
     l1a    <= ctrs_in.l1a;
     bx_cnt <= ctrs_in.bctr;
-    
-    
 
-    process (lhc_clk)
-    begin
-        if rising_edge(lhc_clk) then
-            case (ctrs_in.ttc_cmd) is
-                when TTC_BCMD_BC0 =>
-                    bc0_s <= '1';
-                    ec0_s <= '0';
-                    oc0_s <= '0';
-                when TTC_BCMD_EC0 =>
-                    bc0_s <= '0';
-                    ec0_s <= '1';
-                    oc0_s <= '0';
-                when TTC_BCMD_OC0 =>
-                    bc0_s <= '0';
-                    ec0_s <= '0';
-                    oc0_s <= '1';
-                when others =>
-                    bc0_s <= '0';
-                    ec0_s <= '0';
-                    oc0_s <= '0';
-            end case;
-        end if;
-    end process;
+    bc0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_BC0  else '0';
+    oc0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_OC0  else '0';
+    ec0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_EC0  else '0';
 
     process (lhc_clk)
     begin
@@ -80,9 +62,9 @@ begin
             end if;
         end if;
     end process;
-    
+
     o_cntbls <= o_cnt(BEGIN_LUMI_BIT);
-    
+
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
@@ -93,7 +75,7 @@ begin
             end if;
         end if;
     end process;
-    
+
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
@@ -104,14 +86,21 @@ begin
                 ls_cnt(o_cnt'high  downto o_cnt'high - BEGIN_LUMI_BIT + 1 ) <= (others => '0');
             end if;
             o_cntbls_temp <= o_cntbls;
-            if o_cntbls_temp /= o_cntbls then -- toggle of o_cnt(BEGIN_LUMI_BIT)
-                begin_lumi_sec_int <= '1';
-            else 
-                begin_lumi_sec_int <= '0';
-            end if;
         end if;
     end process;
-    
+
+    begin_lumi_sec_int <= '1' when o_cntbls_temp /= o_cntbls  else '0';
+
+    process(o_cnt, bx_cnt)
+    begin
+        if  (and o_cnt(BEGIN_LUMI_BIT-1 downto 0) = '1') and (unsigned(bx_cnt) = LHC_BUNCH_COUNT-1) then
+            end_lumi_sec_int <= '1';
+        else
+            end_lumi_sec_int <= '0';
+        end if;
+    end process;
+
+
     process (lhc_clk)
     begin
         if rising_edge(lhc_clk) then
@@ -122,7 +111,7 @@ begin
             end if;
         end if;
     end process;
-    
+
     bc0 <= bc0_s;
     ec0 <= ec0_s;
     oc0 <= oc0_s;
@@ -131,10 +120,11 @@ begin
     event_nr       <= e_cnt;
     orbit_nr       <= o_cnt;
     lumi_sec_nr    <= ls_cnt;
-    
+
     begin_lumi_sec <= begin_lumi_sec_int;
+    end_lumi_sec   <= end_lumi_sec_int;
     test_en        <= test_en_int;
-    
+
 
 
 end architecture RTL;

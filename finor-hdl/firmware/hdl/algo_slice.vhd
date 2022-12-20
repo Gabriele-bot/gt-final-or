@@ -58,6 +58,7 @@ entity algo_slice is
         request_update_factor_pulse : in std_logic;
         request_update_veto_pulse   : in std_logic;
         begin_lumi_per              : in std_logic;
+        end_lumi_per                : in std_logic;
 
         algo_i                      : in std_logic;
         algo_del_i                  : in std_logic;
@@ -93,7 +94,6 @@ architecture rtl of algo_slice is
 
 begin
 
-    -- HB 2017-01-10: one bx delay for "begin_lumi_per" for rate counter after pre-scaler
     begin_lumi_per_del_p: process(lhc_clk)
     begin
         if rising_edge(lhc_clk) then
@@ -101,8 +101,6 @@ begin
         end if;
     end process;
 
-    -- HB 2016-06-17: added "suppress_cal_trigger", used to suppress counting of algos caused by calibration trigger at bx=3490.
-    --                Signal pos. active: '1' = suppression algos caused by calibration trigger !!!
     algo_after_algo_bx_mask_int <= algo_i and algo_bx_mask and not suppress_cal_trigger;
 
     rate_cnt_before_prescaler_i: entity work.algo_rate_counter
@@ -128,12 +126,11 @@ begin
             sres_counter                => sres_algo_pre_scaler,
             algo_i                      => algo_after_algo_bx_mask_int,
             request_update_factor_pulse => request_update_factor_pulse,
-            update_factor_pulse         => begin_lumi_per,
+            update_factor_pulse         => end_lumi_per,
             prescale_factor             => prescale_factor,
             prescaled_algo_o            => algo_after_prescaler_int
         );
 
-    -- HB 2016-08-31: renamed algo_rate_counter after finor-mask to algo_rate_counter after presclaer.
     rate_cnt_after_prescaler_i: entity work.algo_rate_counter
         generic map(
             COUNTER_WIDTH => RATE_COUNTER_WIDTH
@@ -142,14 +139,12 @@ begin
             sys_clk         => sys_clk,
             clk             => lhc_clk,
             sres_counter    => sres_algo_rate_counter,
-            --      store_cnt_value => begin_lumi_per,
-            store_cnt_value => begin_lumi_per_del1,
+            store_cnt_value => begin_lumi_per,
+            --store_cnt_value => begin_lumi_per_del1,
             algo_i          => algo_after_prescaler_int,
             counter_o       => rate_cnt_after_prescaler
         );
 
-    -- ****************************************************************************************************
-    -- HB 2016-11-17: section "prescaler preview" in monitoring
 
     prescaler_preview_i: entity work.algo_pre_scaler
         generic map(
@@ -161,7 +156,7 @@ begin
             sres_counter                => sres_algo_pre_scaler,
             algo_i                      => algo_after_algo_bx_mask_int,
             request_update_factor_pulse => request_update_factor_pulse,
-            update_factor_pulse         => begin_lumi_per,
+            update_factor_pulse         => end_lumi_per,
             prescale_factor             => prescale_factor_preview,
             prescaled_algo_o            => algo_after_prescaler_preview_int
         );
@@ -176,8 +171,8 @@ begin
             sys_clk         => sys_clk,
             clk             => lhc_clk,
             sres_counter    => sres_algo_rate_counter,
-            --      store_cnt_value => begin_lumi_per,
-            store_cnt_value => begin_lumi_per_del1,
+            store_cnt_value => begin_lumi_per,
+            --store_cnt_value => begin_lumi_per_del1,
             algo_i          => algo_after_prescaler_preview_int,
             counter_o       => rate_cnt_after_prescaler_preview
         );
@@ -193,7 +188,8 @@ begin
             lhc_clk         => lhc_clk,
             lhc_rst         => lhc_rst,
             sres_counter    => sres_algo_post_dead_time_counter,
-            store_cnt_value => begin_lumi_per_del1,
+            store_cnt_value => begin_lumi_per,
+            --store_cnt_value => begin_lumi_per_del1,
             l1a             => l1a,
             algo_del_i      => algo_del_i,
             counter_o       => rate_cnt_post_dead_time

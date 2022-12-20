@@ -1,5 +1,5 @@
 src tb_decl.vhd
-include -c emp-fwk:boards/testbench top.dep
+#include -c emp-fwk:boards/testbench top.dep
 
 src --usein sim inputPattern.mem
 

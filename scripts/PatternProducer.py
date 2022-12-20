@@ -31,12 +31,19 @@ def prep_bitstring_data(data_int_new):
 
     # Step 2: convert to bitstrings
     formatstring = np.full(1, "uint:64")
-    data_bitstring = pack_vec(formatstring, data_int_new)
+    data_bitstring = pack_vec(formatstring, data_int_new, 'hex')
 
     # Step 3: Add required padding
     data_bitstring_padded = padd_vec(data_bitstring, 16)
 
     return data_bitstring_padded
+    
+def prep_bitstring_metadata(metadata_int_new):
+
+    	
+    metadata_bitstring = pack_vec('uint:4', metadata_int_new, 'bin')
+
+    return metadata_bitstring
 
 
 def extract_random_indexes(n_algo_bits, max_algos=1152, max_rep=113, low_rep=True, debug=False):
@@ -125,8 +132,8 @@ def pattern_data_producer(indeces, positions, file_name, Links, debug):
 
 def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False):
 
-    X_input_low  = np.zeros((1017, 24), dtype=np.uint64)
-    X_input_high = np.zeros((1017, 24), dtype=np.uint64)
+    X_input_low  = np.zeros((1024, 24), dtype=np.uint64)
+    X_input_high = np.zeros((1024, 24), dtype=np.uint64)
 
     Possibile_rep     = np.array(range(int(1024 / 9)))
     Possibile_indeces = np.array(range(1152))
@@ -149,17 +156,29 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False
 
     X_test_chunk = np.hstack((X_input_low, X_input_high))
     data_bitstring_padded = prep_bitstring_data(X_test_chunk)
+    
+    metadata = np.ones_like(X_test_chunk, dtype=np.uint8)*1
+    metadata[0,:] = 13
+    for i in range(113):
+        if i != 0:
+            metadata[i*9,:] = 5
+        else:
+            metadata[i*9,:] = 13
+        metadata[i*9+8,:] = 3
+    
+    metadata[1017:1024,:] = 0
+    metadata_bitstring = prep_bitstring_metadata(metadata)
 
     links = np.vstack((Links[0], Links[1]))
     # write out fname
     indir = "Pattern_files"
     fname = indir + "/" + file_name
-    write_pattern_file(data_bitstring_padded, outputfile=fname, links=links.flatten())
+    write_pattern_file(metadata_bitstring, data_bitstring_padded, outputfile=fname, links=links.flatten())
 
     if for_sim:
         indir = "../simulation/firmware/hdl/"
         fname = indir + "/inputPattern.mem"
-        write_pattern_file(data_bitstring_padded, outputfile=fname, links=links.flatten())
+        write_pattern_file(metadata_bitstring, data_bitstring_padded, outputfile=fname, links=links.flatten())
 
     if debug:
         for row in range(3,12):
@@ -182,8 +201,8 @@ def pattern_producer_prescale_test_v1(n_algo_bits, board='vu13p', debug=False):
         print("Algo bit repetitions")
         print(np.array(repetitions))
 
-    X_input_low = np.zeros((1017, 24), dtype=np.uint64)
-    X_input_high = np.zeros((1017, 24), dtype=np.uint64)
+    X_input_low = np.zeros((1024, 24), dtype=np.uint64)
+    X_input_high = np.zeros((1024, 24), dtype=np.uint64)
 
     for i in range(len(indeces)):
         rep = random.sample(Possibile_rep, repetitions[i])
@@ -275,13 +294,15 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, board='vu13p', debug=Fa
         raise Exception("n_algo_bits must be larger than n_veto_bits, \nvalues got %d and %d" % (n_algo_bits, n_veto_bits))
 
     algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, 1152, 113, True, debug)
+    algo_matrix_veto = np.copy(algo_matrix)
     veto_indeces = np.random.choice(indeces, size=n_veto_bits, replace=False)
     veto_matrix = np.zeros((n_veto_bits, 113), bool)
 
-    for i, index in enumerate(veto_indeces):\
+    for i, index in enumerate(veto_indeces):
         veto_matrix[i, :] = algo_matrix[index, :]
+        algo_matrix_veto[index, :] = 0
 
-    finor = np.logical_or.reduce(algo_matrix, 0).astype(bool)
+    finor = np.logical_or.reduce(algo_matrix_veto, 0).astype(bool)
     veto = np.logical_or.reduce(veto_matrix, 0).astype(bool)
     finor_with_veto = np.logical_and(finor, np.logical_not(veto)).astype(bool)
 

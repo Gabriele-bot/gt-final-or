@@ -15,7 +15,7 @@ use ieee.numeric_std.all;
 package P2GT_finor_pkg is
     
     
-    constant DEBUG                  : boolean := false;
+    constant DEBUG                  : boolean := FALSE;
     -- =======================================================================================================
     -- GT Final-OR definitions
     -- =======================================================================================================
@@ -24,9 +24,12 @@ package P2GT_finor_pkg is
     constant INPUT_LINKS            : integer := 24;
     constant MON_REG                : integer := 6;
     constant N_TRIGG                : integer := 8;
-    constant BEGIN_LUMI_SECTION_BIT : integer := 18;
+    constant BEGIN_LUMI_SEC_BIT     : integer := 18;
+    constant BEGIN_LUMI_SEC_BIT_SIM : integer := 3;
     constant MAX_DELAY_PDT          : integer := 255;
-    constant SLR_CROSSING_LATENCY   : integer := 5;
+    constant SLR_CROSSING_LATENCY   : integer := 9;
+    constant FINOR_LATENCY          : integer := 3;
+    constant DESER_OUT_REG          : boolean := FALSE;
     
     type data_arr is array (INPUT_LINKS - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
     type mask_arr is array (N_TRIGG     - 1 downto 0) of std_logic_vector(64*9-1 downto 0);

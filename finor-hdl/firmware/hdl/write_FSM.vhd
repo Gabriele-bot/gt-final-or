@@ -14,7 +14,6 @@ entity write_FSM is
         clk            : in std_logic;
         rst            : in std_logic;
         write_flag     : in std_logic;
-        orbit_nr       : in eoctr_t;
         addr_o             : out std_logic_vector(log2c(RAM_DEPTH)-1 downto 0);
         addr_w_o           : out std_logic_vector(log2c(RAM_DEPTH)-1 downto 0);
         we_o               : out std_logic
