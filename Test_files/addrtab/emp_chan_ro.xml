@@ -1,30 +1,42 @@
 <node>
-	<node id="link_info" address="0x0">
-		<node id="channel"                          mask="0x00000003"/>
-		<node id="region"                           mask="0x000000FC"/>
-		<node id="board_id"                         mask="0xFFFFFF00"/>
+	<node id="rx_info0" address="0x0">
+		<node id="channel"  mask="0x000000FF"/>
+		<node id="slot"     mask="0x00000F00"/>
+		<node id="crate"    mask="0x000FF000"/>
+		<node id="reserved" mask="0xFFF00000"/>
 	</node>
 
-	<node id="status" address="0x1">
-		<node id="init_done"                        mask="0x00000001"/>
-		<node id="rx_init_done"                     mask="0x00000002"/>
-		<node id="tx_init_done"                     mask="0x00000004"/>
-		<node id="link_down_latched"                mask="0x00000008"/>
-		<node id="link_status"                      mask="0x00000010"/>
-		<node id="fifo_full"                        mask="0x00000020"/>
-		<node id="fifo_almost_full"                 mask="0x00000040"/>
-		<node id="rxcdrlock"                        mask="0x00000080"/>
-		<node id="prbs_locked"                      mask="0x00000100"/>
-		<node id="prbs_error"                       mask="0x00000200"/>
-		<node id="not_in_use"                       mask="0xFFFFFC00"/>
+	<node id="rx_info1" address="0x1">
+		<node id="packet_size"  mask="0x000000FF"/>
+		<node id="tm_interval"  mask="0x00001F00"/>
+		<node id="idle_method"  mask="0x00002000"/>
+		<node id="reserved"     mask="0xFFFC0000"/>
 	</node>
 
-	<node id="counters" address="0x2">
-		<node id="packets_in"                       mask="0x000000FF"/>
-		<node id="crc_errors"                       mask="0x0000FF00"/>
-		<node id="header_errors"       		        mask="0x000F0000"/>
-		<node id="control_type_hamming_corrections" mask="0x00F00000"/>
-		<node id="invalid_control_type" 	        mask="0x0F000000"/>
-		<node id="invalid_control_word"             mask="0xF0000000"/>
+	<node id="status" address="0x2">
+		<node id="rx_control_word_index_lock_lost" mask="0x00000001"/>
+		<node id="rx_init_done"                    mask="0x00000002"/>
+		<node id="tx_init_done"                    mask="0x00000004"/>
+		<node id="rx_down_latched"                 mask="0x00000008"/>
+		<node id="rx_status"                       mask="0x00000010"/>
+		<node id="tx_fifo_full"                    mask="0x00000020"/>
+		<node id="tx_fifo_almost_full"             mask="0x00000040"/>
+		<node id="rx_cdr_locked"                   mask="0x00000080"/>
+		<node id="rx_prbs_locked"                  mask="0x00000100"/>
+		<node id="rx_prbs_error"                   mask="0x00000200"/>
+		<node id="tx_invalid_signal_count_start_or_last_when_valid_low"     mask="0x0000F000"/>
+		<node id="tx_invalid_signal_count_start_or_last_continuous"         mask="0x000F0000"/>
+		<node id="tx_invalid_signal_count_start_and_last_simultaneous"      mask="0x00F00000"/>
+		<node id="tx_invalid_signal_count_valid_before_start_without_last"  mask="0x0F000000"/>
+		<node id="tx_invalid_signal_count_valid_after_last_without_start"   mask="0xF0000000"/>
+	</node>
+
+	<node id="rx_counters" address="0x3">
+		<node id="packets_in"                   mask="0x000000FF"/>
+		<node id="crc_errors"                   mask="0x0000FF00"/>
+		<node id="hard_errors"                  mask="0x000F0000"/>
+		<node id="typeField_single_errors"      mask="0x00F00000"/>
+		<node id="typeField_double_errors"      mask="0x0F000000"/>
+		<node id="control_word_index_lock_lost" mask="0xF0000000"/>
 	</node>
 </node>

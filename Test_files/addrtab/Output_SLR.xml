@@ -1,9 +1,13 @@
 <node id="Output_SLR" fwinfo="endpoint;width=8">
-  <node id="cnt_rate_finor"               mode="block" address="0x00" size="8" fwinfo="endpoint;width=4"/>
-  <node id="cnt_rate_finor_pdt"           mode="block" address="0x10" size="8" fwinfo="endpoint;width=4"/>
-  <node id="cnt_rate_finor_with_veto"     mode="block" address="0x20" size="8" fwinfo="endpoint;width=4"/>
-  <node id="cnt_rate_finor_with_veto_pdt" mode="block" address="0x30" size="8" fwinfo="endpoint;width=4"/>
-  <node id="CSR" address="0x40" fwinfo="endpoint;width=1">
+  <node id="cnt_rate_finor"                       mode="block" address="0x00" size="8" fwinfo="endpoint;width=4"/>
+  <node id="cnt_rate_finor_pdt"                   mode="block" address="0x10" size="8" fwinfo="endpoint;width=4"/>
+  <node id="cnt_rate_finor_preview"               mode="block" address="0x20" size="8" fwinfo="endpoint;width=4"/>
+  <node id="cnt_rate_finor_preview_pdt"           mode="block" address="0x30" size="8" fwinfo="endpoint;width=4"/>
+  <node id="cnt_rate_finor_with_veto"             mode="block" address="0x40" size="8" fwinfo="endpoint;width=4"/>
+  <node id="cnt_rate_finor_with_veto_pdt"         mode="block" address="0x50" size="8" fwinfo="endpoint;width=4"/>
+  <node id="cnt_rate_finor_preview_with_veto"     mode="block" address="0x60" size="8" fwinfo="endpoint;width=4"/>
+  <node id="cnt_rate_finor_preview_with_veto_pdt" mode="block" address="0x70" size="8" fwinfo="endpoint;width=4"/>
+  <node id="CSR" address="0x80" fwinfo="endpoint;width=1">
     <node id="ctrl" address="0x0000">
       <node id="l1_latency_delay"     mask="0xFFF" />
     </node>

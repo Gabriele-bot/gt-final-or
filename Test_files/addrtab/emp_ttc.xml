@@ -1,38 +1,43 @@
 <node description="TTC block control registers" fwinfo="endpoint" class="TTCNode">
 
     <!-- Clock lock, sel registers etc. in separate block, as not in clock40 domain -->
-	<node id="clk40" fwinfo="endpoint;width=1">
-		<node id="mmcm_reset" mask="0x1"/>
-		<node id="source"     mask="0x6"/>
-		<node id="lock" address="0x1" mask="0x1" permission="r"/>
-		<node id="stop" address="0x1" mask="0x2" permission="r"/>
+	<node id="mux" fwinfo="endpoint;width=1">
+		<node id="clk40_mmcm_reset" mask="0x1"/>
+		<node id="clk40_sel" mask="0x6"/>
+		<node id="tcds_sel"  mask="0x18"/>
+		<node id="clk40_lock" address="0x1" mask="0x1" permission="r"/>
+		<node id="clk40_stop" address="0x1" mask="0x2" permission="r"/>
+		<node id="has_legacy_interface" address="0x1" mask="0x4" permission="r" description="High if legacy interface instantiated"/>
+		<node id="has_tcds2_interface"  address="0x1" mask="0x8" permission="r" description="High if TCDS2 interface instantiated"/>
 	</node>
 
 	<node id="master" description="TTC master">
-		<node id="common" address="0x8" fwinfo="endpoint;width=3">
+		<node id="common" address="0x10" fwinfo="endpoint;width=4">
 			<node id="ctrl" address="0x0">
-				<node id="ttc_source"     mask="0x3" description="0 for internal; 1 for legacy TTC; 2 for TCDS2"/>
-				<node id="reset"          mask="0x4"/>
-				<node id="enable_int_bc0" mask="0x8"/>
-				<node id="clear_ctr"      mask="0x10"/>
-				<node id="force_b_cmd"    mask="0x20"/>
-				<node id="b_cmd"          mask="0xff00"/>
+				<node id="reset"          mask="0x1"/>
+				<node id="enable_int_bc0" mask="0x2"/>
+				<node id="clear_ctr"      mask="0x4"/>
+				<node id="force_b_cmd"    mask="0x8"/>
+				<node id="b_cmd"          mask="0xff0"/>
 
-				<node id="clock_phase"        mask="0x0fff0000"/>
-				<node id="enable_clock_phase" mask="0x10000000"/>
+				<node id="clock_phase"        mask="0x0fff000"/>
+				<node id="enable_clock_phase" mask="0x1000000"/>
 			</node>
-			<node id="stat" address="0x4">
-				<node id="legacy_interface" mask="0x01" permission="r" description="High if legacy interface instantiated"/>
-				<node id="tcds2_interface"  mask="0x02" permission="r" description="High if TCDS2 interface instantiated"/>
-				<node id="bc0_lock"         mask="0x10" permission="r"/>
-				<node id="dist_lock"        mask="0x20" permission="r"/>
-				<node id="clock_phase_ok"   mask="0x40" permission="r"/>
-				<node id="bunch_ctr"        mask="0xfff00" permission="r"/>
+			<node id="stat" address="0x8">
+				<node id="bc0_lock"         mask="0x1"     permission="r"/>
+				<node id="dist_lock"        mask="0x2"     permission="r"/>
+				<node id="clock_phase_ok"   mask="0x4"     permission="r"/>
+				<node id="bunch_ctr"        mask="0xfff0"  permission="r"/>
 				<node id="event_ctr"        address="0x1"  permission="r"/>
 				<node id="orbit_ctr"        address="0x2"  permission="r"/>
+				<node id="bc0_counters" address="0x3">
+					<node id="on_time" address="0x0" permission="r"/>
+					<node id="invalid" address="0x1" permission="r"/>
+					<node id="missing" address="0x2" permission="r"/>
+				</node>
 			</node>
 		</node>
-		<node id="legacy" address="0x10" fwinfo="endpoint;width=1">
+		<node id="legacy" address="0x20" fwinfo="endpoint;width=1">
 			<node id="ctrl">
 				<node id="clear_err_ctr" mask="0x1"/>
 			</node>

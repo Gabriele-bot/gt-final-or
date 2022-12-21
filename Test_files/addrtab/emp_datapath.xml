@@ -6,5 +6,6 @@
 	</node>
 	<node id="region_info" address="0x1" module="file://emp_region_info.xml"/>
 	<node id="bc0_mon" module="file://emp_align_mon.xml" address="0x2"/>
+	<node id="rx_enable" address="0x4" fwinfo="endpoint;width=0"/>
 	<node id="region" module="file://emp_region.xml" address="0x1000"/>
 </node>

@@ -1,9 +1,9 @@
 <node>
-	<node id="reset_tx_pll_and_datapath" mask="0x00000001"/>
-	<node id="reset_rx_datapath"         mask="0x00000002"/>
-    <node id="enable_power_pll"          mask="0x00000004"/>
-    <node id="enable_power_rx"           mask="0x00000008"/>
-    <node id="enable_power_tx"           mask="0x00000010"/>
-	<node id="not_in_use"                mask="0x000000E0"/>
-	<node id="board_id"                  mask="0xFFFFFF00"/>
+  <node id="reset_tx_pll_and_datapath" mask="0x00000001"/>
+  <node id="reset_rx_datapath"         mask="0x00000002"/>
+  <node id="enable_power_pll"          mask="0x00000004"/>
+  <node id="enable_power_rx"           mask="0x00000008"/>
+  <node id="enable_power_tx"           mask="0x00000010"/>
+  <node id="crate_id"                  mask="0x00001FE0"/>
+  <node id="slot_id"                   mask="0x0001E000"/>
 </node>

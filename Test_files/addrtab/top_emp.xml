@@ -3,5 +3,6 @@
     <node id="ctrl" module="file://emp_ctrl.xml" address="0x200"/>
     <node id="ttc" module="file://emp_ttc.xml" address="0x400"/>
     <node id="datapath" module="file://emp_datapath.xml" address="0x2000"/>
+    <node id="slink" module="file://emp_slink.xml" address="0x1000000" />
     <node id="payload" module="file://emp_payload.xml" address="0x80000000" fwinfo="endpoint;width=31"/>
 </node>
