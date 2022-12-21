@@ -13,16 +13,23 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package P2GT_finor_pkg is
-
-    -- =======================================================================================================
-    -- GT FinalOR definitions
-    -- =======================================================================================================
-    constant N_BOARD     : natural := 12;
-    constant N_SLR       : natural := 4;
-    constant INPUT_LINKS : natural := 24;
-    constant MON_REG     : natural := 6;
-    constant N_TRIGG     : natural := 8;
     
+    
+    constant DEBUG                  : boolean := FALSE;
+    -- =======================================================================================================
+    -- GT Final-OR definitions
+    -- =======================================================================================================
+    constant N_BOARD                : integer := 12;
+    constant N_SLR                  : integer := 4;
+    constant INPUT_LINKS            : integer := 24;
+    constant MON_REG                : integer := 6;
+    constant N_TRIGG                : integer := 8;
+    constant BEGIN_LUMI_SEC_BIT     : integer := 18;
+    constant BEGIN_LUMI_SEC_BIT_SIM : integer := 3;
+    constant MAX_DELAY_PDT          : integer := 255;
+    constant SLR_CROSSING_LATENCY   : integer := 9;
+    constant FINOR_LATENCY          : integer := 3;
+    constant DESER_OUT_REG          : boolean := FALSE;
     
     type data_arr is array (INPUT_LINKS - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
     type mask_arr is array (N_TRIGG     - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
@@ -48,17 +55,6 @@ package P2GT_finor_pkg is
     constant PRESCALER_INCR : unsigned(31 downto 0) := to_unsigned(10**PRESCALE_FACTOR_FRACTION_DIGITS, 32);
 
     type prescale_factor_array is array (9*64-1 downto 0) of std_logic_vector(PRESCALE_FACTOR_WIDTH-1 downto 0);
-
-
-    -- =======================================================================================================
-
-    -- Algo board parameters
-    --constant N_BOARD         : natural := 1;
-    --constant N_SLR_PER_BOARD : natural := 3 ;
-    --constant N_ALGOS_PER_SLR : natural := 64;
-    --constant N_ALGOS         : natural := N_BOARD * N_SLR_PER_BOARD * N_ALGOS_PER_SLR;
-    --constant N_ALGOS         : natural := 1152;
-
 
     -- ================= RATE COUNTERS ========================================================================
     -- Definitions for rate counters (P2GT FinalOR)

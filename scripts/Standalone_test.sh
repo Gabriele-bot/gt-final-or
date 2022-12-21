@@ -3,7 +3,7 @@
 echo "Username: $1";
 echo "Board: $2";
 
-python PatternProducer.py -i 500 -s $2
+python PatternProducer.py -i 1100 -s $2
 
 
 if [ $2 = 'Serenity1' ]
@@ -19,14 +19,24 @@ then
     cd $1/Finor/ &&
     serenitybutler power off x0 &&
     serenitybutler power on x0 &&
-    serenitybutler program x0 gt-final-or.bit -r &&
+    serenitybutler program x0 p2gt_finor_serenity-vu9p.bit -r &&
     empbutler -c my_connections.xml do x0 reset internal &&
-    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 4-15,44-55,64-75,104-115 --inject file://Pattern_files/Finor_input_pattern.txt &&
-    empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-120 && 
-    empbutler -c my_connections.xml do x0 capture --tx 0-120 && 
-    python RateChecker.py  &&
+    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 4-15,44-55,64-75,104-115 --inject file://Pattern_files/Finor_input_pattern_prescaler_test.txt &&
+    empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-120 &&
+    empbutler -c my_connections.xml do x0 capture --tx 0-120 &&
+    python RateChecker.py -p random -t prescaler &&
+    empbutler -c my_connections.xml do x0 reset internal &&
+    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 4-15,44-55,64-75,104-115 --inject file://Pattern_files/Finor_input_pattern_trigg_test.txt &&
+    empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-120 &&
+    empbutler -c my_connections.xml do x0 capture --tx 0-120 &&
+    python RateChecker.py -p random -t trigger_mask &&
+    empbutler -c my_connections.xml do x0 reset internal &&
+    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 4-15,44-55,64-75,104-115 --inject file://Pattern_files/Finor_input_pattern_veto_test.txt &&
+    empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-120 &&
+    empbutler -c my_connections.xml do x0 capture --tx 0-120 &&
+    python RateChecker.py -p random -t veto_mask &&
     serenitybutler power off x0 &&
-    exit" 
+    exit"
 elif [ $2 = 'Serenity2' ]
 then
     scp -r Pattern_files $1@CMS-L1T-SERENITY-2:$1/Finor/
@@ -39,12 +49,22 @@ then
     cd $1/Finor/ &&
     serenitybutler power off x0 &&
     serenitybutler power on x0 &&
-    serenitybutler program x0 gt-final-or.bit -r &&
+    serenitybutler program x0 p2gt_finor_serenity-vu9p.bit -r &&
     empbutler -c my_connections.xml do x0 reset internal &&
-    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 4-15,44-55,64-75,104-115 --inject file://Pattern_files/Finor_input_pattern.txt &&
-    empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-120 && 
-    empbutler -c my_connections.xml do x0 capture --tx 0-120 && 
-    python RateChecker.py  &&
+    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 4-15,44-55,64-75,104-115 --inject file://Pattern_files/Finor_input_pattern_prescaler_test.txt &&
+    empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-120 &&
+    empbutler -c my_connections.xml do x0 capture --tx 0-120 &&
+    python RateChecker.py -p random -t prescaler &&
+    empbutler -c my_connections.xml do x0 reset internal &&
+    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 4-15,44-55,64-75,104-115 --inject file://Pattern_files/Finor_input_pattern_trigg_test.txt &&
+    empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-120 &&
+    empbutler -c my_connections.xml do x0 capture --tx 0-120 &&
+    python RateChecker.py -p random -t trigger_mask &&
+    empbutler -c my_connections.xml do x0 reset internal &&
+    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 4-15,44-55,64-75,104-115 --inject file://Pattern_files/Finor_input_pattern_veto_test.txt &&
+    empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-120 &&
+    empbutler -c my_connections.xml do x0 capture --tx 0-120 &&
+    python RateChecker.py -p random -t veto_mask &&
     serenitybutler power off x0 &&
     exit"
     
@@ -61,12 +81,27 @@ then
     cd $1/Finor/ &&
     serenitybutler power off x0 &&
     serenitybutler power on x0 &&
-    serenitybutler program x0 gt-final-or.bit -r &&
+    serenitybutler program x0 p2gt_finor_serenity-vu13p.bit -r &&
+    #empbutler -c my_connections.xml do x0 reset internal &&
+    #empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 36-47,48-59,68-79,80-91 --inject file://Pattern_files/Finor_input_pattern_prescaler_test.txt &&
+    #empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-127 &&
+    #empbutler -c my_connections.xml do x0 capture --tx 0-127 &&
+    #python RateChecker.py -t prescaler &&
+    #empbutler -c my_connections.xml do x0 reset internal &&
+    #empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 36-47,48-59,68-79,80-91 --inject file://Pattern_files/Finor_input_pattern_trigg_test.txt &&
+    #empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-127 &&
+    #empbutler -c my_connections.xml do x0 capture --tx 0-127 &&
+    #python RateChecker.py -p random -t trigger_mask &&
+    #empbutler -c my_connections.xml do x0 reset internal &&
+    #empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 36-47,48-59,68-79,80-91 --inject file://Pattern_files/Finor_input_pattern_veto_test.txt &&
+    #empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-127 && 
+    #empbutler -c my_connections.xml do x0 capture --tx 0-127 && 
+    #python RateChecker.py -t veto_mask &&
     empbutler -c my_connections.xml do x0 reset internal &&
-    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 36-47,48-59,68-79,80-91 --inject file://Pattern_files/Finor_input_pattern.txt &&
+    empbutler -c my_connections.xml do x0 buffers rx PlayOnce -c 36-47,48-59,68-79,80-91 --inject file://Pattern_files/Finor_input_pattern_BXmask_test.txt &&
     empbutler -c my_connections.xml do x0 buffers tx Capture -c 0-127 && 
     empbutler -c my_connections.xml do x0 capture --tx 0-127 && 
-    python RateChecker.py  &&
+    python RateChecker.py -t BXmask &&
     serenitybutler power off x0 &&
     exit"
 fi

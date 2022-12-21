@@ -8,6 +8,7 @@ use IEEE.STD_LOGIC_1164.all;
 
 use work.emp_framework_decl.all;
 use work.emp_device_types.all;
+use work.emp_slink_types.all;
 
 
 package emp_project_decl is
@@ -21,6 +22,10 @@ package emp_project_decl is
   constant CLOCK_COMMON_RATIO : integer               := 36;
   constant CLOCK_RATIO        : integer               := 9;
   constant CLOCK_AUX_DIV      : clock_divisor_array_t := (36, 9, 4); -- Dividers of CLOCK_COMMON_RATIO * 40 MHz
+  
+  constant SLINK_CONF : slink_conf_array_t := (
+  others      => kNoSlink
+  );
 
 
   constant REGION_CONF : region_conf_array_t := (

@@ -15,7 +15,7 @@ use ieee.numeric_std.all;
 entity update_process is
     generic(
         WIDTH      : integer := 24;
-        INIT_VALUE : std_logic_vector(31 DOWNTO 0) := X"00000064" --1.00
+        INIT_VALUE : std_logic_vector
     );
     port(
         clk                  : in std_logic;

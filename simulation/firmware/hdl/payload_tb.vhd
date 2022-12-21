@@ -1,142 +1,262 @@
-library std;
-use std.env.all;
+--! Using the IEEE Library
+library IEEE;
+--! Using STD_LOGIC
+use IEEE.STD_LOGIC_1164.all;
+--! Using NUMERIC TYPES
+use IEEE.NUMERIC_STD.all;
+use ieee.math_real.all;
 
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use work.tb_helpers.all;
-use STD.TEXTIO.all;
-use ieee.std_logic_textio.all;
-
-use work.ipbus.all;
+--! Using the EMP data-types
 use work.emp_data_types.all;
-use work.emp_project_decl.all;
 
-use work.emp_device_decl.all;
+--! Using slink data types
+use work.emp_slink_types.all;
+
+--! Using TTC data-types
 use work.emp_ttc_decl.all;
 
-use work.common_pkg.all;
+--! Using EMP device declaration
+use work.emp_device_decl.all;
 
-entity testbench is
-end testbench;
+--! Using the testbench helper package
+use work.emp_capture_tools.all;
+use work.emp_testbench_helpers.all;
+--
+--! Using ipbus definitions
+--use work.ipbus.all;
 
-architecture behavior of testbench is
+--! Project declaration
+use work.emp_project_decl.all;
 
-  constant verbose : boolean := true;
+--! Using Testbench declaration
+use work.tb_decl;
 
-  constant div480          : integer   := ALGO_FREQ/2;
-  constant div360          : integer   := 180;
-  constant div40           : integer   := 20;
-  constant half_period_480 : time      := 250000 ps / div480;
-  constant half_period_360 : time      := half_period_480 * 4/3;
-  constant half_period_40  : time      := half_period_480 * 12;
-  constant n_links         : integer   := 4 * N_REGION;
-  signal   clk480          : std_logic := '1';
-  signal   clk360          : std_logic := '1';
-  signal   clk40           : std_logic := '1';
-  signal   clk_payload     : std_logic_vector(2 downto 0);
-  signal   rst_payload     : std_logic_vector(2 downto 0);
-  signal   rst             : std_logic_vector(N_REGION - 1 downto 0) := (others => '0');
+use work.ipbus.all;
 
-  signal iD : ldata(n_links - 1 downto 0);
-  signal oQ : ldata(n_links - 1 downto 0);
+-- sim decoders
+use work.ipbus_decode_sim.all;
+
+use work.P2GT_finor_pkg.all;
+
+
+
+--!
+--! @brief      An entity providing a TestBench
+--! @details    Detailed description
+--!
+entity top is
+    generic(
+        UNIX_TIME             : std_logic_vector(31 downto 0) := X"00000000";
+        GIT_REPOS_NAME        : std_logic_vector              := X"";
+        GIT_REPOS_SHA         : std_logic_vector              := X"";
+        GIT_REPOS_CLEAN       : std_logic_vector              := X"";
+        GIT_REPOS_REF         : std_logic_vector              := X"";
+        GITLAB_CI_PROJECT_ID  : integer                       := 0;
+        GITLAB_CI_PIPELINE_ID : integer                       := 0;
+        GITLAB_CI_JOB_ID      : integer                       := 0;
+        ---------------------------------------------------------------------
+        --TB values
+        ---------------------------------------------------------------------
+        sourcefile : string  := tb_decl.SOURCE_FILE;
+        sinkfile   : string  := tb_decl.SINK_FILE;
+        striphdr   : boolean := tb_decl.STRIP_HEADER;
+        inserthdr  : boolean := tb_decl.INSERT_HEADER;
+        playlen    : natural := tb_decl.PLAYBACK_LENGTH;
+        playoffset : natural := tb_decl.PLAYBACK_OFFSET;
+        playloop   : boolean := tb_decl.PLAYBACK_LOOP;
+        caplen     : natural := tb_decl.CAPTURE_LENGTH;
+        capoffset  : natural := tb_decl.CAPTURE_OFFSET;
+        dryrun     : boolean := false;
+        debug      : boolean := false
+    );
+end top;
+
+--! @brief Architecture definition for entity TestBench
+--! @details Detailed description
+architecture rtl of top is
+
+    -- IPBus signals
+    signal ipb_clk, ipb_rst : std_logic;
+
+    signal ipb_w : ipb_wbus;
+    signal ipb_r : ipb_rbus;
+
+    signal ipb_w_array : ipb_wbus_array(N_SLAVES - 1 downto 0);
+    signal ipb_r_array : ipb_rbus_array(N_SLAVES - 1 downto 0);
+
+    -- Clock domain reset outputs
+    signal clk125   : std_logic;
+    signal clk40    : std_logic;
+    signal rst40    : std_logic;
+    signal clk_p    : std_logic;
+    signal rst_p    : std_logic;
+    signal clks_aux : std_logic_vector(2 downto 0);
+    signal rsts_aux : std_logic_vector(2 downto 0);
+
+    -- TTC signals  
+    signal ttc_l1a, ttc_l1a_dist, dist_lock, oc_flag, ec_flag : std_logic;
+    signal ttc_cmd, ttc_cmd_dist                              : ttc_cmd_t;
+    signal bunch_ctr                                          : bctr_t;
+    signal evt_ctr, orb_ctr                                   : eoctr_t;
+
+    -- Others
+    signal soft_rst : std_logic;
+
+    -- Datapath signals
+    signal payload_d, payload_q : ldata(N_REGION * 4 - 1 downto 0);
+    signal clkmon               : std_logic_vector(3 downto 0);
+    signal ctrs                 : ttc_stuff_array(N_REGION - 1 downto 0);
+    signal rst_loc, clken_loc   : std_logic_vector(N_REGION - 1 downto 0);
+
+
 
 begin
 
-  uut : entity work.emp_payload
-    port map (
-      clk               => clk480, -- ipbus signals
-      rst               => rst(0),
-      ipb_in.ipb_addr   => (others => '0'),
-      ipb_in.ipb_wdata  => (others => '0'),
-      ipb_in.ipb_strobe => '0',
-      ipb_in.ipb_write  => '0',
-      ipb_out           => open,
-      clk_payload       => clk_payload,
-      rst_payload       => rst_payload,
-      clk_p             => clk360, -- data clock
-      rst_loc           => rst,
-      clken_loc         => (others => '1'),
-      ctrs              => (others => ("00000000", '0', "000000000000", "0000")), -- missing!
-      bc0               => open,
-      d                 => iD, -- data in
-      q                 => oQ, -- data out
-      gpio              => open, -- IO to mezzanine connector
-      gpio_en           => open -- IO to mezzanine connector (three-state enables)
-      );
-  -- Clocks
-  clk480         <= not clk480 after half_period_480;
-  clk360         <= not clk360 after half_period_360;
-  clk40          <= not clk40  after half_period_40;
-  clk_payload(ALGO_CLK) <= clk480;
-  clk_payload(LHC_CLK)  <= clk40;
+    -- Infrastructure
 
-  tb : process
-    file F                      : text open read_mode is "inputPattern.txt";
-    file FI                     : text open write_mode is "payload_tb.inputs";
-    file FO                     : text open write_mode is "payload_tb.results";
-    variable L, QL, LL          : line;
-    constant TM_PERIOD          : integer := 5;
-    constant DEMUX_LATENCY_VU9P     : integer := 9*TM_PERIOD*TM_PERIOD; -- Time to get the data in etc.
-    variable NEXT_TM_SLICE      : natural := 1;
-    variable ACTIVE_TM_SLICES   : std_logic_vector(TM_PERIOD-1 downto 0) := (others => '0');
-    type counters_t is array (natural range <>) of natural;
-    variable TM_SLICES_CNT      : counters_t(TM_PERIOD-1 downto 0) := (81, 63, 45, 27 ,9);
-    variable frames             : ldata(n_links - 1 downto 0);
-    variable iFrame             : integer := 0;
-    variable validFrame         : boolean;
-    -- variable remainingEvents    : integer := 2;
-    variable remainingEvents    : integer := 2*DEMUX_LATENCY_VU9P;
-    variable outFrames          : ldata(n_links - 1 downto 0);
+    infra : entity work.sim_udp_infra
+        port map(
+            soft_rst => soft_rst,
+            ipb_clk  => ipb_clk,
+            ipb_rst  => ipb_rst,
+            ipb_in   => ipb_r,
+            ipb_out  => ipb_w,
+            clk125   => clk125
+        );
 
-  begin  -- process tb
-    -- Write header
-    WriteHeader(n_links, FI);
-    WriteHeader(n_links, FO);
+    -- ipbus fabric selector
 
-    frames := (others => ("0000000000000000000000000000000000000000000000000000000000000000", '0', '0', '0'));
-    iD <= frames;
-    rst         <= (others => '1');
-    rst_payload <= (others => '1');
-    -- wait for 3*half_period_40;
-    wait for 234*half_period_360;  -- Enough for valid data to reach outputs
-    rst         <= (others => '0');
-    rst_payload <= (others => '0');
-    -- wait for 2*half_period_40;  -- wait until global set/reset completes
-    -- TODO: Should adjust the delays below when we know at which point Serenity sends out the data. (Might not be very important though, let's see.)
-    wait for 32*half_period_360;  -- wait until global set/reset completes
-    frames := (others => ("0000000000000000000000000000000000000000000000000000000000000000", '0', '0', '0'));
-    iD <= frames;
-    wait for 2*half_period_360;
-    frames := (others => ("0000000000000000000000000000000000000000000000000000000000000000", '0', '0', '0'));
-    iD <= frames;
-    wait for 2*half_period_360;
-    -- TODO: I seem to have two 360 half periods mysteriously show up around here. Should find out where they came from...
+    fabric : entity work.ipbus_fabric_sel
+        generic map(
+            NSLV      => N_SLAVES,
+            SEL_WIDTH => IPBUS_SEL_WIDTH)
+        port map(
+            ipb_in          => ipb_w,
+            ipb_out         => ipb_r,
+            sel             => ipbus_sel_sim(ipb_w.ipb_addr),
+            ipb_to_slaves   => ipb_w_array,
+            ipb_from_slaves => ipb_r_array
+        );
 
-    while remainingEvents > 0 loop
-      if not endfile(F) then
-        ReadInFrames(F, validFrame, frames);
-      else
-         -- frames := (others => (std_logic_vector(to_unsigned(remainingEvents, 16)) & std_logic_vector(to_unsigned(remainingEvents, 16)) & std_logic_vector(to_unsigned(remainingEvents, 16))& std_logic_vector(to_unsigned(remainingEvents, 16)), '1', '1', '1'));
-        frames := (others => ("0000000000000000000000000000000000000000000000000000000000000000", '0', '1', '0'));
-        remainingEvents := remainingEvents-1;
-      end if;
 
-      -- Filling payload
-      iD <= frames;
+    -- info block (constant registers containing version numbers, build info, etc)
+    info : entity work.emp_info
+        generic map (
+            UNIX_TIME             => UNIX_TIME,
+            GIT_REPOS_NAME        => GIT_REPOS_NAME,
+            GIT_REPOS_SHA         => GIT_REPOS_SHA,
+            GIT_REPOS_CLEAN       => GIT_REPOS_CLEAN,
+            GIT_REPOS_REF         => GIT_REPOS_REF,
+            GITLAB_CI_PROJECT_ID  => GITLAB_CI_PROJECT_ID,
+            GITLAB_CI_PIPELINE_ID => GITLAB_CI_PIPELINE_ID,
+            GITLAB_CI_JOB_ID      => GITLAB_CI_JOB_ID
+        )
+        port map(
+            clk     => ipb_clk,
+            rst     => ipb_rst,
+            ipb_in  => ipb_w_array(N_SLV_INFO),
+            ipb_out => ipb_r_array(N_SLV_INFO)
+        );
 
-      if validFrame or endfile(F) then  -- We should only advance time if there was valid data in the frame (or we're done).
-          wait for 2*half_period_360;
-      end if;
+    ctrl : entity work.emp_ctrl
+        port map (
+            clk      => ipb_clk,
+            rst      => ipb_rst,
+            ipb_in   => ipb_w_array(N_SLV_CTRL),
+            ipb_out  => ipb_r_array(N_SLV_CTRL),
+            soft_rst => soft_rst,
+            debug    => (others => '0')
+        );
 
-      outFrames := oQ;
+    -- TTC block
+    ttc : entity work.ttc_sim
+        port map(
+            clk_ipb      => ipb_clk,
+            rst_ipb      => ipb_rst,
+            ipb_in       => ipb_w_array(N_SLV_TTC),
+            ipb_out      => ipb_r_array(N_SLV_TTC),
+            clk40        => clk40,
+            rst40        => rst40,
+            clk_p        => clk_p,
+            rst_p        => rst_p,
+            clks_aux     => clks_aux,
+            rsts_aux     => rsts_aux,
+            ttc_cmd      => ttc_cmd,
+            ttc_cmd_dist => ttc_cmd_dist,
+            ttc_l1a      => ttc_l1a,
+            ttc_l1a_dist => ttc_l1a_dist,
+            dist_lock    => dist_lock,
+            bunch_ctr    => bunch_ctr,
+            evt_ctr      => (others => '0'),
+            orb_ctr      => open,
+            oc_flag      => oc_flag,
+            ec_flag      => ec_flag,
+            monclk       => clkmon
+        );
 
-      DumpFrames(outFrames, iFrame, FO);
-      DumpFrames(frames, iFrame, FI);
+    -- Datapath block
+    datapath : entity work.emp_datapath_sim
+        generic map(
+            sourcefile => sourcefile,
+            sinkfile   => sinkfile,
+            striphdr   => striphdr,
+            inserthdr  => inserthdr,
+            playlen    => playlen,
+            playoffset => playoffset,
+            playloop   => playloop,
+            caplen     => caplen,
+            capoffset  => capoffset,
+            dryrun     => dryrun,
+            debug      => debug
+        )
+        port map(
+            clk         => ipb_clk,
+            rst         => ipb_rst,
+            ipb_in      => ipb_w_array(N_SLV_DATAPATH),
+            ipb_out     => ipb_r_array(N_SLV_DATAPATH),
+            clk125      => clk125,
+            clk40       => clk40,
+            clk_p       => clk_p,
+            rst_p       => rst_p,
+            ttc_cmd     => ttc_cmd_dist,
+            ttc_l1a     => ttc_l1a_dist,
+            lock        => dist_lock,
+            ctrs_out    => ctrs,
+            rst_out     => rst_loc,
+            clken_out   => clken_loc,
+            refclkp     => (others => '0'),
+            refclkn     => (others => '0'),
+            clkmon      => clkmon,
+            q           => payload_d,
+            d           => payload_q
+        );
 
-      iFrame := iFrame+1;
-    end loop;
-    finish(0);
-  end process tb;
+    -- And finally, the payload
+    payload : entity work.emp_payload
+        generic map(
+            BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_SEC_BIT_SIM
+        )
+        port map(
+            clk         => ipb_clk,
+            rst         => ipb_rst,
+            ipb_in      => ipb_w_array(N_SLV_PAYLOAD),
+            ipb_out     => ipb_r_array(N_SLV_PAYLOAD),
+            clk40       => clk40,
+            clk_payload => clks_aux,
+            rst_payload => rsts_aux,
+            clk_p       => clk_p,
+            rst_loc     => rst_loc,
+            clken_loc   => clken_loc,
+            ctrs        => ctrs,
+            bc0         => open,
+            d           => payload_d,
+            q           => payload_q,
+            gpio        => open,
+            gpio_en     => open,
+            slink_q     => open,
+            backpressure => (others => '0')
+        );
 
-end;
+end rtl;
+
+

@@ -21,7 +21,8 @@ entity ipbus_initialized_dpram is
     generic(
         INIT_VALUE : std_logic_vector(31 downto 0) := (others => '0');
         ADDR_WIDTH : positive;
-        DATA_WIDTH : positive := 32
+        DATA_WIDTH : positive := 32;
+        STYLE      : string   := "block"
     );
     port(
         clk: in std_logic;
@@ -34,7 +35,7 @@ entity ipbus_initialized_dpram is
         q: out std_logic_vector(DATA_WIDTH - 1 downto 0);
         addr: in std_logic_vector(ADDR_WIDTH - 1 downto 0)
     );
-    
+
 end ipbus_initialized_dpram;
 
 architecture rtl of ipbus_initialized_dpram is
@@ -43,6 +44,9 @@ architecture rtl of ipbus_initialized_dpram is
     shared variable ram: ram_array  := (others => INIT_VALUE(DATA_WIDTH - 1 downto 0));
     signal sel, rsel: integer range 0 to 2 ** ADDR_WIDTH - 1 := 0;
     signal ack: std_logic;
+
+    attribute ram_style : string;
+    attribute ram_style of ram : variable is STYLE;
 
 begin
 
@@ -59,12 +63,12 @@ begin
             ack <= ipb_in.ipb_strobe and not ack;
         end if;
     end process;
-    
+
     ipb_out.ipb_ack <= ack;
     ipb_out.ipb_err <= '0';
-    
+
     rsel <= to_integer(unsigned(addr));
-    
+
     process(rclk)
     begin
         if rising_edge(rclk) then

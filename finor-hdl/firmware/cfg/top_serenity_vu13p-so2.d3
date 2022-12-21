@@ -6,7 +6,7 @@ src ../ucf/payload_serenity-vu13p.tcl
 src ../ucf/payload_timings.tcl
 
 include top.d3
-src payload_vu13p.vhd
+src --vhdl2008 payload_vu13p.vhd
 
 setup flatten_hierarchy.tcl
 setup build.tcl
