@@ -121,9 +121,9 @@ cd scripts
 ```
 Launch one of the test available with the command
 ```bash
-pyhton Ratechecker.py -t prescaler -p random -ls 3 -c my_connections
-pyhton Ratechecker.py -t trigger_mask -p random -ls 3 -c my_connections
-pyhton Ratechecker.py -t veto_mask -p random -ls 3 -c my_connections
-pyhton Ratechecker.py -t BXmask -p random -ls 3 -c my_connections
+pyhton Ratechecker.py -t prescaler -p random -ls 3 -c my_connections -S
+pyhton Ratechecker.py -t trigger_mask -p random -ls 3 -c my_connections -S
+pyhton Ratechecker.py -t veto_mask -p random -ls 3 -c my_connections -S
+pyhton Ratechecker.py -t BXmask -p random -ls 3 -c my_connections -S
 ```
 

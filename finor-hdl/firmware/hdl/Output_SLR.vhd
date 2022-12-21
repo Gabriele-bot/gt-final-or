@@ -298,11 +298,8 @@ begin
     end process;
 
     Final_OR_with_veto_l : for i in 0 to N_TRIGG -1 generate
-        Final_OR_with_veto_p : process (trgg_0, trgg_1, veto_0, veto_1)
-        begin
-            Final_OR_with_veto(i) <= (trgg_0(i) or trgg_1(i)) and not(veto_0 or veto_1);
-            Final_OR_preview_with_veto(i) <= (trgg_prvw_0(i) or trgg_prvw_1(i)) and not(veto_0 or veto_1);
-        end process;
+        Final_OR_with_veto(i)         <= (trgg_0(i) or trgg_1(i)) and not(veto_0 or veto_1);
+        Final_OR_preview_with_veto(i) <= (trgg_prvw_0(i) or trgg_prvw_1(i)) and not(veto_0 or veto_1);
     end generate;
 
     veto_out_s <= veto_0 or veto_1;

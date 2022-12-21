@@ -271,7 +271,8 @@ def pattern_producer_trggmask_test(board='vu13p', debug=False):
         indeces = np.int32(np.append(indeces, algo_distrib))
         positions = np.int32(np.append(positions, algos_position))
         for pos, local_index in zip(algos_position, algo_distrib):
-            print(pos, local_index)
+            if debug:
+                print(pos, local_index)
             algo_matrix[local_index, pos] = True
 
     if debug:
@@ -307,17 +308,17 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, board='vu13p', debug=Fa
     finor_with_veto = np.logical_and(finor, np.logical_not(veto)).astype(bool)
 
     if debug:
-        print(finor.sum())
-        print(finor_with_veto.sum())
+        print("FinalOR counts = %d" % finor.sum())
+        print("FinalOR with veto counts = %d" % finor_with_veto.sum())
 
-    finor_counts = np.vstack((finor.sum(), finor_with_veto.sum()))
+    finor_counts = np.vstack((finor.sum(), finor_with_veto.sum(), veto.sum()))
 
     Available_links = get_Available_links(board)
 
     pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_veto_test.txt", Available_links, debug)
 
     return finor_counts, veto_indeces
-
+    
 
 def pattern_producer_BXmask_test(p_algo, p_mask, board='vu13p', debug=False):
 
@@ -329,7 +330,8 @@ def pattern_producer_BXmask_test(p_algo, p_mask, board='vu13p', debug=False):
     indeces = np.where(rep_tot > 0)[0]
     repetitions = rep_tot[indeces]
     finor_counts = np.sum(np.logical_or.reduce(algo_matrix_masked, 0).astype(bool)).astype(np.uint32)
-    print(finor_counts)
+    if debug:
+    	print("FinalOR counts = %d" % finor_counts)
 
     Available_links = get_Available_links(board)
 

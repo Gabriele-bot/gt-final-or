@@ -48,7 +48,7 @@ begin
                         state <= check;
                     end if;
                 when check  =>
-                    if unsigned(orbit_nr(BEGIN_LUMI_BIT - 1 downto 0)) <= to_unsigned(2**BEGIN_LUMI_BIT - 2, BEGIN_LUMI_BIT) then
+                    if unsigned(orbit_nr(BEGIN_LUMI_BIT - 1 downto 0)) <= to_unsigned(2**BEGIN_LUMI_BIT - 1, BEGIN_LUMI_BIT) then
                         addr  <= (others => '0');
                         request_update <= '0';
                         ready          <= '0';
