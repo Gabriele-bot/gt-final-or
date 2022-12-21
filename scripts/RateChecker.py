@@ -353,14 +353,14 @@ if args.test == 'prescaler':
 
     error_cnt = 0
 
-    time.sleep(23)
+    time.sleep(46)
 
     for i in range(0, 10):
         ready_1 = 0
         ready_0 = 0
         while not (ready_1 and ready_0):
             print("Counters are not ready to be read")
-            time.sleep(3)
+            time.sleep(10)
             ready_1, ready_0 = HWtest.check_counter_ready_flags()
 
         cnt_before = HWtest.read_cnt_arr(0)
@@ -624,7 +624,7 @@ elif args.test == 'veto_mask':
         trigg_rate_theo[i] = np.uint32(finor_cnts * (2 ** lumi_bit))
         trigg_rate_with_veto_theo[i] = np.uint32(finor_with_veto_cnts * (2 ** lumi_bit))
 
-    time.sleep(23)
+    time.sleep(46)
 
     o_ctr_temp = 0
 
@@ -633,7 +633,7 @@ elif args.test == 'veto_mask':
     for i in range(0, 10):
         ready = 0
         while ready < 1:
-            time.sleep(3)
+            time.sleep(10)
             ready = HWtest.check_trigger_counter_ready_flag()
         # ttcStatus = ttcNode.readStatus()
         o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
