@@ -357,16 +357,17 @@ if args.test == 'prescaler':
     error_cnt = 0
 
     if args.simulation:
-        time.sleep(2)
+        iteration = 10
     else:
         time.sleep(46)
+        iteration = 50
 
-    for i in range(0, 10):
+    for i in range(iteration):
         ready_1 = 0
         ready_0 = 0
         while not (ready_1 and ready_0):
             print("Counters are not ready to be read")
-            time.sleep(10)
+            time.sleep(5)
             ready_1, ready_0 = HWtest.check_counter_ready_flags()
 
         cnt_before = HWtest.read_cnt_arr(0)
@@ -418,6 +419,8 @@ if args.test == 'prescaler':
 
     if error_cnt != 0:
         raise Exception("Error found! Check the counters!")
+    else:
+        print("No mismatch found!")
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------TRIGG MASK TEST-----------------------------------
@@ -498,12 +501,12 @@ elif args.test == 'trigger_mask':
         iteration = 10
     else:
         time.sleep(46)
-        iteration = 200
+        iteration = 50
 
     for i in range(iteration):
         ready = 0
         while ready < 1:
-            time.sleep(3)
+            time.sleep(5)
             ready = HWtest.check_trigger_counter_ready_flag()
         # ttcStatus = ttcNode.readStatus()
         o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
@@ -526,7 +529,7 @@ elif args.test == 'trigger_mask':
             for trigg_index, cnt in enumerate(trigg_cnt):
                 error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
                 print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
-                if error_trgg > 1:
+                if error_trgg > 0:
                     error_cnt += 1
                     print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
                     print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
@@ -546,6 +549,8 @@ elif args.test == 'trigger_mask':
 
     if error_cnt != 0:
         raise Exception("Error found! Check the counters!")
+    else:
+        print("No mismatch found!")
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------VETO TEST-----------------------------------------
@@ -644,12 +649,12 @@ elif args.test == 'veto_mask':
         iteration = 10
     else:
         time.sleep(46)
-        iteration = 200
+        iteration = 50
 
     for i in range(iteration):
         ready = 0
         while ready < 1:
-            time.sleep(10)
+            time.sleep(5)
             ready = HWtest.check_trigger_counter_ready_flag()
         # ttcStatus = ttcNode.readStatus()
         o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
@@ -672,7 +677,7 @@ elif args.test == 'veto_mask':
             for trigg_index, cnt in enumerate(trigg_cnt):
                 error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
                 print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
-                if error_trgg > 1:
+                if error_trgg > 0:
                     error_cnt += 1
                     print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
                     print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
@@ -683,7 +688,7 @@ elif args.test == 'veto_mask':
             for trigg_index, cnt in enumerate(trigg_cnt_wveto):
                 error_trgg = np.abs(trigg_rate_with_veto_theo[trigg_index] - cnt)
                 print('Trigger with veto %d-th counter value = %d' % (trigg_index, cnt))
-                if error_trgg > 1:
+                if error_trgg > 0:
                     error_cnt += 1
                     print('Mismatch found on %d-th trigger rate with veto, error= %d' % (trigg_index, error_trgg))
                     print('Expected value %d, Value got= %d' % (trigg_rate_with_veto_theo[trigg_index], cnt))
@@ -695,6 +700,8 @@ elif args.test == 'veto_mask':
 
     if error_cnt != 0:
         raise Exception("Error found! Check the counters!")
+    else:
+        print("No mismatch found!")
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------BX MASK TEST--------------------------------------
@@ -789,14 +796,14 @@ elif args.test == 'BXmask':
         iteration = 10
     else:
         time.sleep(46)
-        iteration = 200
+        iteration = 50
 
     for i in range(iteration):
         ready_1 = 0
         ready_0 = 0
         while not (ready_1 and ready_0):
             print("Counters are not ready to be read")
-            time.sleep(3)
+            time.sleep(5)
             ready_1, ready_0 = HWtest.check_counter_ready_flags()
 
         # ttcStatus = ttcNode.readStatus()
@@ -819,7 +826,7 @@ elif args.test == 'BXmask':
             error_before = np.abs(rate_before_exp - rate_before_theo)
 
             for current_i, error in enumerate(error_before):
-                if error > 1:
+                if error > 0:
                     error_cnt += 1
                     print('Mismatch found on rate before pescaler %d, error= %d' % (current_i, error))
                     print('Expected value %d, Value got= %d' % (rate_before_theo[current_i], rate_before_exp[current_i]))
@@ -827,6 +834,8 @@ elif args.test == 'BXmask':
 
     if error_cnt != 0:
         raise Exception("Error found! Check the counters!")
+    else:
+        print("No mismatch found!")
 
 else:
     print('No suitable test was selected!')
