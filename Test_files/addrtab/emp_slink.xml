@@ -1,0 +1,23 @@
+<node description="Slink Interface" fwinfo="endpoint" class="SlinkInterfaceNode">
+
+  <node id="csr"  address="0x0" tags="test" fwinfo="endpoint;width=1">
+    <node id="ctrl" address="0x0000" permission="rw" tags="test" fwinfo="endpoint;width=0">
+      <node id="quad_select"         address="0x0000"     mask="0x00000003"/>
+      <node id="global_quad_reset"   address="0x0000"     mask="0x80000000"/>
+    </node>
+    <node id="stat" address="0x0001" permission="r" tags="test" fwinfo="endpoint;width=0">
+      <node id="enabled_quads"   address="0x0000" mask="0x00000003"/>
+      <node id="qpll_lock"       address="0x0000" mask="0x0000001c"/>
+      <node id="mmcm_lock"       address="0x0000" mask="0x00000020"/>
+      <node id="refclk_index"    address="0x0000" mask="0x00007C00"/>
+      <node id="refclk_is_async" address="0x0000" mask="0x00008000"/>
+    </node>
+  </node>
+
+  <node id="freq" address="0x1000" module="file://ipbus_freq_ctr.xml"/>
+  
+  <node id="quad" address="0x100000" module="file://emp_slink_quad.xml"/>  
+
+
+</node> 
+

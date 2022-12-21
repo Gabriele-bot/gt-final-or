@@ -1,0 +1,109 @@
+<node description="slow command control registers" fwinfo="endpoint;width=6" class="SCCNode">
+	<node id="ctrl">
+		<node id="soft_rst"     address="0x0" mask="0x01"/>
+		<node id="nuke"         address="0x0" mask="0x02"/>
+		<node id="gbtsc_rst"    address="0x0" mask="0x04"/>
+		<node id="active_ec"    address="0x1" mask="0x0001ffff"/>
+		<node id="ec_spare_sel" address="0x1" mask="0x00f00000"/>
+	</node>
+	<node id="stat" address="0x02"/>
+	<node id="ic" address="0x10">
+		<node id="auto" class="SCCICNode">
+			<node id="reset">
+				<node id="global"       mask="0x01"/>
+				<node id="txdata_fifo"  mask="0x02"/>
+				<node id="rxdata_fifo"  mask="0x04"/>
+			</node>
+			<node id="stat" address="0x1">
+				<node id="tx_ready"          mask="0x01" />
+				<node id="rx_empty"          mask="0x02" />
+				<node id="rxdata_fifo_empty" mask="0x04" />
+				<node id="fsm"               mask="0x38" />
+			</node>
+			<node id="reply_data_count" address="0x2"/>
+			<node id="gbtx_addr"        address="0x3"/>
+			<node id="txdata_fifo"      address="0x4" size="0x200" mode="port"/>
+			<node id="rxdata_fifo"      address="0x5" size="0x200" mode="port"/>
+		</node>
+		<node id="ic_simple" address="0x8">
+			<node id="tx_data"   address="0x0"/>
+			<node id="tx_conf"   address="0x1"/>
+			<node id="tx_nwread" address="0x2"/>
+			<node id="rx_data"   address="0x4"/>
+			<node id="stat"      address="0x5">
+				<node id="tx_ready" mask="0x01"/>
+				<node id="rx_empty" mask="0x02"/>
+			</node>
+			<node id="tx_start_write" address="0x6"/>
+			<node id="tx_start_read"  address="0x7"/>
+		</node>
+	</node>
+	<node id="ec" address="0x20" class="SCCECNode">
+		<node id="txram">
+			<node id="data"       address="0x0" size="0x400" mode="port"/>
+			<node id="input_addr" address="0x1"/>
+			<node id="frame_addr" address="0x2"/>
+		</node>
+		<node id="rxram" address="0x4">
+			<node id="data" address="0x0" size="0x400" mode="port"/>
+			<node id="output_addr" address="0x1"/>
+			<node id="frame_addr"  address="0x2"/>
+		</node>
+		<node id="ctrl" address="0x8">
+			<node id="ctrl">
+				<node id="reset"                    mask="0x10"/>
+				<node id="gbtsca_cmd_start_input"   mask="0x01"/>
+				<node id="gbtsca_cmd_start_reset"   mask="0x02"/>
+				<node id="gbtsca_cmd_start_connect" mask="0x04"/>
+				<node id="gbtsca_cmd_start_test"    mask="0x08"/>
+			</node>
+			<node id="stats" address="0x1">
+				<node id="rxram_ready"     mask="0x00000001"/>
+				<node id="gbtsca_addr_err" mask="0x00000002"/>
+				<node id="transID_err"     mask="0x00000004"/>
+				<node id="rx_done_latched" mask="0x00000008"/>
+				<node id="reset_ack"       mask="0x00000010"/>
+				<node id="connect_ack"     mask="0x00000020"/>
+				<node id="trans_started"   mask="0x00000040"/>
+				<node id="rx_gbtsca_addr"  mask="0x0000ff00"/>
+				<node id="rx_control"      mask="0x00ff0000"/>
+				<node id="start_input_fsm" mask="0xff000000"/>
+			</node>
+			<node id="gbt_sca_addr" address="0x2"/>
+		</node>
+	</node>
+	<node id="ec_spare" address="0x30" class="SCCECNode">
+		<node id="txram">
+			<node id="data"       address="0x0" size="0x400" mode="port"/>
+			<node id="input_addr" address="0x1"/>
+			<node id="frame_addr" address="0x2"/>
+		</node>
+		<node id="rxram" address="0x4">
+			<node id="data"        address="0x0" size="0x400" mode="port"/>
+			<node id="output_addr" address="0x1"/>
+			<node id="frame_addr"  address="0x2"/>
+		</node>
+		<node id="ctrl" address="0x8">
+			<node id="ctrl">
+				<node id="reset"                    mask="0x10"/>
+				<node id="gbtsca_cmd_start_input"   mask="0x01"/>
+				<node id="gbtsca_cmd_start_reset"   mask="0x02"/>
+				<node id="gbtsca_cmd_start_connect" mask="0x04"/>
+				<node id="gbtsca_cmd_start_test"    mask="0x08"/>
+			</node>
+			<node id="stats" address="0x1">
+				<node id="rxram_ready"     mask="0x00000001"/>
+				<node id="gbtsca_addr_err" mask="0x00000002"/>
+				<node id="transID_err"     mask="0x00000004"/>
+				<node id="rx_done_latched" mask="0x00000008"/>
+				<node id="reset_ack"       mask="0x00000010"/>
+				<node id="connect_ack"     mask="0x00000020"/>
+				<node id="trans_started"   mask="0x00000040"/>
+				<node id="rx_gbtsca_addr"  mask="0x0000ff00"/>
+				<node id="rx_control"      mask="0x00ff0000"/>
+				<node id="start_input_fsm" mask="0xff000000"/>
+			</node>
+			<node id="gbt_sca_addr" address="0x2"/>
+		</node>
+	</node>
+</node>

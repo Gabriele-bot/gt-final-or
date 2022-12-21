@@ -1,0 +1,14 @@
+<node description="GBT quad CSR registers" fwinfo="endpoint;width=7" class="GbtMGTRegionNode">
+	<node id="ctrl" address="0x00">
+		<node id="ch0" module="file://emp_gbt_chan_rw.xml" address="0x0"/>
+		<node id="ch1" module="file://emp_gbt_chan_rw.xml" address="0x1"/>
+		<node id="ch2" module="file://emp_gbt_chan_rw.xml" address="0x2"/>
+		<node id="ch3" module="file://emp_gbt_chan_rw.xml" address="0x3"/>
+	</node>
+	<node id="stat" address="0x20">
+		<node id="ch0" module="file://emp_gbt_chan_ro.xml" address="0x00"/>
+		<node id="ch1" module="file://emp_gbt_chan_ro.xml" address="0x08"/>
+		<node id="ch2" module="file://emp_gbt_chan_ro.xml" address="0x10"/>
+		<node id="ch3" module="file://emp_gbt_chan_ro.xml" address="0x18"/>
+	</node>
+</node>

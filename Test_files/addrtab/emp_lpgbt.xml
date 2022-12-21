@@ -1,0 +1,14 @@
+<node description="LPGBT configuration and status registers" fwinfo="endpoint;width=7" class="LpGbtMGTRegionNode">
+	<node id="ctrl">
+		<node id="ch0" module="file://emp_lpgbt_chan_ctrl.xml" address="0x0"/>
+		<node id="ch1" module="file://emp_lpgbt_chan_ctrl.xml" address="0x2"/>
+		<node id="ch2" module="file://emp_lpgbt_chan_ctrl.xml" address="0x4"/>
+		<node id="ch3" module="file://emp_lpgbt_chan_ctrl.xml" address="0x6"/>
+	</node>
+	<node id="status" address="0x8">
+		<node id="ch0" module="file://emp_lpgbt_chan_status.xml" address="0x0"/>
+		<node id="ch1" module="file://emp_lpgbt_chan_status.xml" address="0x2"/>
+		<node id="ch2" module="file://emp_lpgbt_chan_status.xml" address="0x4"/>
+		<node id="ch3" module="file://emp_lpgbt_chan_status.xml" address="0x6"/>
+	</node>
+</node>

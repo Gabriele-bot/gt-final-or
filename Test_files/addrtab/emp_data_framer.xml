@@ -1,0 +1,5 @@
+<node description="data framer registers" fwinfo="endpoint;width=8">
+	<node id="scc"    module="file://emp_scc.xml"    address="0x00"/>
+	<node id="rx_udf" module="file://emp_rx_udf.xml" address="0x40"/>
+	<node id="tx_udf" module="file://emp_tx_udf.xml" address="0x80"/>
+</node>

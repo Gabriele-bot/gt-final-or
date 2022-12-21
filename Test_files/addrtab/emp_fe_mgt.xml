@@ -1,0 +1,5 @@
+<node description="FE MGT quad registers" fwinfo="endpoint">
+	<node id="lpgbt"       module="file://emp_lpgbt.xml"/>
+	<node id="gbt"         module="file://emp_gbt.xml"         address="0x080"/>
+	<node id="data_framer" module="file://emp_data_framer.xml" address="0x100"/>
+</node>

@@ -1,0 +1,25 @@
+<node>
+	<node id="status">
+		<node id="cplllock_out"            mask="0x00000100"/>
+		<node id="txAligned_latched"       mask="0x00000080"/>
+		<node id="rxExtrDataWidebusErSeen" mask="0x00000040"/>
+		<node id="rxDataErrorSeen"         mask="0x08000020"/>
+		<node id="gbtRxReady"              mask="0x00000008"/>
+		<node id="mgtReady"                mask="0x00000004"/>
+		<node id="gbtErrorDetected"        mask="0x00000002"/>
+		<node id="rxIsData"                mask="0x00000001"/>
+	</node>
+	<node id="status2" address="0x1">
+		<node id="mgt_txresetdone" mask="0x00000001" />
+		<node id="mgt_rxresetdone" mask="0x00000002" />
+		<node id="gbt_txreset"     mask="0x00000004" />
+		<node id="gbt_rxreset"     mask="0x00000008" />
+		<node id="gbt_rxbitslip"   mask="0x00000010" />
+	</node>
+	<node id="mgt_rxwordL"     address="0x2"/>
+	<node id="mgt_rxwordH"     address="0x3"/>
+	<node id="gbt_user_data_a" address="0x4"/>
+	<node id="gbt_user_data_b" address="0x5"/>
+	<node id="gbt_user_data_c" address="0x6"/>
+	<node id="gbt_user_data_d" address="0x7"/>
+</node>

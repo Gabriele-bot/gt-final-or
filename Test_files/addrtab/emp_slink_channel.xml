@@ -1,0 +1,56 @@
+<node description="Slink Channel" permission="rw" tags="test" fwinfo="endpoint">
+
+    <node id="csr_channel" address="0x00000" fwinfo="endpoint;width=2">
+      <node id="ctrl" address="0x00000"  fwinfo="endpoint;width=1">
+	<node id="reset" address="0x00000" mask="0x1" fwinfo="endpoint;width=0"/>
+	<node id="source_id" address="0x00001" mask="0xFFFFFFFF" fwinfo="endpoint;width=0"/>
+      </node>
+      <node id="stat" address="0x00002" fwinfo="endpoint;width=1">
+	<node id="packet_fifo_occupancy" address="0x00000" mask="0x000001FF" fwinfo="endpoint"/>
+	<node id="error_excessive_packet" address="0x00000" mask="0x00000200" fwinfo="endpoint"/>
+	<node id="error_repeat_header" address="0x00000" mask="0x00000400" fwinfo="endpoint"/>
+	<node id="error_repeat_trailer" address="0x00000" mask="0x00000800" fwinfo="endpoint"/>
+	<node id="formatter_conditioned_reset" address="0x00000" mask="0x00001000" fwinfo="endpoint"/>
+	<node id="trigger_fifo_overflow" address="0x00000" mask="0x00100000" fwinfo="endpoint"/>
+	<node id="data_fifo_overflow" address="0x00000" mask="0x00200000" fwinfo="endpoint"/>
+	<node id="packet_fifo_overflow" address="0x00000" mask="0x00400000" fwinfo="endpoint"/>
+	<node id="trigger_fifo_really_full" address="0x00000" mask="0x00800000" fwinfo="endpoint"/>
+	<node id="data_fifo_really_full" address="0x00000" mask="0x01000000" fwinfo="endpoint"/>
+	<node id="packet_fifo_really_full" address="0x00000" mask="0x02000000" fwinfo="endpoint"/>
+	<node id="trigger_fifo_empty" address="0x00000" mask="0x04000000" fwinfo="endpoint"/>
+	<node id="data_fifo_empty" address="0x00000" mask="0x08000000" fwinfo="endpoint"/>
+	<node id="packet_fifo_empty" address="0x00000" mask="0x10000000" fwinfo="endpoint"/>
+	<node id="trigger_fifo_full" address="0x00000" mask="0x20000000" fwinfo="endpoint"/>
+	<node id="data_fifo_full" address="0x00000" mask="0x40000000" fwinfo="endpoint"/>
+	<node id="packet_fifo_full" address="0x00000" mask="0x80000000" fwinfo="endpoint"/>
+	<node id="backpressure_per_sec" address="0x00001" mask="0x1FFFFFFF" fwinfo="endpoint"/>
+      </node>
+    </node>
+
+    <node id="csr_core" address="0x0010" fwinfo="endpoint;width=4">
+      <node id="ctrl" address="0x00000"  fwinfo="endpoint;width=3">
+	<node id="core_status_addr" address="0x00000" mask="0x0000FFFF" fwinfo="endpoint"/>
+	<node id="reserved_0" address="0x00001" mask="0xFFFFFFF" fwinfo="endpoint"/>
+	<node id="reserved_1" address="0x00002" mask="0xFFFFFFF" fwinfo="endpoint"/>
+	<node id="reserved_2" address="0x00003" mask="0xFFFFFFF" fwinfo="endpoint"/>
+	<node id="reserved_3" address="0x00004" mask="0xFFFFFFF" fwinfo="endpoint"/>
+	<node id="reserved_4" address="0x00005" mask="0xFFFFFFF" fwinfo="endpoint"/>
+	<node id="reserved_5" address="0x00006" mask="0xFFFFFFF" fwinfo="endpoint"/>
+	<node id="reserved_6" address="0x00007" mask="0xFFFFFFF" fwinfo="endpoint"/>
+      </node>
+      <node id="stat" address="0x00008" fwinfo="endpoint;width=3">
+	<node id="lff_per_sec" address="0x00000" mask="0x0FFFFFFF" fwinfo="endpoint"/>
+	<node id="lff" address="0x00000" mask="0x40000000" fwinfo="endpoint"/>
+	<node id="link_down" address="0x00000" mask="0x80000000" fwinfo="endpoint"/>
+	<node id="word_per_sec" address="0x00001" mask="0x0FFFFFFF" fwinfo="endpoint"/>
+	<node id="core_status_l" address="0x00002" mask="0xFFFFFFFF" fwinfo="endpoint;width=0"/>
+	<node id="core_status_h" address="0x00003" mask="0xFFFFFFFF" fwinfo="endpoint;width=0"/>
+	<node id="packet_count_l" address="0x00004" mask="0xFFFFFFFF" fwinfo="endpoint;width=0"/>
+	<node id="packet_count_h" address="0x00005" mask="0xFFFFFFFF" fwinfo="endpoint;width=0"/>
+	<node id="reserved_0" address="0x00006" mask="0xFFFFFFFF" fwinfo="endpoint;width=0"/>
+	<node id="reserved_1" address="0x00007" mask="0xFFFFFFFF" fwinfo="endpoint;width=0"/>
+      </node>
+    </node>
+
+
+</node>

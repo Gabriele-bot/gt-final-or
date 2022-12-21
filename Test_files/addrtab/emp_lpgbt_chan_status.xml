@@ -1,0 +1,15 @@
+<node description="LPGBT status registers">
+	<node id="link">
+		<node id="uplink_rdy"                mask="0x00000001" />
+		<node id="downlink_rdy"              mask="0x00000002" />
+		<node id="mgt_tx_rdy"                mask="0x00000008" />
+		<node id="mgt_txaligned"             mask="0x00000010" />
+		<node id="mgt_txphase"               mask="0x00000fe0" />
+		<node id="uplinkFECCorrectedLatched" mask="0x00001000" />
+		<node id="testsig"                   mask="0x007fe000" />
+	</node>
+	<node id="extra" address="0x1">
+		<node id="downlinkPhase" mask="0x000003ff"/>
+		<node id="uplinkPhase"   mask="0x00001c00"/>
+	</node>
+</node>

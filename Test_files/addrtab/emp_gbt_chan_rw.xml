@@ -1,0 +1,9 @@
+<node>
+	<node id="loopback"     mask="0x00000007"/>
+	<node id="resetgbtfpga" mask="0x00000008"/>
+	<node id="txreset"      mask="0x00000010"/>
+	<node id="rxreset"      mask="0x00000020"/>
+	<node id="patternSel"   mask="0x000000C0"/>
+	<node id="tx_pol"       mask="0x00000800"/>
+	<node id="rx_pol"       mask="0x00001000"/>
+</node>

@@ -1,0 +1,58 @@
+<node description="Slink Quad" permission="rw" tags="test" fwinfo="endpoint">
+
+  <node id="csr" address="0x0000" permission="rw" tags="test" fwinfo="endpoint;width=4">
+    <node id="ctrl" address="0x0000" permission="rw" tags="test" fwinfo="endpoint;width=3">
+      <node id="bypass_ram_nentries"   address="0x0000"     mask="0x000000FF"/>
+      <node id="use_bypass_ram"        address="0x0000"     mask="0x00000100"/>
+      <node id="use_generator"         address="0x0000"     mask="0x00000200"/>
+      <node id="ram_capture"           address="0x0000"     mask="0x00000400"/>
+      <node id="capture_channel"       address="0x0000"     mask="0x00001800"/>
+      <node id="channel_select"        address="0x0000"     mask="0x00006000"/>
+      <node id="sw_bypass_loaded"      address="0x0000"     mask="0x08000000"/>
+      <node id="bypass_reset"          address="0x0000"     mask="0x10000000"/>
+      <node id="generator_reset"       address="0x0000"     mask="0x20000000"/>
+      <node id="global_core_reset"     address="0x0000"     mask="0x40000000"/>
+      <node id="global_channel_reset"  address="0x0000"     mask="0x80000000"/>
+      <node id="rsvd0"                 address="0x0001"     mask="0x00000000"/>
+      <node id="rsvd1"                 address="0x0002"     mask="0x00000000"/>
+      <node id="rsvd2"                 address="0x0003"     mask="0x00000000"/>
+      <node id="rsvd3"                 address="0x0004"     mask="0x00000000"/>
+      <node id="rsvd4"                 address="0x0005"     mask="0x00000000"/>
+      <node id="rsvd5"                 address="0x0006"     mask="0x00000000"/>
+      <node id="rsvd6"                 address="0x0007"     mask="0x00000000"/>
+    </node> 
+    <node id="stat" address="0x0008" permission="r" tags="test" fwinfo="endpoint;width=3">
+      <node id="link_down_any"      address="0x0000" mask="0x00000004"/>
+      <node id="capture_done"       address="0x0000" mask="0x00000008"/>
+      <node id="bypass_loaded"      address="0x0000" mask="0x00000010"/>
+      <node id="refclk_freq"        address="0x0000" mask="0x00100000"/>
+      <node id="xcvr_type"          address="0x0000" mask="0x00200000"/>
+      <node id="throughput"         address="0x0000" mask="0x00400000"/>
+      <node id="region_equivalent"  address="0x0000" mask="0x0F800000"/>
+      <node id="channel_mask"       address="0x0000" mask="0xF0000000"/>
+      <node id="core0_word_per_sec" address="0x0001" mask="0x0FFFFFFF"/>
+      <node id="core1_word_per_sec" address="0x0002" mask="0x0FFFFFFF"/>
+      <node id="core2_word_per_sec" address="0x0003" mask="0x0FFFFFFF"/>
+      <node id="core3_word_per_sec" address="0x0004" mask="0x0FFFFFFF"/>
+      <node id="bypass_address"     address="0x0005" mask="0x000003FF"/>
+      <node id="rsvd1"              address="0x0006" mask="0x0FFFFFFF"/>
+      <node id="rsvd2"              address="0x0007" mask="0x0FFFFFFF"/>
+    </node>
+  </node>
+
+  <node id="generator" address="0x100" module="file://emp_slink_generator.xml"  fwinfo="endpoint"/>
+  
+  <node id="channel" address="0x1000" module="file://emp_slink_channel.xml"  fwinfo="endpoint"/>
+  
+  <node id="bypass_ram_0" address="0x98000" description="1kword dual-port RAM72 (ported)" fwinfo="endpoint;width=1" >
+    <node id="addr" address="0x0"/>
+    <node id="data" mode="port" size="0x800" address="0x1"/>
+  </node>
+  <node id="bypass_ram_1" address="0x9a000" description="1kword dual-port RAM72 (ported)" fwinfo="endpoint;width=1">
+    <node id="addr" address="0x0"/>
+    <node id="data" mode="port" size="0x800" address="0x1"/>
+  </node>
+
+  
+</node> 
+

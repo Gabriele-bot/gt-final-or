@@ -5,14 +5,14 @@ include:
       - pipelines/workflow.yml
       - templates/xilinx/build-emp.yml
 
-.ci_templates_ref: v0.1.0
+.ci_templates_ref: v0.1.4
 
 variables:
   QUESTASIM_VERSION: "2021.1_2"
   VIVADO_VERSION: "2021.1"
   BUILD_DIR: "build"
   MTI_VCO_MODE: "64"
-  HARDWARE_TEST_IMAGE_TAG: v0-3-17
+  HARDWARE_TEST_IMAGE_TAG: v0-3-39
 
 .test_base:
   stage: test
@@ -99,12 +99,12 @@ test:serenity:
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - cd ${CI_PROJECT_DIR}/gt-final-or/scripts
-    - python3.6 RateChecker.py -p random -t prescaler
+    - python3.6 RateChecker.py -p random -t prescaler -ls 18 -c my_connections.xml
     # Trigger masks test
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/gt-final-or/scripts/Pattern_files/Finor_input_pattern_trigg_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3.6 RateChecker.py -p random -t trigger_mask
+    - python3.6 RateChecker.py -p random -t trigger_mask -ls 18 -c my_connections.xml
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual

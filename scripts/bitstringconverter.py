@@ -3,9 +3,11 @@ import numpy as np
 
 
 # Vectorizing bs.pack to use bitstring with numpy arrays
-def pack_wrapper(formatstring, data):
-    return bs.pack(formatstring, data).hex
-
+def pack_wrapper(formatstring, data, str_fromat):
+    if str_fromat == 'hex':
+        return bs.pack(formatstring, data).hex
+    elif str_fromat == 'bin':
+        return bs.pack(formatstring, data).bin
 
 pack_vec = np.vectorize(pack_wrapper)
 

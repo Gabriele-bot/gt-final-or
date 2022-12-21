@@ -1,0 +1,24 @@
+<node description="Slink Payload Generator" permission="rw" tags="test" fwinfo="endpoint;width=2">
+    <node id="csr" address="0x0" description="ctrl/stat register" >
+        <node id="ctrl" address="0x0" fwinfo="endpoint;width=1">
+          <node id="reset"              address="0x0"     mask="0x80000000"/>
+          <node id="enable"             address="0x0"     mask="0x40000000"/>
+          <node id="decrement"          address="0x0"     mask="0x20000000"/>
+          <node id="length"             address="0x0"     mask="0x0FFFF000"/>
+          <node id="pause"              address="0x0"     mask="0x00000FFF"/>
+          <node id="physics_type"       address="0x1"     mask="0x000000FF"/>
+          <node id="l1a_type"           address="0x1"     mask="0x00FFFF00"/>
+          <node id="ignore_lff"         address="0x1"     mask="0x20000000"/>
+          <node id="inject_err_trailer" address="0x1"     mask="0x40000000"/>
+          <node id="inject_err_header"  address="0x1"     mask="0x80000000"/>
+	</node>
+        <node id="stat" address="0x2" fwinfo="endpoint;width=1">
+          <node id="is_reset"         address="0x0" mask="0x80000000"/>
+          <node id="is_backpressured" address="0x0" mask="0x40000000"/>
+          <node id="is_paused"        address="0x0" mask="0x20000000"/>
+          <node id="bx_id"            address="0x0" mask="0x00000FFF"/>
+          <node id="orbit_id"         address="0x1" mask="0xFFFFFFFF"/>
+	</node>
+    </node>
+</node>
+

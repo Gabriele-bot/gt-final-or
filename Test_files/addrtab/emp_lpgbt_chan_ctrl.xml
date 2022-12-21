@@ -1,0 +1,21 @@
+<node description="LPGBT configuration registers">
+	<node id="mgt_rx_rst"                  address="0x0" mask="0x00000001" />
+	<node id="mgt_tx_rst"                  address="0x0" mask="0x00000002" />
+	<node id="uplink_bypass_interleaver"   address="0x0" mask="0x00000004" />
+	<node id="uplink_bypass_fec_encoder"   address="0x0" mask="0x00000008" />
+	<node id="uplink_bypass_scrambler"     address="0x0" mask="0x00000010" />
+	<node id="downlink_bypass_scrambler"   address="0x0" mask="0x00000020" />
+	<node id="downlink_bypass_fec_encoder" address="0x0" mask="0x00000040" />
+	<node id="downlink_bypass_interleaver" address="0x0" mask="0x00000080" />
+	<node id="txpolarity"                  address="0x0" mask="0x00000100" />
+	<node id="rxpolarity"                  address="0x0" mask="0x00000200" />
+	<node id="txcaliben"                   address="0x0" mask="0x00000400" />
+	<node id="txcalib"                     address="0x0" mask="0x0003f800" />
+	<node id="uplinkFECCorrectedClear"     address="0x0" mask="0x00040000" />
+	<node id="extra" address="0x1">
+		<node id="downlinkPhaseCalib" mask="0x000003ff"/>
+		<node id="downlinkPhaseForce" mask="0x00000400"/>
+		<node id="uplinkPhaseCalib"   mask="0x00003800"/>
+		<node id="uplinkPhaseForce"   mask="0x00004000"/>
+	</node>
+</node>
