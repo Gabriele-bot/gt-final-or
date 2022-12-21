@@ -24,6 +24,8 @@ parser.add_argument('-c', '--connections', metavar='N', type=str, default='my_co
                     help='connections xml file')
 parser.add_argument('-ls', '--lumisection', metavar='N', type=int, default=18,
                     help='Luminosity section toggle bit (within the orbit counter)')
+parser.add_argument('-S', '--simulation', action='store_true',
+                    help='Simulation flag')
 
 args = parser.parse_args()
 
@@ -344,16 +346,20 @@ if args.test == 'prescaler':
     rate_prvw_theo[np.uint32(index)] = np.uint32(
         repetitions * (2 ** lumi_bit) / prsc_fct_prvw.flatten()[np.int16(index)] * 100)
 
-    # need to send some data to make te simulation faster
-    for i in range(600):
-        ready = HWtest.check_trigger_counter_ready_flag()
-        HWtest.hw.dispatch()
+    if args.simulation:
+        # need to send some data to make te simulation faster
+        for i in range(600):
+            ready = HWtest.check_trigger_counter_ready_flag()
+            HWtest.hw.dispatch()
 
     o_ctr_temp = 0
 
     error_cnt = 0
 
-    time.sleep(46)
+    if args.simulation:
+        time.sleep(2)
+    else:
+        time.sleep(46)
 
     for i in range(0, 10):
         ready_1 = 0
@@ -473,23 +479,28 @@ elif args.test == 'trigger_mask':
     print("SLR 2 LS mark after loading = %d" % ls_trigg_mark[0])
     print("SLR 3 LS mark after loading = %d" % ls_trigg_mark[1])
 
-    # need to send some data to make te simulation faster
-    for i in range(600):
-        ready = HWtest.check_trigger_counter_ready_flag()
-        HWtest.hw.dispatch()
-
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
     for i in range(8):
         trigg_rate_theo[i] = np.uint32(trigg_rep[i] * (2 ** lumi_bit))
 
-    time.sleep(23)
+    if args.simulation:
+        # need to send some data to make te simulation faster
+        for i in range(600):
+            ready = HWtest.check_trigger_counter_ready_flag()
+            HWtest.hw.dispatch()
 
     o_ctr_temp = 0
 
     error_cnt = 0
 
-    for i in range(0, 10):
+    if args.simulation:
+        iteration = 10
+    else:
+        time.sleep(46)
+        iteration = 200
+
+    for i in range(iteration):
         ready = 0
         while ready < 1:
             time.sleep(3)
@@ -612,11 +623,6 @@ elif args.test == 'veto_mask':
     print("SLR 2 LS mark after loading = %d" % ls_veto_mark[0])
     print("SLR 3 LS mark after loading = %d" % ls_veto_mark[1])
 
-    # need to sand some data to make te simulation faster
-    for i in range(600):
-        ready = HWtest.check_trigger_counter_ready_flag()
-        HWtest.hw.dispatch()
-
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
     trigg_rate_with_veto_theo = np.float64(np.zeros(8))
@@ -624,13 +630,23 @@ elif args.test == 'veto_mask':
         trigg_rate_theo[i] = np.uint32(finor_cnts * (2 ** lumi_bit))
         trigg_rate_with_veto_theo[i] = np.uint32(finor_with_veto_cnts * (2 ** lumi_bit))
 
-    time.sleep(46)
+    if args.simulation:
+        # need to send some data to make te simulation faster
+        for i in range(600):
+            ready = HWtest.check_trigger_counter_ready_flag()
+            HWtest.hw.dispatch()
 
     o_ctr_temp = 0
 
     error_cnt = 0
 
-    for i in range(0, 10):
+    if args.simulation:
+        iteration = 10
+    else:
+        time.sleep(46)
+        iteration = 200
+
+    for i in range(iteration):
         ready = 0
         while ready < 1:
             time.sleep(10)
@@ -759,13 +775,23 @@ elif args.test == 'BXmask':
 
     rate_before_theo[np.uint32(indeces)] = np.uint32(repetitions * (2 ** lumi_bit))
 
+    if args.simulation:
+        # need to send some data to make te simulation faster
+        for i in range(600):
+            ready = HWtest.check_trigger_counter_ready_flag()
+            HWtest.hw.dispatch()
+
     o_ctr_temp = 0
 
     error_cnt = 0
 
-    time.sleep(23)
+    if args.simulation:
+        iteration = 10
+    else:
+        time.sleep(46)
+        iteration = 200
 
-    for i in range(0, 10):
+    for i in range(iteration):
         ready_1 = 0
         ready_0 = 0
         while not (ready_1 and ready_0):
