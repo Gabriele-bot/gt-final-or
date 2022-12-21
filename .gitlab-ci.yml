@@ -57,7 +57,7 @@ test:serenity:
     - python3 -m pip install --upgrade click==8.0.4 click_didyoumean==0.3.0 pytest==7.0.1 python-dateutil==2.8.2 pyyaml==5.1.2 colorama==0.4.5
     - cd ${CI_PROJECT_DIR}/scripts
     # Generate pattern files
-    - python3 PatternProducer.py -i 1000 -s Serenity3
+    - python3 PatternProducer.py -i 1100 -s Serenity3
     - cd ${CI_PROJECT_DIR}
     # Extract bitfile & address tables
     - ls
