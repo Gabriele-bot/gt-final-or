@@ -310,7 +310,7 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, board='vu13p', debug=Fa
         print(finor.sum())
         print(finor_with_veto.sum())
 
-    finor_counts = np.vstack((finor.sum(), finor_with_veto.sum()))
+    finor_counts = np.vstack((finor.sum(), finor_with_veto.sum(), veto.sum()))
 
     Available_links = get_Available_links(board)
 

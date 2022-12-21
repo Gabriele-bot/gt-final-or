@@ -5,7 +5,7 @@
   <node id="cnt_rate_after_prsc"      mode="block" address="0x3000" size="576" fwinfo="endpoint;width=12"/>
   <node id="cnt_rate_after_prsc_prvw" mode="block" address="0x4000" size="576" fwinfo="endpoint;width=12"/>
   <node id="cnt_rate_pdt"             mode="block" address="0x5000" size="576" fwinfo="endpoint;width=12"/>
-  <node id="CSR" address="0x6000" fwinfo="endpoint;width=12">
+  <node id="CSR" address="0x6000" fwinfo="endpoint;width=11">
     <node id="ctrl" address="0x0">
       <node id="new_prescale_column" mask="0x00000001"/>
       <node id="new_trigger_masks"   mask="0x00000002"/>
@@ -21,6 +21,11 @@
       <node id="lumi_sec_update_veto_mark"           address="0x03"/>
     </node>
   </node>
+  <node id="Veto_reg" address="0x6800" fwinfo="endpoint;width=11">
+    <node id="stat">
+      <node id="Veto_cnt"/>
+    </node>
+  </node>  
   <node id="trgg_mask" mode="block" address="0x7000" size="144" fwinfo="endpoint;width=12"/>
   <node id="veto_mask" mode="block" address="0x8000" size="18"  fwinfo="endpoint;width=12"/>
   <node id="algo_bx_masks" module="file://ipbus_dpram_4096x576.xml" address="0x20000" fwinfo="endpoint;width=17"/>

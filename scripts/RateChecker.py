@@ -230,6 +230,12 @@ class HWtest_class:
 
         return np.array(cnt, dtype=np.uint32)
 
+    def read_veto_cnt(self):
+        cnt = self.hw.getNode("payload.SLR2_FINOR.Veto_reg.stat.Veto_cnt").read()
+        self.hw.dispatch()
+
+        return cnt
+
 
 # def get_device(self):
 #    device = emp.Controller(self.hw)
@@ -515,7 +521,6 @@ elif args.test == 'trigger_mask':
 
         # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
         if ((o_ctr >> lumi_bit) != (o_ctr_temp >> lumi_bit)):
-            os.system('clear')
             print("Current orbit counter = %d" % o_ctr)
             # print("Current orbit counter = %d" % ttcStatus.orbitCount)
             # o_ctr_temp = ttcStatus.orbitCount
@@ -561,6 +566,7 @@ elif args.test == 'veto_mask':
     cnts = np.loadtxt('Pattern_files/metadata/Veto_test/finor_counts.txt')
     finor_cnts = cnts[0]
     finor_with_veto_cnts = cnts[1]
+    veto_cnts = cnts[2]
 
     veto_indeces = np.loadtxt('Pattern_files/metadata/Veto_test/veto_indeces.txt')
 
@@ -634,6 +640,7 @@ elif args.test == 'veto_mask':
     for i in range(8):
         trigg_rate_theo[i] = np.uint32(finor_cnts * (2 ** lumi_bit))
         trigg_rate_with_veto_theo[i] = np.uint32(finor_with_veto_cnts * (2 ** lumi_bit))
+    veto_theo = veto_cnts * (2 ** lumi_bit)
 
     if args.simulation:
         # need to send some data to make te simulation faster
@@ -663,7 +670,6 @@ elif args.test == 'veto_mask':
 
         # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
         if ((o_ctr >> lumi_bit) != (o_ctr_temp >> lumi_bit)):
-            os.system('clear')
             print("Current orbit counter = %d" % o_ctr)
             # print("Current orbit counter = %d" % ttcStatus.orbitCount)
             # o_ctr_temp = ttcStatus.orbitCount
@@ -673,6 +679,8 @@ elif args.test == 'veto_mask':
             trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
             trigg_cnt_wveto = HWtest.read_trigg_cnt(4)
             trigg_cnt_pdt_wveto = HWtest.read_trigg_cnt(5)
+
+            veto_cnt_reg = HWtest.read_veto_cnt()
 
             for trigg_index, cnt in enumerate(trigg_cnt):
                 error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
@@ -695,6 +703,12 @@ elif args.test == 'veto_mask':
 
             for trigg_index, cnt in enumerate(trigg_cnt_pdt_wveto):
                 print('Trigger %d-th with veto counter post dead time value = %d' % (trigg_index, cnt))
+
+            error_veto = np.abs(veto_theo - veto_cnt_reg)
+            if error_veto > 0:
+                error_cnt += 1
+                print('Mismatch found on veto counter, error= %d' % error_veto)
+                print('Expected value %d, Value got= %d' % (veto_theo, veto_cnt_reg))
 
     # sys.stdout.flush()
 
