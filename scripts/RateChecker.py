@@ -7,7 +7,11 @@ import os
 import numpy as np
 import random
 import uhal
+<<<<<<< HEAD
 # import emp
+=======
+#import emp
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
 import sys
 import time
 import argparse
@@ -228,20 +232,33 @@ class HWtest_class:
 
         return np.array(cnt, dtype=np.uint32)
 
+<<<<<<< HEAD
 
 # def get_device(self):
 #    device = emp.Controller(self.hw)
 #
 #    return device
+=======
+    #def get_device(self):
+    #    device = emp.Controller(self.hw)
+    #
+    #    return device
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
 
 
 HWtest = HWtest_class('Serenity3', args.connections, 'x0')
 
+<<<<<<< HEAD
 # EMPdevice = HWtest.get_device()
 # ttcNode   = EMPdevice.getTTC()
 # ttcNode.forceBCmd(0x24) #Send test enable command
 
 HWtest.set_TimeOutPeriod(5000)
+=======
+#EMPdevice = HWtest.get_device()
+#ttcNode   = EMPdevice.getTTC()
+#ttcNode.forceBCmd(0x24) #Send test enable command
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
 
 # Set the l1a-latency delay
 l1_latency_delay = int(100)
@@ -351,6 +368,7 @@ if args.test == 'prescaler':
 
     o_ctr_temp = 0
 
+<<<<<<< HEAD
     error_cnt = 0
 
     time.sleep(23)
@@ -369,9 +387,24 @@ if args.test == 'prescaler':
         #cnt_pdt = HWtest.read_cnt_arr(3)
 
         # ttcStatus = ttcNode.readStatus()
+=======
+    for i in range(0, 200):
+        #ttcStatus = ttcNode.readStatus()
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
         o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
         HWtest.hw.dispatch()
+<<<<<<< HEAD
         print("Current orbit counter = %d" % np.array(o_ctr))
+=======
+        time.sleep(1)
+        #if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        if ((o_ctr - o_ctr_temp) > (2 ** 18)):
+            os.system('clear')
+            print("Current orbit counter = %d" % o_ctr)
+            #print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            #o_ctr_temp = ttcStatus.orbitCount
+            o_ctr_temp = o_ctr
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
 
         # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
         if ((o_ctr >> lumi_bit) != (o_ctr_temp >> lumi_bit)):
@@ -487,7 +520,22 @@ elif args.test == 'trigger_mask':
 
     o_ctr_temp = 0
 
+<<<<<<< HEAD
     error_cnt = 0
+=======
+    for i in range(0, 200):
+	    #ttcStatus = ttcNode.readStatus()
+        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+        HWtest.hw.dispatch()
+        time.sleep(1)
+        #if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        if ((o_ctr - o_ctr_temp) > (2 ** 18)):
+            os.system('clear')
+            print("Current orbit counter = %d" % o_ctr)
+            #print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            #o_ctr_temp = ttcStatus.orbitCount
+            o_ctr_temp = o_ctr
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
 
     for i in range(0, 10):
         ready = 0
@@ -628,6 +676,7 @@ elif args.test == 'veto_mask':
 
     o_ctr_temp = 0
 
+<<<<<<< HEAD
     error_cnt = 0
 
     for i in range(0, 10):
@@ -636,16 +685,31 @@ elif args.test == 'veto_mask':
             time.sleep(3)
             ready = HWtest.check_trigger_counter_ready_flag()
         # ttcStatus = ttcNode.readStatus()
+=======
+    for i in range(0, 200):
+        #ttcStatus = ttcNode.readStatus()
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
         o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
         HWtest.hw.dispatch()
+<<<<<<< HEAD
         print("Current orbit counter = %d" % np.array(o_ctr))
 
         # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
         if ((o_ctr >> lumi_bit) != (o_ctr_temp >> lumi_bit)):
+=======
+        time.sleep(1)
+        #if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        if ((o_ctr - o_ctr_temp) > (2 ** 18)):
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
             os.system('clear')
             print("Current orbit counter = %d" % o_ctr)
+<<<<<<< HEAD
             # print("Current orbit counter = %d" % ttcStatus.orbitCount)
             # o_ctr_temp = ttcStatus.orbitCount
+=======
+            #print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            #o_ctr_temp = ttcStatus.orbitCount
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
             o_ctr_temp = o_ctr
 
             trigg_cnt = HWtest.read_trigg_cnt(0)
@@ -761,6 +825,7 @@ elif args.test == 'BXmask':
 
     o_ctr_temp = 0
 
+<<<<<<< HEAD
     error_cnt = 0
 
     time.sleep(23)
@@ -774,8 +839,13 @@ elif args.test == 'BXmask':
             ready_1, ready_0 = HWtest.check_counter_ready_flags()
 
         # ttcStatus = ttcNode.readStatus()
+=======
+    for i in range(0, 200):
+        #ttcStatus = ttcNode.readStatus()
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
         o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
         HWtest.hw.dispatch()
+<<<<<<< HEAD
         print("Current orbit counter = %d" % np.array(o_ctr))
 
         # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
@@ -784,6 +854,15 @@ elif args.test == 'BXmask':
             print("Current orbit counter = %d" % o_ctr)
             # print("Current orbit counter = %d" % ttcStatus.orbitCount)
             # o_ctr_temp = ttcStatus.orbitCount
+=======
+        time.sleep(1)
+        #if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
+        if ((o_ctr - o_ctr_temp) > (2 ** 18)):
+            os.system('clear')
+            print("Current orbit counter = %d" % o_ctr)
+            #print("Current orbit counter = %d" % ttcStatus.orbitCount)
+            #o_ctr_temp = ttcStatus.orbitCount
+>>>>>>> branch 'CI_test' of https://gitlab.cern.ch/cms-cactus/phase2/firmware/gt-final-or.git
             o_ctr_temp = o_ctr
 
             cnt_before = HWtest.read_cnt_arr(0)
