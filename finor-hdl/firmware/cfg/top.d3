@@ -8,8 +8,9 @@ src --vhdl2008 -c emp-fwk:components/links/slink emp_slink_types.vhd
 src --vhdl2008 math_pkg.vhd
 src --vhdl2008 P2GT_finor_pkg.vhd
 
-src --vhdl2008 decoders/ipbus_decode_m_module.vhd
 src --vhdl2008 decoders/ipbus_decode_emp_payload.vhd
+src --vhdl2008 decoders/ipbus_decode_SLR_FinOR_unit.vhd
+src --vhdl2008 decoders/ipbus_decode_m_module.vhd
 src --vhdl2008 decoders/ipbus_decode_ipbus_dpram_4096x576.vhd
 src --vhdl2008 decoders/ipbus_decode_Output_SLR.vhd
 
@@ -34,6 +35,7 @@ src --vhdl2008 SLR_FinOR_unit.vhd
 src --vhdl2008 Output_SLR.vhd
 
 addrtab -c gt-final-or:finor-hdl emp_payload.xml
+addrtab -c gt-final-or:finor-hdl SLR_FinOR_unit.xml
 addrtab -c gt-final-or:finor-hdl m_module.xml
 addrtab -c gt-final-or:finor-hdl ipbus_dpram_4096x576.xml
 addrtab -c gt-final-or:finor-hdl Output_SLR.xml
