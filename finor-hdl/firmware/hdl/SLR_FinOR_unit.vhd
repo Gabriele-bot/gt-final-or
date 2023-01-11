@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library xpm;
+use xpm.vcomponents.all;
+
 use work.ipbus.all;
 use work.ipbus_reg_types.all;
 use work.emp_data_types.all;
