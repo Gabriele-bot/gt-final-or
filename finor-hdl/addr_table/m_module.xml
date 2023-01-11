@@ -1,4 +1,4 @@
-<node id="monitoring_module" fwinfo="endpoint;width=28">
+<node id="monitoring_module" fwinfo="endpoint;width=18">
   <node id="prescale_factor"          mode="block" address="0x0000" size="576" fwinfo="endpoint;width=12"/>
   <node id="prescale_factor_prvw"     mode="block" address="0x1000" size="576" fwinfo="endpoint;width=12"/>
   <node id="cnt_rate_before_prsc"     mode="block" address="0x2000" size="576" fwinfo="endpoint;width=12"/>

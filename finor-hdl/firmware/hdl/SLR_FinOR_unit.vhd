@@ -3,16 +3,14 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.ipbus.all;
+use work.ipbus_reg_types.all;
 use work.emp_data_types.all;
 use work.emp_project_decl.all;
+use work.ipbus_decode_SLR_FinOR_unit.all;
 
 use work.emp_device_decl.all;
 use work.emp_ttc_decl.all;
 
---use work.FinOR_pkg.all;
-
---use work.P2GT_monitor_pkg.all;
---use work.pre_scaler_pkg.all;
 use work.P2GT_finor_pkg.all;
 
 use work.math_pkg.all;
@@ -25,17 +23,17 @@ entity SLR_FinOR_unit is
         MAX_DELAY             : natural := MAX_DELAY_PDT
     );
     port(
-        clk     : in  std_logic;
-        rst     : in  std_logic;
-        ipb_in  : in  ipb_wbus;
-        ipb_out : out ipb_rbus;
+        clk       : in  std_logic;
+        rst       : in  std_logic;
+        ipb_in    : in  ipb_wbus;
+        ipb_out   : out ipb_rbus;
         --====================================================================--
-        clk360  : in std_logic;
-        rst360  : in std_logic;
-        lhc_clk : in std_logic;
-        lhc_rst : in std_logic;
-        ctrs    : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
-        d       : in  ldata(NR_LINKS - 1 downto 0);  -- data in
+        clk360    : in std_logic;
+        rst360    : in std_logic;
+        lhc_clk   : in std_logic;
+        lhc_rst   : in std_logic;
+        ctrs      : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
+        d         : in ldata(NR_LINKS - 1 downto 0);  -- data in
         valid_out         : out std_logic;
         trigger_o         : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_preview_o : out std_logic_vector(N_TRIGG-1 downto 0);
@@ -49,6 +47,10 @@ end entity SLR_FinOR_unit;
 architecture RTL of SLR_FinOR_unit is
 
     constant LATENCY_360 : integer := 9  + 1;
+    
+    -- fabric signals        
+    signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
+    signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
 
     signal valid_shreg : std_logic_vector(LATENCY_360 downto 0);
     signal d_valids    : std_logic_vector(NR_LINKS - 1 downto 0);
@@ -69,9 +71,24 @@ architecture RTL of SLR_FinOR_unit is
     signal ctrs_int               : ttc_stuff_t;
     signal ctrs_del               : ttc_stuff_array(1 downto 0);
 
-    signal link_mask              : std_logic_vector(NR_LINKS -1 downto 0) := (others => '1');
+    signal linkmask_reg : ipb_reg_v(0 downto 0) := (others => (others => '1'));
+
+    signal link_mask    : std_logic_vector(NR_LINKS - 1 downto 0);
 
 begin
+    
+    fabric_i: entity work.ipbus_fabric_sel
+        generic map(
+            NSLV      => N_SLAVES,
+            SEL_WIDTH => IPBUS_SEL_WIDTH
+        )
+        port map(
+            ipb_in          => ipb_in,
+            ipb_out         => ipb_out,
+            sel             => ipbus_sel_SLR_FinOR_unit(ipb_in.ipb_addr),
+            ipb_to_slaves   => ipb_to_slaves,
+            ipb_from_slaves => ipb_from_slaves
+        );
 
     valid_shreg(0) <= d_res.valid;
 
@@ -89,6 +106,37 @@ begin
             d_reg <= d;
         end if;
     end process;
+
+    link_mask_regs : entity work.ipbus_ctrlreg_v
+        generic map(
+            N_CTRL     => 1,
+            N_STAT     => 0
+        )
+        port map(
+            clk       => clk,
+            reset     => rst,
+            ipbus_in  => ipb_to_slaves(N_SLV_LINK_MASK),
+            ipbus_out => ipb_from_slaves(N_SLV_LINK_MASK),
+            d         => open,
+            q         => linkmask_reg,
+            qmask     => open,
+            stb       => open
+        );
+
+    xpm_cdc_linkmask : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => INPUT_LINKS
+        )
+        port map (
+            dest_out => link_mask,
+            dest_clk => lhc_clk,
+            src_clk  => clk,
+            src_in   => linkmask_reg(0)(INPUT_LINKS - 1 downto 0)
+        );
 
     Right_merge : entity work.Link_merger
         generic map(
@@ -183,8 +231,8 @@ begin
         port map(
             clk                     => clk,
             rst                     => rst,
-            ipb_in                  => ipb_in,
-            ipb_out                 => ipb_out,
+            ipb_in                  => ipb_to_slaves(N_SLV_MONITORING_MODULE),
+            ipb_out                 => ipb_from_slaves(N_SLV_MONITORING_MODULE),
             lhc_clk                 => lhc_clk,
             lhc_rst                 => lhc_rst,
             ctrs                    => ctrs_int,

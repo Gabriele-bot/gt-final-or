@@ -1,0 +1,4 @@
+<node id="SLR_FinOR_unit" fwinfo="endpoint;width=19">
+  <node id="monitoring_module" module="file://m_module.xml"   address="0x00000" fwinfo="endpoint;width=18"/>
+  <node id="link_mask"          address="0x40000" fwinfo="endpoint;width=0"/>
+</node>
