@@ -207,7 +207,7 @@ class HWtest_class:
         return np.array(cnt, dtype=np.uint32)
 
     def check_trigger_counter_ready_flag(self):
-        ready = self.hw.getNode("payload.SLR2_FINOR.monitoring_module.CSR.stat.ready").read()
+        ready = self.hw.getNode("payload.SLR2_FINOR.CSR.stat.ready").read()
         self.hw.dispatch()
 
         return ready
