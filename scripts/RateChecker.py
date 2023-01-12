@@ -162,6 +162,11 @@ class HWtest_class:
         self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[0][17])
         self.hw.dispatch()
 
+    def set_link_mask(self, link_mask_h, link_mask_l):
+        self.hw.getNode("payload.SLR3_monitor.link_mask").write(link_mask_h)
+        self.hw.getNode("payload.SLR2_monitor.link_mask").write(link_mask_l)
+        self.hw.dispatch()
+
     def load_latancy_delay(self, latency):
         self.hw.getNode("payload.SLR3_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
         self.hw.getNode("payload.SLR2_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
@@ -254,6 +259,7 @@ HWtest.set_TimeOutPeriod(5000)
 # Set the l1a-latency delay
 l1_latency_delay = int(100)
 HWtest.load_latancy_delay(l1_latency_delay)
+HWtest.set_link_mask(0x00ffffff, 0x00ffffff)
 time.sleep(2)
 
 # -------------------------------------------------------------------------------------

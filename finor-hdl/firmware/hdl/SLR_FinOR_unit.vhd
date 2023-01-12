@@ -132,13 +132,13 @@ begin
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
             SRC_INPUT_REG  => 1,
-            WIDTH          => INPUT_LINKS
+            WIDTH          => NR_LINKS
         )
         port map (
             dest_out => link_mask,
-            dest_clk => lhc_clk,
+            dest_clk => clk360,
             src_clk  => clk,
-            src_in   => linkmask_reg(0)(INPUT_LINKS - 1 downto 0)
+            src_in   => linkmask_reg(0)(NR_LINKS - 1 downto 0)
         );
 
     Right_merge : entity work.Link_merger
