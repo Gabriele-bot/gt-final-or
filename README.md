@@ -32,7 +32,7 @@ ipbb add git https://gitlab.cern.ch/HPTD/tclink.git -r fda0bcf
 ipbb add git https://gitlab.cern.ch/ttc/legacy_ttc.git -b v2.1
 ipbb add git https://:@gitlab.cern.ch:8443/cms-cactus/phase2/firmware/gt-final-or.git
 ipbb add git https://gitlab.cern.ch/dth_p1-v2/slinkrocket_ips.git -b v03.09
-ipbb add git https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/dth_p1-v2/slinkrocket.git -b v03.10
+ipbb add git https://:@gitlab.cern.ch:8443/dth_p1-v2/slinkrocket.git -b v03.10
 ```
 
 # Build instructions
@@ -121,9 +121,9 @@ cd scripts
 ```
 Launch one of the test available with the command
 ```bash
-python RateChecker.py -t prescaler -p random -ls 3 -c my_connections -S
-python RateChecker.py -t trigger_mask -p random -ls 3 -c my_connections -S
-python RateChecker.py -t veto_mask -p random -ls 3 -c my_connections -S
-python RateChecker.py -t BXmask -p random -ls 3 -c my_connections -S
+python RateChecker.py -t prescaler -p random -ls 3 -c my_connections.xml -S
+python RateChecker.py -t trigger_mask -p random -ls 3 -c my_connections.xml -S
+python RateChecker.py -t veto_mask -p random -ls 3 -c my_connections.xml -S
+python RateChecker.py -t BXmask -p random -ls 3 -c my_connections.xml -S
 ```
 
