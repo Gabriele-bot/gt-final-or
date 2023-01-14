@@ -50,7 +50,7 @@ end entity SLR_FinOR_unit;
 architecture RTL of SLR_FinOR_unit is
 
     constant LATENCY_360 : integer := 9  + 1;
-    
+
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
@@ -74,12 +74,15 @@ architecture RTL of SLR_FinOR_unit is
     signal ctrs_int               : ttc_stuff_t;
     signal ctrs_del               : ttc_stuff_array(1 downto 0);
 
-    signal linkmask_reg : ipb_reg_v(0 downto 0) := (others => (others => '1'));
+    signal ctrl_reg : ipb_reg_v(1 downto 0) := (others => (others => '1'));
+    signal stat_reg : ipb_reg_v(0 downto 0);
 
-    signal link_mask    : std_logic_vector(NR_LINKS - 1 downto 0);
+    signal link_mask       : std_logic_vector(NR_LINKS - 1 downto 0);
+    signal rst_align_error : std_logic;
+    signal align_error     : std_logic;
 
 begin
-    
+
     fabric_i: entity work.ipbus_fabric_sel
         generic map(
             NSLV      => N_SLAVES,
@@ -112,16 +115,16 @@ begin
 
     link_mask_regs : entity work.ipbus_ctrlreg_v
         generic map(
-            N_CTRL     => 1,
-            N_STAT     => 0
+            N_CTRL     => 2,
+            N_STAT     => 1
         )
         port map(
             clk       => clk,
             reset     => rst,
             ipbus_in  => ipb_to_slaves(N_SLV_LINK_MASK),
             ipbus_out => ipb_from_slaves(N_SLV_LINK_MASK),
-            d         => open,
-            q         => linkmask_reg,
+            d         => stat_reg,
+            q         => ctrl_reg,
             qmask     => open,
             stb       => open
         );
@@ -138,8 +141,38 @@ begin
             dest_out => link_mask,
             dest_clk => clk360,
             src_clk  => clk,
-            src_in   => linkmask_reg(0)(NR_LINKS - 1 downto 0)
+            src_in   => ctrl_reg(0)(NR_LINKS - 1 downto 0)
         );
+
+    xpm_cdc_rst_error : xpm_cdc_single
+        generic map (
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1
+        )
+        port map (
+            dest_out => rst_align_error,
+            dest_clk => clk360,
+            src_clk  => clk,
+            src_in   => ctrl_reg(1)(0)
+        );
+
+    xpm_cdc_error_flag : xpm_cdc_single
+        generic map (
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1
+        )
+        port map (
+            dest_out => stat_reg(0)(0),
+            dest_clk => clk,
+            src_clk  => clk360,
+            src_in   => align_error
+        );
+
+    stat_reg(0)(31 downto 1) <= (others => '0');
 
     Right_merge : entity work.Link_merger
         generic map(
@@ -195,6 +228,8 @@ begin
             lhc_clk      => lhc_clk,
             lhc_rst      => lhc_rst,
             lane_data_in => d_res,
+            rst_err      => rst_align_error,
+            align_err_o  => align_error,
             demux_data_o => algos_in
         );
 

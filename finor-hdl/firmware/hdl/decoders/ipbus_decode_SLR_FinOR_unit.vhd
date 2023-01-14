@@ -17,9 +17,9 @@ package ipbus_decode_SLR_FinOR_unit is
   subtype ipbus_sel_t is std_logic_vector(IPBUS_SEL_WIDTH - 1 downto 0);
   function ipbus_sel_SLR_FinOR_unit(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
 
--- START automatically generated VHDL (Wed Jan 11 12:35:49 2023)
+-- START automatically generated VHDL (Fri Jan 13 12:29:19 2023)
   constant N_SLV_MONITORING_MODULE: integer := 0;
-  constant N_SLV_LINK_MASK: integer := 1;
+  constant N_SLV_CSR: integer := 1;
   constant N_SLAVES: integer := 2;
 -- END automatically generated VHDL
 
@@ -32,11 +32,11 @@ package body ipbus_decode_SLR_FinOR_unit is
     variable sel: ipbus_sel_t;
   begin
 
--- START automatically generated VHDL (Wed Jan 11 12:35:49 2023)
+-- START automatically generated VHDL (Fri Jan 13 12:29:19 2023)
     if    std_match(addr, "-------------0------------------") then
       sel := ipbus_sel_t(to_unsigned(N_SLV_MONITORING_MODULE, IPBUS_SEL_WIDTH)); -- monitoring_module / base 0x00000000 / mask 0x00040000
     elsif std_match(addr, "-------------1------------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_LINK_MASK, IPBUS_SEL_WIDTH)); -- link_mask / base 0x00040000 / mask 0x00040000
+      sel := ipbus_sel_t(to_unsigned(N_SLV_CSR, IPBUS_SEL_WIDTH)); -- CSR / base 0x00040000 / mask 0x00040000
 -- END automatically generated VHDL
 
     else

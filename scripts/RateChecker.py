@@ -162,9 +162,23 @@ class HWtest_class:
         self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[0][17])
         self.hw.dispatch()
 
-    def set_link_mask(self, link_mask_h, link_mask_l):
-        self.hw.getNode("payload.SLR3_monitor.link_mask").write(link_mask_h)
-        self.hw.getNode("payload.SLR2_monitor.link_mask").write(link_mask_l)
+    def set_link_mask(self, link_mask_1, link_mask_0):
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.link_mask").write(link_mask_1)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.link_mask").write(link_mask_0)
+        self.hw.dispatch()
+
+    def check_alignement_error(self):
+        err_1 = self.hw.getNode("payload.SLR3_monitor.CSR.stat.align_err").read()
+        err_0 = self.hw.getNode("payload.SLR2_monitor.CSR.stat.align_err").read()
+        self.hw.dispatch()
+
+        return err_1, err_0
+
+    def reset_alignement_error(self):
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.rst_align_err").write(1)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.rst_align_err").write(1)
+        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.rst_align_err").write(0)
+        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.rst_align_err").write(0)
         self.hw.dispatch()
 
     def load_latancy_delay(self, latency):
