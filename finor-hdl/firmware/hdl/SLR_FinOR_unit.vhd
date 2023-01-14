@@ -121,8 +121,8 @@ begin
         port map(
             clk       => clk,
             reset     => rst,
-            ipbus_in  => ipb_to_slaves(N_SLV_LINK_MASK),
-            ipbus_out => ipb_from_slaves(N_SLV_LINK_MASK),
+            ipbus_in  => ipb_to_slaves(N_SLV_CSR),
+            ipbus_out => ipb_from_slaves(N_SLV_CSR),
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
