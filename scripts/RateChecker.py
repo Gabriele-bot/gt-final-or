@@ -62,6 +62,20 @@ class HWtest_class:
             raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
 
+    def read_prsc_in_RAM(self, sel):
+        prsc_arr = np.zeros((2, 1152), dtype=np.uint32)
+        if sel == 0:
+            prsc_arr[1] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.prescale_factor").readBlock(prsc_arr[1])
+            prsc_arr[0] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.prescale_factor").readBlock(prsc_arr[0])
+        elif sel == 1:
+            prsc_arr[1] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.prescale_factor_prvw").readBlock(prsc_arr[1])
+            prsc_arr[0] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.prescale_factor_prvw").readBlock(prsc_arr[0])
+        else:
+            raise Exception("Selector is not in [0,1]")
+        self.hw.dispatch()
+
+        return prsc_arr
+
     def send_new_prescale_column_flag(self):
         self.hw.getNode("payload.SLR3_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
         self.hw.getNode("payload.SLR2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
@@ -113,15 +127,31 @@ class HWtest_class:
 
         return np.uint32(mark_2), np.uint32(mark_3)
 
-    def load_mask_arr(self, mask_arr):
+    def load_trigger_mask_arr(self, mask_arr):
         self.hw.getNode("payload.SLR3_monitor.monitoring_module.trgg_mask").writeBlock(mask_arr[1])
         self.hw.getNode("payload.SLR2_monitor.monitoring_module.trgg_mask").writeBlock(mask_arr[0])
         self.hw.dispatch()
+
+    def read_trigger_mask_arr(self):
+        mask_arr = np.zeros((2, 144), dtype=np.uint32)
+        mask_arr[1] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.trgg_mask").readBlock()
+        mask_arr[0] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.trgg_mask").readBlock()
+        self.hw.dispatch()
+
+        return mask_arr
 
     def load_veto_mask(self, veto_mask):
         self.hw.getNode("payload.SLR3_monitor.monitoring_module.veto_mask").writeBlock(veto_mask[1])
         self.hw.getNode("payload.SLR2_monitor.monitoring_module.veto_mask").writeBlock(veto_mask[0])
         self.hw.dispatch()
+
+    def read_veto_mask(self):
+        veto_mask = np.zeros((2, 18), dtype=np.uint32)
+        veto_mask[1] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.trgg_mask").readBlock()
+        veto_mask[0] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.trgg_mask").readBlock()
+        self.hw.dispatch()
+
+        return veto_mask
 
     def load_BXmask_arr(self, BXmask_arr):
         self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[1][0])
@@ -162,10 +192,59 @@ class HWtest_class:
         self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[0][17])
         self.hw.dispatch()
 
+    def read_BXmask_arr(self):
+        BXmask_arr = np.zeros((2, 18, 4096), dtype=np.uint32)
+        BXmask_arr[1][0] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[1][0])
+        BXmask_arr[1][1] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[1][1])
+        BXmask_arr[1][2] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[1][2])
+        BXmask_arr[1][3] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_96_127").writeBlock(BXmask_arr[1][3])
+        BXmask_arr[1][4] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[1][4])
+        BXmask_arr[1][5] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[1][5])
+        BXmask_arr[1][6] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[1][6])
+        BXmask_arr[1][7] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[1][7])
+        BXmask_arr[1][8] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[1][8])
+        BXmask_arr[1][9] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[1][9])
+        BXmask_arr[1][10] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[1][10])
+        BXmask_arr[1][11] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[1][11])
+        BXmask_arr[1][12] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[1][12])
+        BXmask_arr[1][13] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[1][13])
+        BXmask_arr[1][14] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[1][14])
+        BXmask_arr[1][15] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[1][15])
+        BXmask_arr[1][16] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[1][16])
+        BXmask_arr[1][17] = self.hw.getNode("payload.SLR3_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[1][17])
+        BXmask_arr[0][0] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[0][0])
+        BXmask_arr[0][1] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[0][1])
+        BXmask_arr[0][2] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[0][2])
+        BXmask_arr[0][3] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_96_127").writeBlock(BXmask_arr[0][3])
+        BXmask_arr[0][4] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[0][4])
+        BXmask_arr[0][5] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[0][5])
+        BXmask_arr[0][6] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[0][6])
+        BXmask_arr[0][7] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[0][7])
+        BXmask_arr[0][8] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[0][8])
+        BXmask_arr[0][9] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[0][9])
+        BXmask_arr[0][10] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[0][10])
+        BXmask_arr[0][11] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[0][11])
+        BXmask_arr[0][12] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[0][12])
+        BXmask_arr[0][13] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[0][13])
+        BXmask_arr[0][14] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[0][14])
+        BXmask_arr[0][15] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[0][15])
+        BXmask_arr[0][16] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[0][16])
+        BXmask_arr[0][17] = self.hw.getNode("payload.SLR2_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[0][17])
+        self.hw.dispatch()
+
+        return BXmask_arr
+
     def set_link_mask(self, link_mask_1, link_mask_0):
         self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.link_mask").write(link_mask_1)
         self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.link_mask").write(link_mask_0)
         self.hw.dispatch()
+
+    def get_link_mask(self):
+        link_mask_1 = self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.link_mask").read()
+        link_mask_0 = self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.link_mask").read()
+        self.hw.dispatch()
+
+        return link_mask_0, link_mask_1
 
     def check_alignement_error(self):
         err_1 = self.hw.getNode("payload.SLR3_monitor.CSR.stat.align_err").read()
@@ -181,17 +260,19 @@ class HWtest_class:
         self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.rst_align_err").write(0)
         self.hw.dispatch()
 
-    def load_latancy_delay(self, latency):
+    def set_latancy_delay(self, latency):
         self.hw.getNode("payload.SLR3_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
         self.hw.getNode("payload.SLR2_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
         self.hw.dispatch()
 
-    def read_latancy_delay(self):
-        latency_3 = self.hw.getNode("payload.SLR3_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
-        latency_2 = self.hw.getNode("payload.SLR2_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
+    def get_latancy_delay(self):
+        latency_1 = self.hw.getNode("payload.SLR3_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
+        latency_0 = self.hw.getNode("payload.SLR2_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
         self.hw.dispatch()
-
-        return latency_2, latency_3
+        if latency_0 != latency_1:
+            raise Exception("Latency delays do not match in the two SLR")
+        else:
+            return latency_0
 
     def check_counter_ready_flags(self):
         ready_1 = self.hw.getNode("payload.SLR3_monitor.monitoring_module.CSR.stat.ready").read()
@@ -272,9 +353,84 @@ HWtest.set_TimeOutPeriod(5000)
 
 # Set the l1a-latency delay
 l1_latency_delay = int(100)
-HWtest.load_latancy_delay(l1_latency_delay)
+HWtest.set_latancy_delay(l1_latency_delay)
 HWtest.set_link_mask(0x00ffffff, 0x00ffffff)
 time.sleep(2)
+
+# -------------------------------------------------------------------------------------
+# -----------------------------------UNIT TESTs----------------------------------------
+# -------------------------------------------------------------------------------------
+if args.test == 'utest':
+    l1_latency_delay = int(np.random.randint(0, 255, 1, dtype=np.uint32))
+    HWtest.set_latancy_delay(l1_latency_delay)
+
+    link_mask = np.uint32(np.random.randint(0, 2 ** 24 - 1, 2))
+    HWtest.set_link_mask(link_mask[0], link_mask[1])
+
+    trigger_mask = np.uint32(np.random.randint(0, 2 ** 32 - 1, 2*144))
+    trigger_mask = np.reshape(trigger_mask, (2, 144))
+    HWtest.load_trigger_mask_arr(trigger_mask)
+
+    veto_mask = np.uint32(np.random.randint(0, 2 ** 32 - 1, 2*18))
+    veto_mask = np.reshape(veto_mask, (2, 18))
+    HWtest.load_veto_mask(veto_mask)
+
+    # Set the bxmasks
+    bxmask = np.uint32(np.random.randint(0, 2 ** 32 - 1, 2*18*4096))
+    bxmask = np.reshape(bxmask, (2, 18, 4096))
+    HWtest.load_BXmask_arr(bxmask)
+
+    prsc_fct = np.uint32(np.random.randint(100, 2 ** 24 - 101, 2*576))
+    prsc_fct = np.reshape(prsc_fct, (2, 576))
+    HWtest.load_prsc_in_RAM(prsc_fct, 0)
+
+    prsc_fct_prvw = np.uint32(np.random.randint(100, 2 ** 24 - 101, 2*576))
+    prsc_fct_prvw = np.reshape(prsc_fct_prvw, (2, 576))
+    HWtest.load_prsc_in_RAM(prsc_fct_prvw, 0)
+
+    l1_latency_delay_r = HWtest.get_latancy_delay()
+    link_mask_r = HWtest.get_link_mask()
+    trigger_mask_r = HWtest.read_trigger_mask_arr()
+    veto_mask_r = HWtest.read_veto_mask()
+    bxmask_r = HWtest.read_BXmask_arr()
+    prsc_fct_r = HWtest.read_prsc_in_RAM(0)
+    prsc_fct_prvw_r = HWtest.read_prsc_in_RAM(1)
+
+    error = 0
+
+    if l1_latency_delay_r != l1_latency_delay:
+        print('Found mismatch in the latency delay value set and read')
+        error = 1
+
+    if link_mask_r != link_mask:
+        print('Found mismatch in the link masks values set and read')
+        error = 1
+
+    if trigger_mask_r != trigger_mask:
+        print('Found mismatch in the trigger masks values set and read')
+        error = 1
+
+    if veto_mask_r != veto_mask:
+        print('Found mismatch in the veto mask value set and read')
+        error = 1
+
+    if bxmask_r != bxmask:
+        print('Found mismatch in the BXmask values set and read')
+        error = 1
+
+    if prsc_fct_r != prsc_fct:
+        print('Found mismatch in the prescale factors values set and read')
+        error = 1
+
+    if prsc_fct_prvw_r != prsc_fct_prvw:
+        print('Found mismatch in the prescale factors preview values set and read')
+        error = 1
+
+    if error != 0:
+        raise Exception("Set/read test failed")
+    else:
+        print("Set/read test passed")
+
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------PRE-SCALER TEST-----------------------------------
@@ -294,12 +450,16 @@ if args.test == 'prescaler':
     bxmask[0] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
     bxmask[1] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
 
-    # HWtest.load_BXmask_arr(bxmask)
+    if args.simulation:
+        print('BXmask is not loaded, relay on the fact that they are initialized to 1 in sim')
+    else:
+        print('Currently loading BXmask values')
+        HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
     trigger_mask = np.ones((2, 144), dtype=np.uint32) * 2 ** 32 - 1
 
-    HWtest.load_mask_arr(trigger_mask)
+    HWtest.load_trigger_mask_arr(trigger_mask)
 
     ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
     print("SLR 2 LS mark before loading = %d" % ls_trigg_mark[0])
@@ -498,7 +658,7 @@ elif args.test == 'trigger_mask':
     print("SLR 2 LS mark after loading = %d" % ls_prescale_mark[0])
     print("SLR 3 LS mark after loading = %d" % ls_prescale_mark[1])
 
-    HWtest.load_mask_arr(trigger_mask)
+    HWtest.load_trigger_mask_arr(trigger_mask)
 
     ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
     print("SLR 2 LS mark before loading = %d" % ls_trigg_mark[0])
@@ -616,7 +776,7 @@ elif args.test == 'veto_mask':
     print("SLR 2 LS mark after loading = %d" % ls_prescale_mark[0])
     print("SLR 3 LS mark after loading = %d" % ls_prescale_mark[1])
 
-    HWtest.load_mask_arr(trigger_mask)
+    HWtest.load_trigger_mask_arr(trigger_mask)
 
     ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
     print("SLR 2 LS mark before loading = %d" % ls_trigg_mark[0])
@@ -788,7 +948,7 @@ elif args.test == 'BXmask':
     print("SLR 2 LS mark after loading = %d" % ls_prescale_mark[0])
     print("SLR 3 LS mark after loading = %d" % ls_prescale_mark[1])
 
-    HWtest.load_mask_arr(trigger_mask)
+    HWtest.load_trigger_mask_arr(trigger_mask)
 
     ls_trigg_mark = HWtest.read_lumi_sec_trigger_mask_mark()
     print("SLR 2 LS mark before loading = %d" % ls_trigg_mark[0])
