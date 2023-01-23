@@ -86,6 +86,11 @@ test:serenity:
     - cd ${CI_PROJECT_DIR}/scripts/
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} info
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} reset internal
+    # IPbus regirsters test
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_prescaler_test.txt
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
+    - python3.6 RateChecker.py -p random -t IPbustest -c my_connections.xml -ls 18
     # Pre-scaler test
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_prescaler_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
