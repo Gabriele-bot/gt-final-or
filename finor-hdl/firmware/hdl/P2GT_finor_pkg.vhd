@@ -13,15 +13,15 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package P2GT_finor_pkg is
-    
-    
+
+
     constant DEBUG                  : boolean := FALSE;
     -- =======================================================================================================
     -- GT Final-OR definitions
     -- =======================================================================================================
     constant N_BOARD                : integer := 12;
     constant N_SLR                  : integer := 4;
-    constant INPUT_LINKS            : integer := 24;
+    constant INPUT_LINKS_SLR        : integer := 24;
     constant MON_REG                : integer := 6;
     constant N_TRIGG                : integer := 8;
     constant BEGIN_LUMI_SEC_BIT     : integer := 18;
@@ -30,10 +30,20 @@ package P2GT_finor_pkg is
     constant SLR_CROSSING_LATENCY   : integer := 9;
     constant FINOR_LATENCY          : integer := 3;
     constant DESER_OUT_REG          : boolean := FALSE;
+
+    type ChannelSystemMap is array (natural range <>) of natural; -- Maps the input links to DEMUX Channels
+    constant SLRn0_channel : ChannelSystemMap(INPUT_LINKS_SLR - 1 downto 0)  := (127,126,125,124,123,122,121,120,119,118,117,116,11,10,9,8,7,6,5,4,3,2,1,0);
+    constant SLRn1_channel : ChannelSystemMap(INPUT_LINKS_SLR - 1 downto 0)  := (79,78,77,76,75,74,73,72,71,70,69,68,59,58,57,56,55,54,53,52,51,50,49,48);
+    constant SLRn0_quad   : ChannelSystemMap(INPUT_LINKS_SLR/4 - 1 downto 0) := (31,30,29,2,1,0   );
+    constant SLRn1_quad   : ChannelSystemMap(INPUT_LINKS_SLR/4 - 1 downto 0) := (19,18,17,14,13,12);
     
-    type data_arr is array (INPUT_LINKS - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
+    constant OUTPUT_channel : natural := 24;
+    constant OUTPUT_quad    : natural := 6;
+
+
+    type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
     type mask_arr is array (N_TRIGG     - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
-    
+
 
     -- ================= PRE-SCALERS =========================================================================
     -- Definitions for prescalers (P2GT FinalOR)
