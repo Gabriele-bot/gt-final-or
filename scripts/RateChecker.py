@@ -20,10 +20,12 @@ parser.add_argument('-t', '--test', metavar='N', type=str, default='prescaler',
                          '\ntrigger_mask --> start a trigger mask test '
                          '\nveto_mask    --> start a veto mask test '
                          '\nBXmask       --> start a BXmask test ')
-parser.add_argument('-c', '--connections', metavar='N', type=str, default='my_connection.xml',
+parser.add_argument('-c', '--connections', metavar='N', type=str, default='my_connections.xml',
                     help='connections xml file')
 parser.add_argument('-ls', '--lumisection', metavar='N', type=int, default=18,
                     help='Luminosity section toggle bit (within the orbit counter)')
+parser.add_argument('-S', '--simulation', action='store_true',
+                    help='Simulation flag')
 
 args = parser.parse_args()
 
@@ -51,147 +53,200 @@ class HWtest_class:
     # ==============================READ_WRITE IPbus regs ==============================
     def load_prsc_in_RAM(self, prsc_arr, sel):
         if sel == 0:
-            self.hw.getNode("payload.SLR3_monitor.prescale_factor").writeBlock(prsc_arr[1])
-            self.hw.getNode("payload.SLR2_monitor.prescale_factor").writeBlock(prsc_arr[0])
+            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr[1])
+            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr[0])
         elif sel == 1:
-            self.hw.getNode("payload.SLR3_monitor.prescale_factor_prvw").writeBlock(prsc_arr[1])
-            self.hw.getNode("payload.SLR2_monitor.prescale_factor_prvw").writeBlock(prsc_arr[0])
+            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr[1])
+            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr[0])
         else:
             raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
 
     def send_new_prescale_column_flag(self):
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(1)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(1)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
         time.sleep(0.01)
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_prescale_column").write(0)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
         self.hw.dispatch()
 
     def send_new_trigger_mask_flag(self):
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_trigger_masks").write(1)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_trigger_masks").write(1)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
         time.sleep(0.01)
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_trigger_masks").write(0)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
         self.hw.dispatch()
 
     def send_new_veto_mask_flag(self):
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_veto_mask").write(1)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_veto_mask").write(1)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
         time.sleep(0.01)
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.new_veto_mask").write(0)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
         self.hw.dispatch()
 
     def read_lumi_sec_prescale_mark(self):
-        mark_3 = self.hw.getNode("payload.SLR3_monitor.CSR.stat.lumi_sec_update_prescaler_mark").read()
-        mark_2 = self.hw.getNode("payload.SLR2_monitor.CSR.stat.lumi_sec_update_prescaler_mark").read()
+        mark_3 = self.hw.getNode(
+            "payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
+        mark_2 = self.hw.getNode(
+            "payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
         self.hw.dispatch()
 
         return np.uint32(mark_2), np.uint32(mark_3)
 
     def read_lumi_sec_trigger_mask_mark(self):
-        mark_3 = self.hw.getNode("payload.SLR3_monitor.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-        mark_2 = self.hw.getNode("payload.SLR2_monitor.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
+        mark_3 = self.hw.getNode(
+            "payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
+        mark_2 = self.hw.getNode(
+            "payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
         self.hw.dispatch()
 
         return np.uint32(mark_2), np.uint32(mark_3)
 
     def read_lumi_sec_veto_mask_mark(self):
-        mark_3 = self.hw.getNode("payload.SLR3_monitor.CSR.stat.lumi_sec_update_veto_mark").read()
-        mark_2 = self.hw.getNode("payload.SLR2_monitor.CSR.stat.lumi_sec_update_veto_mark").read()
+        mark_3 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
+        mark_2 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
         self.hw.dispatch()
 
         return np.uint32(mark_2), np.uint32(mark_3)
 
     def load_mask_arr(self, mask_arr):
-        self.hw.getNode("payload.SLR3_monitor.trgg_mask").writeBlock(mask_arr[1])
-        self.hw.getNode("payload.SLR2_monitor.trgg_mask").writeBlock(mask_arr[0])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.trgg_mask").writeBlock(mask_arr[1])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.trgg_mask").writeBlock(mask_arr[0])
         self.hw.dispatch()
 
     def load_veto_mask(self, veto_mask):
-        self.hw.getNode("payload.SLR3_monitor.veto_mask").writeBlock(veto_mask[1])
-        self.hw.getNode("payload.SLR2_monitor.veto_mask").writeBlock(veto_mask[0])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.veto_mask").writeBlock(veto_mask[1])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.veto_mask").writeBlock(veto_mask[0])
         self.hw.dispatch()
 
     def load_BXmask_arr(self, BXmask_arr):
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[1][0])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[1][1])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[1][2])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_96_127").writeBlock(BXmask_arr[1][3])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[1][4])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[1][5])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[1][6])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[1][7])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[1][8])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[1][9])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[1][10])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[1][11])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[1][12])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[1][13])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[1][14])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[1][15])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[1][16])
-        self.hw.getNode("payload.SLR3_monitor.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[1][17])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[0][0])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[0][1])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[0][2])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_96_127").writeBlock(BXmask_arr[0][3])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[0][4])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[0][5])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[0][6])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[0][7])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[0][8])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[0][9])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[0][10])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[0][11])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[0][12])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[0][13])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[0][14])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[0][15])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[0][16])
-        self.hw.getNode("payload.SLR2_monitor.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[0][17])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[1][0])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[1][1])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[1][2])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_96_127").writeBlock(
+            BXmask_arr[1][3])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_128_159").writeBlock(
+            BXmask_arr[1][4])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_160_191").writeBlock(
+            BXmask_arr[1][5])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_192_223").writeBlock(
+            BXmask_arr[1][6])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_224_255").writeBlock(
+            BXmask_arr[1][7])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_256_287").writeBlock(
+            BXmask_arr[1][8])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_288_319").writeBlock(
+            BXmask_arr[1][9])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_320_351").writeBlock(
+            BXmask_arr[1][10])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_352_383").writeBlock(
+            BXmask_arr[1][11])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_384_415").writeBlock(
+            BXmask_arr[1][12])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_416_447").writeBlock(
+            BXmask_arr[1][13])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_448_479").writeBlock(
+            BXmask_arr[1][14])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_480_511").writeBlock(
+            BXmask_arr[1][15])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_512_543").writeBlock(
+            BXmask_arr[1][16])
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(
+            BXmask_arr[1][17])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[0][0])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[0][1])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[0][2])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_96_127").writeBlock(
+            BXmask_arr[0][3])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_128_159").writeBlock(
+            BXmask_arr[0][4])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_160_191").writeBlock(
+            BXmask_arr[0][5])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_192_223").writeBlock(
+            BXmask_arr[0][6])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_224_255").writeBlock(
+            BXmask_arr[0][7])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_256_287").writeBlock(
+            BXmask_arr[0][8])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_288_319").writeBlock(
+            BXmask_arr[0][9])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_320_351").writeBlock(
+            BXmask_arr[0][10])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_352_383").writeBlock(
+            BXmask_arr[0][11])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_384_415").writeBlock(
+            BXmask_arr[0][12])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_416_447").writeBlock(
+            BXmask_arr[0][13])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_448_479").writeBlock(
+            BXmask_arr[0][14])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_480_511").writeBlock(
+            BXmask_arr[0][15])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_512_543").writeBlock(
+            BXmask_arr[0][16])
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(
+            BXmask_arr[0][17])
+        self.hw.dispatch()
+
+    def set_link_mask(self, link_mask_1, link_mask_0):
+        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.link_mask").write(link_mask_1)
+        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.link_mask").write(link_mask_0)
+        self.hw.dispatch()
+
+    def check_alignement_error(self):
+        err_1 = self.hw.getNode("payload.SLRn1_monitor.CSR.stat.align_err").read()
+        err_0 = self.hw.getNode("payload.SLRn0_monitor.CSR.stat.align_err").read()
+        self.hw.dispatch()
+
+        return err_1, err_0
+
+    def reset_alignement_error(self):
+        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.rst_align_err").write(1)
+        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.rst_align_err").write(1)
+        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.rst_align_err").write(0)
+        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.rst_align_err").write(0)
         self.hw.dispatch()
 
     def load_latancy_delay(self, latency):
-        self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.l1_latency_delay").write(latency)
-        self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.l1_latency_delay").write(latency)
+        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
+        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
         self.hw.dispatch()
 
     def read_latancy_delay(self):
-        latency_3 = self.hw.getNode("payload.SLR3_monitor.CSR.ctrl.l1_latency_delay").read()
-        latency_2 = self.hw.getNode("payload.SLR2_monitor.CSR.ctrl.l1_latency_delay").read()
+        latency_3 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
+        latency_2 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
         self.hw.dispatch()
 
         return latency_2, latency_3
 
     def check_counter_ready_flags(self):
-        ready_1 = self.hw.getNode("payload.SLR3_monitor.CSR.stat.ready").read()
-        ready_0 = self.hw.getNode("payload.SLR2_monitor.CSR.stat.ready").read()
+        ready_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.ready").read()
+        ready_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.ready").read()
         self.hw.dispatch()
 
         return ready_1, ready_0
 
     def read_cnt_arr(self, sel):
         if sel == 0:
-            cnt_1 = self.hw.getNode("payload.SLR3_monitor.cnt_rate_before_prsc").readBlock(576)
-            cnt_0 = self.hw.getNode("payload.SLR2_monitor.cnt_rate_before_prsc").readBlock(576)
+            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_before_prsc").readBlock(576)
+            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_before_prsc").readBlock(576)
         elif sel == 1:
-            cnt_1 = self.hw.getNode("payload.SLR3_monitor.cnt_rate_after_prsc").readBlock(576)
-            cnt_0 = self.hw.getNode("payload.SLR2_monitor.cnt_rate_after_prsc").readBlock(576)
+            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_after_prsc").readBlock(576)
+            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_after_prsc").readBlock(576)
         elif sel == 2:
-            cnt_1 = self.hw.getNode("payload.SLR3_monitor.cnt_rate_after_prsc_prvw").readBlock(576)
-            cnt_0 = self.hw.getNode("payload.SLR2_monitor.cnt_rate_after_prsc_prvw").readBlock(576)
+            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_after_prsc_prvw").readBlock(576)
+            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_after_prsc_prvw").readBlock(576)
         elif sel == 3:
-            cnt_1 = self.hw.getNode("payload.SLR3_monitor.cnt_rate_pdt").readBlock(576)
-            cnt_0 = self.hw.getNode("payload.SLR2_monitor.cnt_rate_pdt").readBlock(576)
+            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_pdt").readBlock(576)
+            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_pdt").readBlock(576)
         else:
             raise Exception("Selector is not in [0,1,2,3]")
         self.hw.dispatch()
@@ -200,33 +255,39 @@ class HWtest_class:
         return np.array(cnt, dtype=np.uint32)
 
     def check_trigger_counter_ready_flag(self):
-        ready = self.hw.getNode("payload.SLR2_FINOR.CSR.stat.ready").read()
+        ready = self.hw.getNode("payload.SLR_FINOR.CSR.stat.ready").read()
         self.hw.dispatch()
 
         return ready
 
     def read_trigg_cnt(self, sel):
         if sel == 0:
-            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor").readBlock(8)
+            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor").readBlock(8)
         elif sel == 1:
-            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor_pdt").readBlock(8)
+            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_pdt").readBlock(8)
         elif sel == 2:
-            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor_preview").readBlock(8)
+            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_preview").readBlock(8)
         elif sel == 3:
-            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor_preview_pdt").readBlock(8)
+            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_preview_pdt").readBlock(8)
         elif sel == 4:
-            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor_with_veto").readBlock(8)
+            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_with_veto").readBlock(8)
         elif sel == 5:
-            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor_with_veto_pdt").readBlock(8)
+            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_with_veto_pdt").readBlock(8)
         elif sel == 6:
-            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor_preview_with_veto").readBlock(8)
+            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_preview_with_veto").readBlock(8)
         elif sel == 7:
-            cnt = self.hw.getNode("payload.SLR2_FINOR.cnt_rate_finor_preview_with_veto_pdt").readBlock(8)
+            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_preview_with_veto_pdt").readBlock(8)
         else:
             raise Exception("Selector is not in [0,1,2,3,4,5,6,7]")
         self.hw.dispatch()
 
         return np.array(cnt, dtype=np.uint32)
+
+    def read_veto_cnt(self):
+        cnt = self.hw.getNode("payload.SLR_FINOR.Veto_reg.stat.Veto_cnt").read()
+        self.hw.dispatch()
+
+        return cnt
 
 
 # def get_device(self):
@@ -246,6 +307,7 @@ HWtest.set_TimeOutPeriod(5000)
 # Set the l1a-latency delay
 l1_latency_delay = int(100)
 HWtest.load_latancy_delay(l1_latency_delay)
+HWtest.set_link_mask(0x00ffffff, 0x00ffffff)
 time.sleep(2)
 
 # -------------------------------------------------------------------------------------
@@ -344,74 +406,83 @@ if args.test == 'prescaler':
     rate_prvw_theo[np.uint32(index)] = np.uint32(
         repetitions * (2 ** lumi_bit) / prsc_fct_prvw.flatten()[np.int16(index)] * 100)
 
-    # need to send some data to make te simulation faster
-    for i in range(600):
-        ready = HWtest.check_trigger_counter_ready_flag()
+    # Wait for 2 lumi section, 1 to load the masks and 1 to let the counters actually count
+    o_ctr_0 = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+    o_ctr = o_ctr_0
+    HWtest.hw.dispatch()
+    while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
         HWtest.hw.dispatch()
 
     o_ctr_temp = 0
 
     error_cnt = 0
 
-    time.sleep(23)
+    if args.simulation:
+        iteration = 2
+    else:
+        iteration = 5
 
-    for i in range(0, 10):
+    for i in range(iteration):
+        while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
+            o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+            HWtest.hw.dispatch()
+        o_ctr_temp = o_ctr
+
         ready_1 = 0
         ready_0 = 0
         while not (ready_1 and ready_0):
             print("Counters are not ready to be read")
-            time.sleep(3)
+            time.sleep(5)
             ready_1, ready_0 = HWtest.check_counter_ready_flags()
 
         cnt_before = HWtest.read_cnt_arr(0)
         cnt_after = HWtest.read_cnt_arr(1)
         cnt_prvw = HWtest.read_cnt_arr(2)
-        #cnt_pdt = HWtest.read_cnt_arr(3)
+        # cnt_pdt = HWtest.read_cnt_arr(3)
 
         # ttcStatus = ttcNode.readStatus()
-        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-        HWtest.hw.dispatch()
-        print("Current orbit counter = %d" % np.array(o_ctr))
+        print("Current orbit counter = %d" % o_ctr)
 
         # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        if ((o_ctr >> lumi_bit) != (o_ctr_temp >> lumi_bit)):
-            # os.system('clear')
-            print("Current orbit counter = %d" % o_ctr)
-            # print("Current orbit counter = %d" % ttcStatus.orbitCount)
-            # o_ctr_temp = ttcStatus.orbitCount
-            o_ctr_temp = o_ctr
+        # os.system('clear')
+        # print("Current orbit counter = %d" % ttcStatus.orbitCount)
+        # o_ctr_temp = ttcStatus.orbitCount
+        o_ctr_temp = o_ctr
 
-            rate_before_exp = cnt_before
-            rate_after_exp = cnt_after
-            rate_prvw_exp = cnt_prvw
+        rate_before_exp = cnt_before
+        rate_after_exp = cnt_after
+        rate_prvw_exp = cnt_prvw
 
-            error_before = np.abs(rate_before_exp - rate_before_theo)
-            error_after = np.abs(rate_after_exp - rate_after_theo)
-            error_preview = np.abs(rate_prvw_exp - rate_prvw_theo)
+        error_before = np.abs(rate_before_exp - rate_before_theo)
+        error_after = np.abs(rate_after_exp - rate_after_theo)
+        error_preview = np.abs(rate_prvw_exp - rate_prvw_theo)
 
-            for current_i, error in enumerate(error_before):
-                if error > 1:
-                    error_cnt += 1
-                    print('Mismatch found on rate BEFORE pescaler %d, error= %d' % (current_i, error))
-                    print('Expected value = %d, Value got= %d' % (
+        for current_i, error in enumerate(error_before):
+            if error > 1:
+                error_cnt += 1
+                print('Mismatch found on rate BEFORE pescaler %d, error= %d' % (current_i, error))
+                print('Expected value = %d, Value got= %d' % (
                     rate_before_theo[current_i], rate_before_exp[current_i]))
-            for current_i, error in enumerate(error_after):
-                if error > 1:
-                    error_cnt += 1
-                    print('Mismatch found on rate AFTER pescaler %d, error= %d' % (current_i, error))
-                    print('Expected value %d, Value got= %d' % (rate_after_theo[current_i], rate_after_exp[current_i]))
-                    print('Pre-scale value set = %d' % prsc_fct.flatten()[current_i])
-            for current_i, error in enumerate(error_preview):
-                if error > 1:
-                    error_cnt += 1
-                    print('Mismatch found on rate AFTER pescaler PREVIEW %d, error= %d' % (current_i, error))
-                    print('Expected value %d, Value got= %d' % (rate_prvw_theo[current_i], rate_prvw_exp[current_i]))
-                    print('Pre-scale value set = %d' % prsc_fct_prvw.flatten()[current_i])
+        for current_i, error in enumerate(error_after):
+            if error > 1:
+                error_cnt += 1
+                print('Mismatch found on rate AFTER pescaler %d, error= %d' % (current_i, error))
+                print('Expected value %d, Value got= %d' % (rate_after_theo[current_i], rate_after_exp[current_i]))
+                print('Pre-scale value set = %d' % prsc_fct.flatten()[current_i])
+        for current_i, error in enumerate(error_preview):
+            if error > 1:
+                error_cnt += 1
+                print('Mismatch found on rate AFTER pescaler PREVIEW %d, error= %d' % (current_i, error))
+                print('Expected value %d, Value got= %d' % (rate_prvw_theo[current_i], rate_prvw_exp[current_i]))
+                print('Pre-scale value set = %d' % prsc_fct_prvw.flatten()[current_i])
 
     # sys.stdout.flush()
 
     if error_cnt != 0:
         raise Exception("Error found! Check the counters!")
+    else:
+        print("No mismatch found!")
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------TRIGG MASK TEST-----------------------------------
@@ -473,68 +544,73 @@ elif args.test == 'trigger_mask':
     print("SLR 2 LS mark after loading = %d" % ls_trigg_mark[0])
     print("SLR 3 LS mark after loading = %d" % ls_trigg_mark[1])
 
-    # need to send some data to make te simulation faster
-    for i in range(600):
-        ready = HWtest.check_trigger_counter_ready_flag()
-        HWtest.hw.dispatch()
-
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
     for i in range(8):
         trigg_rate_theo[i] = np.uint32(trigg_rep[i] * (2 ** lumi_bit))
 
-    time.sleep(23)
+        # Wait for 2 lumi section, 1 to load the masks and 1 to let the counters actually count
+    o_ctr_0 = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+    o_ctr = o_ctr_0
+    HWtest.hw.dispatch()
+    while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+        HWtest.hw.dispatch()
 
     o_ctr_temp = 0
 
     error_cnt = 0
 
-    for i in range(0, 10):
+    if args.simulation:
+        iteration = 2
+    else:
+        iteration = 5
+
+    for i in range(iteration):
+        while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
+            o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+            HWtest.hw.dispatch()
+        o_ctr_temp = o_ctr
+
         ready = 0
         while ready < 1:
-            time.sleep(3)
+            time.sleep(5)
             ready = HWtest.check_trigger_counter_ready_flag()
         # ttcStatus = ttcNode.readStatus()
-        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-        HWtest.hw.dispatch()
-        print("Current orbit counter = %d" % np.array(o_ctr))
+        print("Current orbit counter = %d" % o_ctr)
 
         # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        if ((o_ctr >> lumi_bit) != (o_ctr_temp >> lumi_bit)):
-            os.system('clear')
-            print("Current orbit counter = %d" % o_ctr)
-            # print("Current orbit counter = %d" % ttcStatus.orbitCount)
-            # o_ctr_temp = ttcStatus.orbitCount
-            o_ctr_temp = o_ctr
+        # print("Current orbit counter = %d" % ttcStatus.orbitCount)
+        # o_ctr_temp = ttcStatus.orbitCount
 
-            trigg_cnt = HWtest.read_trigg_cnt(0)
-            trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
-            trigg_cnt_wveto = HWtest.read_trigg_cnt(4)
-            trigg_cnt_pdt_wveto = HWtest.read_trigg_cnt(5)
+        trigg_cnt = HWtest.read_trigg_cnt(0)
+        trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
+        trigg_cnt_wveto = HWtest.read_trigg_cnt(4)
+        trigg_cnt_pdt_wveto = HWtest.read_trigg_cnt(5)
 
-            for trigg_index, cnt in enumerate(trigg_cnt):
-                error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
-                print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
-                if error_trgg > 1:
-                    error_cnt += 1
-                    print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
-                    print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
+        for trigg_index, cnt in enumerate(trigg_cnt):
+            error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
+            print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
+            if error_trgg > 0:
+                error_cnt += 1
+                print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
+                print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
 
-            for trigg_index, cnt in enumerate(trigg_cnt_pdt):
-                print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
+        for trigg_index, cnt in enumerate(trigg_cnt_pdt):
+            print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
 
-            for trigg_index, cnt in enumerate(trigg_cnt_wveto):
-                print('Trigger with veto %d-th counter value = %d' % (trigg_index, cnt))
+        for trigg_index, cnt in enumerate(trigg_cnt_wveto):
+            print('Trigger with veto %d-th counter value = %d' % (trigg_index, cnt))
 
-            for trigg_index, cnt in enumerate(trigg_cnt_pdt_wveto):
-                print('Trigger %d-th with veto counter post dead time value = %d' % (trigg_index, cnt))
-
-            time.sleep(4)
+        for trigg_index, cnt in enumerate(trigg_cnt_pdt_wveto):
+            print('Trigger %d-th with veto counter post dead time value = %d' % (trigg_index, cnt))
 
     # sys.stdout.flush()
 
     if error_cnt != 0:
         raise Exception("Error found! Check the counters!")
+    else:
+        print("No mismatch found!")
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------VETO TEST-----------------------------------------
@@ -545,6 +621,7 @@ elif args.test == 'veto_mask':
     cnts = np.loadtxt('Pattern_files/metadata/Veto_test/finor_counts.txt')
     finor_cnts = cnts[0]
     finor_with_veto_cnts = cnts[1]
+    veto_cnts = cnts[2]
 
     veto_indeces = np.loadtxt('Pattern_files/metadata/Veto_test/veto_indeces.txt')
 
@@ -612,73 +689,90 @@ elif args.test == 'veto_mask':
     print("SLR 2 LS mark after loading = %d" % ls_veto_mark[0])
     print("SLR 3 LS mark after loading = %d" % ls_veto_mark[1])
 
-    # need to sand some data to make te simulation faster
-    for i in range(600):
-        ready = HWtest.check_trigger_counter_ready_flag()
-        HWtest.hw.dispatch()
-
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
     trigg_rate_with_veto_theo = np.float64(np.zeros(8))
     for i in range(8):
         trigg_rate_theo[i] = np.uint32(finor_cnts * (2 ** lumi_bit))
         trigg_rate_with_veto_theo[i] = np.uint32(finor_with_veto_cnts * (2 ** lumi_bit))
+    veto_theo = veto_cnts * (2 ** lumi_bit)
 
-    time.sleep(23)
+    # Wait for 2 lumi section, 1 to load the masks and 1 to let the counters actually count
+    o_ctr_0 = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+    o_ctr = o_ctr_0
+    HWtest.hw.dispatch()
+    while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+        HWtest.hw.dispatch()
 
     o_ctr_temp = 0
 
     error_cnt = 0
 
-    for i in range(0, 10):
+    if args.simulation:
+        iteration = 2
+    else:
+        iteration = 5
+
+    for i in range(iteration):
+        while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
+            o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+            HWtest.hw.dispatch()
+        o_ctr_temp = o_ctr
+
         ready = 0
         while ready < 1:
-            time.sleep(3)
+            time.sleep(5)
             ready = HWtest.check_trigger_counter_ready_flag()
         # ttcStatus = ttcNode.readStatus()
-        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-        HWtest.hw.dispatch()
-        print("Current orbit counter = %d" % np.array(o_ctr))
 
         # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        if ((o_ctr >> lumi_bit) != (o_ctr_temp >> lumi_bit)):
-            os.system('clear')
-            print("Current orbit counter = %d" % o_ctr)
-            # print("Current orbit counter = %d" % ttcStatus.orbitCount)
-            # o_ctr_temp = ttcStatus.orbitCount
-            o_ctr_temp = o_ctr
+        print("Current orbit counter = %d" % o_ctr)
+        # print("Current orbit counter = %d" % ttcStatus.orbitCount)
+        # o_ctr_temp = ttcStatus.orbitCount
 
-            trigg_cnt = HWtest.read_trigg_cnt(0)
-            trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
-            trigg_cnt_wveto = HWtest.read_trigg_cnt(4)
-            trigg_cnt_pdt_wveto = HWtest.read_trigg_cnt(5)
+        trigg_cnt = HWtest.read_trigg_cnt(0)
+        trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
+        trigg_cnt_wveto = HWtest.read_trigg_cnt(4)
+        trigg_cnt_pdt_wveto = HWtest.read_trigg_cnt(5)
 
-            for trigg_index, cnt in enumerate(trigg_cnt):
-                error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
-                print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
-                if error_trgg > 1:
-                    error_cnt += 1
-                    print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
-                    print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
+        veto_cnt_reg = HWtest.read_veto_cnt()
 
-            for trigg_index, cnt in enumerate(trigg_cnt_pdt):
-                print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
+        for trigg_index, cnt in enumerate(trigg_cnt):
+            error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
+            print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
+            if error_trgg > 0:
+                error_cnt += 1
+                print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
+                print('Expected value %d, Value got= %d' % (trigg_rate_theo[trigg_index], trigg_cnt[trigg_index]))
 
-            for trigg_index, cnt in enumerate(trigg_cnt_wveto):
-                error_trgg = np.abs(trigg_rate_with_veto_theo[trigg_index] - cnt)
-                print('Trigger with veto %d-th counter value = %d' % (trigg_index, cnt))
-                if error_trgg > 1:
-                    error_cnt += 1
-                    print('Mismatch found on %d-th trigger rate with veto, error= %d' % (trigg_index, error_trgg))
-                    print('Expected value %d, Value got= %d' % (trigg_rate_with_veto_theo[trigg_index], cnt))
+        for trigg_index, cnt in enumerate(trigg_cnt_pdt):
+            print('Trigger %d-th counter post dead time value = %d' % (trigg_index, cnt))
 
-            for trigg_index, cnt in enumerate(trigg_cnt_pdt_wveto):
-                print('Trigger %d-th with veto counter post dead time value = %d' % (trigg_index, cnt))
+        for trigg_index, cnt in enumerate(trigg_cnt_wveto):
+            error_trgg = np.abs(trigg_rate_with_veto_theo[trigg_index] - cnt)
+            print('Trigger with veto %d-th counter value = %d' % (trigg_index, cnt))
+            if error_trgg > 0:
+                error_cnt += 1
+                print('Mismatch found on %d-th trigger rate with veto, error= %d' % (trigg_index, error_trgg))
+                print('Expected value %d, Value got= %d' % (trigg_rate_with_veto_theo[trigg_index], cnt))
+
+        for trigg_index, cnt in enumerate(trigg_cnt_pdt_wveto):
+            print('Trigger %d-th with veto counter post dead time value = %d' % (trigg_index, cnt))
+
+        error_veto = np.abs(veto_theo - veto_cnt_reg)
+        print('Veto counter value = %d' % (veto_cnt_reg))
+        if error_veto > 0:
+            error_cnt += 1
+            print('Mismatch found on veto counter, error= %d' % error_veto)
+            print('Expected value %d, Value got= %d' % (veto_theo, veto_cnt_reg))
 
     # sys.stdout.flush()
 
     if error_cnt != 0:
         raise Exception("Error found! Check the counters!")
+    else:
+        print("No mismatch found!")
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------BX MASK TEST--------------------------------------
@@ -759,48 +853,61 @@ elif args.test == 'BXmask':
 
     rate_before_theo[np.uint32(indeces)] = np.uint32(repetitions * (2 ** lumi_bit))
 
+    # Wait for 2 lumi section, 1 to load the masks and 1 to let the counters actually count
+    o_ctr_0 = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+    o_ctr = o_ctr_0
+    HWtest.hw.dispatch()
+    while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+        HWtest.hw.dispatch()
+
     o_ctr_temp = 0
 
     error_cnt = 0
 
-    time.sleep(23)
+    if args.simulation:
+        iteration = 2
+    else:
+        iteration = 5
 
-    for i in range(0, 10):
+    for i in range(iteration):
+        while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
+            o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+            HWtest.hw.dispatch()
+        o_ctr_temp = o_ctr
+
         ready_1 = 0
         ready_0 = 0
         while not (ready_1 and ready_0):
             print("Counters are not ready to be read")
-            time.sleep(3)
+            time.sleep(5)
             ready_1, ready_0 = HWtest.check_counter_ready_flags()
 
         # ttcStatus = ttcNode.readStatus()
-        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-        HWtest.hw.dispatch()
-        print("Current orbit counter = %d" % np.array(o_ctr))
+        print("Current orbit counter = %d" % o_ctr)
 
         # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        if ((o_ctr >> lumi_bit) != (o_ctr_temp >> lumi_bit)):
-            # os.system('clear')
-            print("Current orbit counter = %d" % o_ctr)
-            # print("Current orbit counter = %d" % ttcStatus.orbitCount)
-            # o_ctr_temp = ttcStatus.orbitCount
-            o_ctr_temp = o_ctr
+        # os.system('clear')
+        # print("Current orbit counter = %d" % ttcStatus.orbitCount)
+        # o_ctr_temp = ttcStatus.orbitCount
 
-            cnt_before = HWtest.read_cnt_arr(0)
+        cnt_before = HWtest.read_cnt_arr(0)
 
-            rate_before_exp = cnt_before
+        rate_before_exp = cnt_before
 
-            error_before = np.abs(rate_before_exp - rate_before_theo)
+        error_before = np.abs(rate_before_exp - rate_before_theo)
 
-            for current_i, error in enumerate(error_before):
-                if error > 1:
-                    error_cnt += 1
-                    print('Mismatch found on rate before pescaler %d, error= %d' % (current_i, error))
-                    print('Expected value %d, Value got= %d' % (rate_before_theo[current_i], rate_before_exp[current_i]))
+        for current_i, error in enumerate(error_before):
+            if error > 0:
+                error_cnt += 1
+                print('Mismatch found on rate before pescaler %d, error= %d' % (current_i, error))
+                print('Expected value %d, Value got= %d' % (rate_before_theo[current_i], rate_before_exp[current_i]))
     # sys.stdout.flush()
 
     if error_cnt != 0:
         raise Exception("Error found! Check the counters!")
+    else:
+        print("No mismatch found!")
 
 else:
     print('No suitable test was selected!')

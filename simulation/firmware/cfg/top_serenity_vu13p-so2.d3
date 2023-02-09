@@ -1,64 +1,87 @@
-include -c emp-fwk:boards/serenity/dc_vu13p device.dep
-include -c ipbus-firmware:components/ipbus_core
-include -c ipbus-firmware:components/ipbus_slaves ipbus_ctrlreg_v.dep
 src -c emp-fwk:components/framework emp_framework_decl.vhd
-src -c emp-fwk:components/datapath emp_data_types.vhd
+#src -c emp-fwk:boards/sim emp_device_decl.vhd
+
 src -c emp-fwk:boards/serenity/dc_vu13p emp_device_decl_a2577_sym.vhd
 
+src -c emp-fwk:components/framework emp_device_types.vhd
 
 src -c emp-fwk:components/ttc emp_ttc_decl.vhd
 
-src -c emp-fwk:components/framework emp_device_types.vhd
+src -c emp-fwk:components/datapath emp_data_types.vhd
 
 src -c emp-fwk:components/links/slink emp_slink_types.vhd
 
 src -c gt-final-or:finor-hdl top_serenity_vu13p-so2_decl.vhd
 
+
+
+
+
+#include -c emp-fwk:boards/sim sim_udp.dep
+#include -c emp-fwk:components/payload emp_simple_payload.dep
+
+include -c ipbus-firmware:components/ipbus_core
+
+include -c emp-fwk:components/ttc ttc_sim.dep
+
+include -c ipbus-firmware:components/ipbus_util ipbus_ctrl.dep
+include -c ipbus-firmware:components/modelsim_fli/transport_udp
+
+
 src -c emp-fwk:boards/sim ipbus_decode_sim.vhd
 
-include -c ipbus-firmware:components/modelsim_fli/transport_udp
 src -c ipbus-firmware:components/ipbus_util ../sim_hdl/clock_sim.vhd
 
-src -c ipbus-firmware:components/ipbus_core ipbus_fabric_sel.vhd ipbus_dc_fabric_sel.vhd ipbus_dc_node.vhd
-src -c ipbus-firmware:components/ipbus_slaves ipbus_reg_types.vhd
+src -c emp-fwk:boards/sim sim_udp_infra.vhd
 
 addrtab -c emp-fwk:boards/sim sim.xml
-addrtab -c emp-fwk:components/datapath emp_datapath.xml
-src -c emp-fwk:boards/sim sim_udp_infra.vhd
-#src -c emp-fwk:boards/sim sim_udp_top.vhd 
+
+addrtab -c emp-fwk:components/links/slink emp_slink.xml
+addrtab -c emp-fwk:components/links/slink emp_slink_quad.xml
+addrtab -c emp-fwk:components/links/slink emp_slink_channel.xml
+addrtab -c emp-fwk:components/links/slink emp_slink_generator.xml
+
+@device_generation = "UltraScalePlus"
+@device_name = "xcvu13p"
+@device_package = "-flga2577"
+@device_speed = "-2-e"
+#@boardname = "x0"
 
 
 
-include -c ipbus-firmware:components/modelsim_fli/transport_udp
-include -c ipbus-firmware:components/ipbus_util ipbus_ctrl.dep
 
 include -c emp-fwk:components/info
 include -c emp-fwk:components/ctrl
-include -c emp-fwk:components/ttc ttc_sim.dep
-#include -c emp-fwk:components/datapath datapath_sim.dep
+
+include -c emp-fwk:components/links/be_mgt/interface interface_sim.dep
+include -c emp-fwk:components/links/fe_mgt/interface interface_sim.dep
+
+include -c emp-fwk:components/datapath datapath_sim.dep
 # Commented out, waiting for someone to write an mgt sim block
-#include -c emp-fwk:components/links/be_mgt/interface interface_sim.dep
-#include -c emp-fwk:components/links/fe_mgt/interface interface_sim.dep
-
-include -c emp-fwk:components/testbench
-
-src tb_decl.vhd
+include -c emp-fwk:components/links/slink slink_sim.dep
 
 
-src emp_datapath_sim.vhd
 
+
+
+src -c emp-fwk:components/datapath emp_data_types.vhd
 src -c emp-fwk:components/framework emp_device_types.vhd 
-#src emp_device_decl.vhd 
-#src -c emp-fwk:components/framework emp_framework_decl.vhd 
 
-
-src -c ipbus-firmware:components/ipbus_core ipbus_package.vhd
+src -c emp-fwk:components/framework emp_framework_decl.vhd
 
 include -c gt-final-or:finor-hdl top.d3
-src -c gt-final-or:finor-hdl payload_vu13p.vhd
+src --vhdl2008  payload_vu13p.vhd
+
+src --vhdl2008 -c emp-fwk:boards/sim sim_udp_top.vhd 
+
+
+setup glbl.tcl
 
 
 
-src payload_tb.vhd
 
-include top.d3
+
+
+
+
+
