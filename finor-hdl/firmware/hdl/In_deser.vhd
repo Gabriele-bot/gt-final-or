@@ -94,8 +94,8 @@ begin
     else generate
         demux_data_o <= data_deserialized;
     end generate;
-    
-    
+
+
     metadata <= lane_data_in.start_of_orbit & lane_data_in.start & lane_data_in.last & lane_data_in.valid;
 
     align_check_p : process(clk360)
@@ -108,28 +108,25 @@ begin
             else
                 case frame_cntr is
                     when 0 =>
-                        if metadata = "-0-1" or metadata = "--11" then
+                        if lane_data_in.valid = '1' and  (lane_data_in.start = '0' or lane_data_in.last = '1') then -- valid and no start or valid and last
                             align_err <=  '1';
-                        else
-                            align_err <=  '0';
+                        end if;
+                        if data_in_valid_del_arr(1 downto 0) = "01" and  lane_data_in.start_of_orbit = '0' then -- valid and no start of orbit when valid rising edge
+                            align_err <=  '1';
                         end if;
                     when 8 =>
-                        if metadata = "--01" or metadata = "-1-1" then
+                        if lane_data_in.valid = '1' and  (lane_data_in.start = '1' or lane_data_in.last = '0') then -- valid and no last or valid and start
                             align_err <=  '1';
-                        else
-                            align_err <=  '0';
                         end if;
                     when others =>
-                        if metadata = "--11" or metadata = "-1-1" then
+                        if lane_data_in.valid = '1' and  (lane_data_in.start = '1' or lane_data_in.last = '1') then --valid and start or valid and last
                             align_err <=  '1';
-                        else
-                            align_err <=  '0';
                         end if;
                 end case;
             end if;
         end if;
     end process align_check_p;
-    
+
     align_err_o <= align_err;
 
 end architecture rtl;
