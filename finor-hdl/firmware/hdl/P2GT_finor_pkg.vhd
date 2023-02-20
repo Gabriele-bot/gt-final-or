@@ -15,7 +15,7 @@ use ieee.numeric_std.all;
 package P2GT_finor_pkg is
     
     
-    constant DEBUG                  : boolean := FALSE;
+    constant DEBUG                  : boolean := TRUE;
     -- =======================================================================================================
     -- GT Final-OR definitions
     -- =======================================================================================================

@@ -93,8 +93,10 @@ architecture rtl of m_module is
     signal new_trgg_masks           : std_logic;
     signal request_veto_update      : std_logic;
     signal new_veto                 : std_logic;
-    signal ctrl_reg : ipb_reg_v(1 downto 0) := (others => (others => '0'));
-    signal stat_reg : ipb_reg_v(3 downto 0) := (others => (others => '0'));
+    signal ctrl_reg     : ipb_reg_v(1 downto 0) := (others => (others => '0'));
+    signal ctrl_reg_stb : ipb_reg_v(1 downto 0) := (others => (others => '0'));
+    signal stat_reg     : ipb_reg_v(3 downto 0) := (others => (others => '0'));
+    signal ctrl_stb     : std_logic_vector(1 downto 0);
 
     -- counters and bgos signals
     signal bc0, oc0, ec0               : std_logic := '0';
@@ -102,7 +104,7 @@ architecture rtl of m_module is
     signal begin_lumi_per_del1         : std_logic;
     signal end_lumi_per                : std_logic;
     signal l1a_latency_delay           : std_logic_vector(log2c(MAX_DELAY)-1 downto 0);
-    
+
     signal ctrs_internal               : ttc_stuff_t;
 
 
@@ -147,8 +149,8 @@ architecture rtl of m_module is
     signal trigger_out_preview      : std_logic_vector(N_TRIGG-1 downto 0);
 
 begin
-    
-    
+
+
     ----------------------------------------------------------------------------------
     ---------------COUNTERS INTERNAL---------------------------------------------------
     ----------------------------------------------------------------------------------
@@ -159,7 +161,7 @@ begin
             ctrs_internal <= ctrs;
         end if;
     end process;
-    
+
     ----------------------------------------------------------------------------------
     ---------------COUNTER MODULE------------------------------------------------------
     ----------------------------------------------------------------------------------
@@ -180,10 +182,10 @@ begin
             orbit_nr       => orbit_nr,
             lumi_sec_nr    => lumi_sec_nr,
             begin_lumi_sec => begin_lumi_per,
-            end_lumi_sec   => end_lumi_per, 
+            end_lumi_sec   => end_lumi_per,
             test_en        => test_en
         );
-    
+
 
 
     -- TODO check delay
@@ -457,8 +459,19 @@ begin
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
-            stb       => open
+            stb       => ctrl_stb
         );
+
+    strobe_loop : process(clk)
+    begin
+        if rising_edge(clk) then
+            for i  in 1 downto 0 loop
+                if ctrl_stb(i) = '1' then
+                    ctrl_reg_stb(i) <= ctrl_reg(i);
+                end if;
+            end loop;
+        end if;
+    end process;
 
 
     xpm_cdc_new_prescale_column : xpm_cdc_single
@@ -472,7 +485,7 @@ begin
             dest_out => new_prescale_column,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(0)
+            src_in   => ctrl_reg_stb(0)(0)
         );
 
     xpm_cdc_new_trgg_masks : xpm_cdc_single
@@ -486,7 +499,7 @@ begin
             dest_out => new_trgg_masks,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(1)
+            src_in   => ctrl_reg_stb(0)(1)
         );
 
     xpm_cdc_new_veto : xpm_cdc_single
@@ -500,7 +513,7 @@ begin
             dest_out => new_veto,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(2)
+            src_in   => ctrl_reg_stb(0)(2)
         );
 
     xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
@@ -515,7 +528,7 @@ begin
             dest_out => l1a_latency_delay,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(log2c(MAX_DELAY) + 2 downto 3)
+            src_in   => ctrl_reg_stb(0)(log2c(MAX_DELAY) + 2 downto 3)
         );
 
     xpm_cdc_supp_BX_low : xpm_cdc_array_single
@@ -530,7 +543,7 @@ begin
             dest_out => supp_cal_BX_low,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(1)(11 downto 0)
+            src_in   => ctrl_reg_stb(1)(11 downto 0)
         );
 
     xpm_cdc_supp_BX_high : xpm_cdc_array_single
@@ -545,7 +558,7 @@ begin
             dest_out => supp_cal_BX_high,
             dest_clk => lhc_clk,
             src_clk  => clk,
-            src_in   => ctrl_reg(1)(23 downto 12)
+            src_in   => ctrl_reg_stb(1)(23 downto 12)
         );
 
     ready <= not we;
@@ -889,7 +902,7 @@ begin
             algo_i          => veto_out_s,
             counter_o       => veto_cnt
         );
-        
+
     xpm_cdc_veto_cnt_reg : xpm_cdc_array_single
         generic map (
             DEST_SYNC_FF   => 3,
@@ -904,7 +917,7 @@ begin
             src_clk  => lhc_clk,
             src_in   => veto_cnt
         );
-        
+
     Veto_cnt_regs : entity work.ipbus_ctrlreg_v
         generic map(
             N_CTRL     => 0,
@@ -920,7 +933,7 @@ begin
             qmask     => open,
             stb       => open
         );
-    
+
     veto_reg_p : process(lhc_clk)
     begin
         if rising_edge(lhc_clk) then
