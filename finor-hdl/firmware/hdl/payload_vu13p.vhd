@@ -68,16 +68,20 @@ architecture rtl of emp_payload is
     signal veto_SLR3_regs      : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
 
 
-    signal algos_SLR3       : std_logic_vector(64*9-1 downto 0);
-    signal algos_SLR2       : std_logic_vector(64*9-1 downto 0);
-    signal algos_presc_SLR3 : std_logic_vector(64*9-1 downto 0);
-    signal algos_presc_SLR2 : std_logic_vector(64*9-1 downto 0);
+    signal algos_SLR3              : std_logic_vector(64*9-1 downto 0);
+    signal algos_SLR2              : std_logic_vector(64*9-1 downto 0);
+    signal algos_after_bxmask_SLR3 : std_logic_vector(64*9-1 downto 0);
+    signal algos_after_bxmask_SLR2 : std_logic_vector(64*9-1 downto 0);
+    signal algos_presc_SLR3        : std_logic_vector(64*9-1 downto 0);
+    signal algos_presc_SLR2        : std_logic_vector(64*9-1 downto 0);
 
     type SLRCross_link_reg_t is array (SLR_CROSSING_LATENCY downto 0) of lword;
-    signal algos_link_SLR3_regs       : SLRCross_link_reg_t;
-    signal algos_presc_link_SLR3_regs : SLRCross_link_reg_t;
-    signal algos_link_SLR2_regs       : SLRCross_link_reg_t;
-    signal algos_presc_link_SLR2_regs : SLRCross_link_reg_t;
+    signal algos_link_SLR3_regs        : SLRCross_link_reg_t;
+    signal algos_bxmask_link_SLR3_regs : SLRCross_link_reg_t;
+    signal algos_presc_link_SLR3_regs  : SLRCross_link_reg_t;
+    signal algos_link_SLR2_regs        : SLRCross_link_reg_t;
+    signal algos_bxmask_link_SLR2_regs : SLRCross_link_reg_t;
+    signal algos_presc_link_SLR2_regs  : SLRCross_link_reg_t;
 
     attribute keep : boolean;
     attribute keep of trgg_SLR3_regs           : signal is true;
@@ -90,8 +94,10 @@ architecture rtl of emp_payload is
     attribute keep of valid_out_SLR3_regs      : signal is true;
 
     attribute keep of algos_link_SLR3_regs          : signal is DEBUG;
+    attribute keep of algos_bxmask_link_SLR3_regs   : signal is DEBUG;
     attribute keep of algos_presc_link_SLR3_regs    : signal is DEBUG;
     attribute keep of algos_link_SLR2_regs          : signal is DEBUG;
+    attribute keep of algos_bxmask_link_SLR2_regs   : signal is DEBUG;
     attribute keep of algos_presc_link_SLR2_regs    : signal is DEBUG;
 
     attribute shreg_extract                             : string;
@@ -106,8 +112,10 @@ architecture rtl of emp_payload is
 
 
     attribute shreg_extract of algos_link_SLR3_regs          : signal is "no";
+    attribute shreg_extract of algos_bxmask_link_SLR3_regs   : signal is "no";
     attribute shreg_extract of algos_presc_link_SLR3_regs    : signal is "no";
     attribute shreg_extract of algos_link_SLR2_regs          : signal is "no";
+    attribute shreg_extract of algos_bxmask_link_SLR2_regs   : signal is "no";
     attribute shreg_extract of algos_presc_link_SLR2_regs    : signal is "no";
 
 begin
@@ -138,24 +146,25 @@ begin
             MAX_DELAY             => MAX_DELAY_PDT
         )
         port map(
-            clk              => clk,
-            rst              => rst,
-            ipb_in           => ipb_to_slaves(N_SLV_SLR3_MONITOR),
-            ipb_out          => ipb_from_slaves(N_SLV_SLR3_MONITOR),
-            clk360           => clk_p,
-            rst360           => rst_loc(12),
-            lhc_clk          => clk_payload(2),
-            lhc_rst          => rst_payload(2),
-            ctrs(2 downto 0) => ctrs(14 downto 12),
-            ctrs(5 downto 3) => ctrs(19 downto 17),
-            d(11 downto 0)   => d(59 downto 48), -- regions[12,13,14]
-            d(23 downto 12)  => d(79 downto 68), -- regions[17,18,19]
-            valid_out         => valid_out_SLR3_regs(0),
-            trigger_o         => trgg_SLR3_regs(0),
-            trigger_preview_o => trgg_prvw_SLR3_regs(0),
-            veto_o            => veto_SLR3_regs(0),
-            algos             => algos_SLR3,
-            algos_prescaled   => algos_presc_SLR3
+            clk                => clk,
+            rst                => rst,
+            ipb_in             => ipb_to_slaves(N_SLV_SLR3_MONITOR),
+            ipb_out            => ipb_from_slaves(N_SLV_SLR3_MONITOR),
+            clk360             => clk_p,
+            rst360             => rst_loc(12),
+            lhc_clk            => clk_payload(2),
+            lhc_rst            => rst_payload(2),
+            ctrs(2 downto 0)   => ctrs(14 downto 12),
+            ctrs(5 downto 3)   => ctrs(19 downto 17),
+            d(11 downto 0)     => d(59 downto 48), -- regions[12,13,14]
+            d(23 downto 12)    => d(79 downto 68), -- regions[17,18,19]
+            valid_out          => valid_out_SLR3_regs(0),
+            trigger_o          => trgg_SLR3_regs(0),
+            trigger_preview_o  => trgg_prvw_SLR3_regs(0),
+            veto_o             => veto_SLR3_regs(0),
+            algos              => algos_SLR3,
+            algos_after_bxmask => algos_after_bxmask_SLR3,
+            algos_prescaled    => algos_presc_SLR3
         );
 
     SLR2_module : entity work.SLR_FinOR_unit
@@ -165,24 +174,25 @@ begin
             MAX_DELAY             => MAX_DELAY_PDT
         )
         port map(
-            clk               => clk,
-            rst               => rst,
-            ipb_in            => ipb_to_slaves(N_SLV_SLR2_MONITOR),
-            ipb_out           => ipb_from_slaves(N_SLV_SLR2_MONITOR),
-            clk360            => clk_p,
-            rst360            => rst_loc(9),
-            lhc_clk           => clk_payload(2),
-            lhc_rst           => rst_payload(2),
-            ctrs(2 downto 0)  => ctrs(11 downto 9),
-            ctrs(5 downto 3)  => ctrs(22 downto 20),
-            d(11 downto 0)    => d(47 downto 36),
-            d(23 downto 12)   => d(91 downto 80),
-            valid_out         => valid_out_SLR2_regs(0),
-            trigger_o         => trgg_SLR2_regs(0),
-            trigger_preview_o => trgg_prvw_SLR2_regs(0),
-            veto_o            => veto_SLR2_regs(0),
-            algos             => algos_SLR2,
-            algos_prescaled   => algos_presc_SLR2
+            clk                => clk,
+            rst                => rst,
+            ipb_in             => ipb_to_slaves(N_SLV_SLR2_MONITOR),
+            ipb_out            => ipb_from_slaves(N_SLV_SLR2_MONITOR),
+            clk360             => clk_p,
+            rst360             => rst_loc(9),
+            lhc_clk            => clk_payload(2),
+            lhc_rst            => rst_payload(2),
+            ctrs(2 downto 0)   => ctrs(11 downto 9),
+            ctrs(5 downto 3)   => ctrs(22 downto 20),
+            d(11 downto 0)     => d(47 downto 36),
+            d(23 downto 12)    => d(91 downto 80),
+            valid_out          => valid_out_SLR2_regs(0),
+            trigger_o          => trgg_SLR2_regs(0),
+            trigger_preview_o  => trgg_prvw_SLR2_regs(0),
+            veto_o             => veto_SLR2_regs(0),
+            algos              => algos_SLR2,
+            algos_after_bxmask => algos_after_bxmask_SLR2,
+            algos_prescaled    => algos_presc_SLR2
         );
 
     cross_SLR : process(clk_p)
@@ -241,21 +251,32 @@ begin
     debug_g : if DEBUG generate
 
 
-        SLR1_second_algos_out_mux : entity work.mux
+        SLR3_higher_algos_out_mux : entity work.mux
             port map(
                 clk360      => clk_p,
-                rst360      => rst_loc(25),
+                rst360      => rst_loc(19),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
                 input_40MHz => algos_SLR3,
                 valid_in    => valid_out_SLR3_regs(0),
                 output_data => algos_link_SLR3_regs(0)
             );
-
-        SLR1_second_algos_prescaled_out_mux : entity work.mux
+            
+        SLR3_higher_algos_bxmask_out_mux : entity work.mux
             port map(
                 clk360      => clk_p,
-                rst360      => rst_loc(25),
+                rst360      => rst_loc(19),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
+                input_40MHz => algos_after_bxmask_SLR3,
+                valid_in    => valid_out_SLR3_regs(0),
+                output_data => algos_bxmask_link_SLR3_regs(0)
+            );
+
+        SLR3_higher_algos_prescaled_out_mux : entity work.mux
+            port map(
+                clk360      => clk_p,
+                rst360      => rst_loc(19),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
                 input_40MHz => algos_presc_SLR3,
@@ -263,21 +284,32 @@ begin
                 output_data => algos_presc_link_SLR3_regs(0)
             );
 
-        SLR1_first_algos_out_mux : entity work.mux
+        SLR2_lower_algos_out_mux : entity work.mux
             port map(
                 clk360      => clk_p,
-                rst360      => rst_loc(25),
+                rst360      => rst_loc(23),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
                 input_40MHz => algos_SLR2,
                 valid_in    => valid_out_SLR2_regs(0),
                 output_data => algos_link_SLR2_regs(0)
             );
-
-        SLR1_first_algos_prescaled_out_mux : entity work.mux
+        
+        SLR2_lower_algos_bxmask_out_mux : entity work.mux
             port map(
                 clk360      => clk_p,
-                rst360      => rst_loc(25),
+                rst360      => rst_loc(23),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
+                input_40MHz => algos_after_bxmask_SLR2,
+                valid_in    => valid_out_SLR2_regs(0),
+                output_data => algos_bxmask_link_SLR2_regs(0)
+            );
+
+        SLR2_lower_algos_prescaled_out_mux : entity work.mux
+            port map(
+                clk360      => clk_p,
+                rst360      => rst_loc(23),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
                 input_40MHz => algos_presc_SLR2,
@@ -288,19 +320,27 @@ begin
         cross_SLR_algo : process(clk_p)
         begin
             if rising_edge(clk_p) then
-                algos_link_SLR3_regs(algos_link_SLR3_regs'high downto 1) <= algos_link_SLR3_regs(algos_link_SLR3_regs'high - 1 downto 0);
+                -- unprescaled
                 algos_link_SLR2_regs(algos_link_SLR2_regs'high downto 1) <= algos_link_SLR2_regs(algos_link_SLR2_regs'high - 1 downto 0);
+                algos_link_SLR3_regs(algos_link_SLR3_regs'high downto 1) <= algos_link_SLR3_regs(algos_link_SLR3_regs'high - 1 downto 0);
+                
+                -- after bxmask
+                algos_bxmask_link_SLR2_regs(algos_bxmask_link_SLR2_regs'high downto 1) <= algos_bxmask_link_SLR2_regs(algos_bxmask_link_SLR2_regs'high - 1 downto 0);
+                algos_bxmask_link_SLR3_regs(algos_bxmask_link_SLR3_regs'high downto 1) <= algos_bxmask_link_SLR3_regs(algos_bxmask_link_SLR3_regs'high - 1 downto 0);
 
-                algos_presc_link_SLR3_regs(algos_presc_link_SLR3_regs'high downto 1) <= algos_presc_link_SLR3_regs(algos_presc_link_SLR3_regs'high - 1 downto 0);
+                -- after bxmask prescaled
                 algos_presc_link_SLR2_regs(algos_presc_link_SLR2_regs'high downto 1) <= algos_presc_link_SLR2_regs(algos_presc_link_SLR2_regs'high - 1 downto 0);
+                algos_presc_link_SLR3_regs(algos_presc_link_SLR3_regs'high downto 1) <= algos_presc_link_SLR3_regs(algos_presc_link_SLR3_regs'high - 1 downto 0);
             end if;
 
         end process;
 
-        q(95) <= algos_link_SLR3_regs(algos_link_SLR3_regs'high);
-        q(94) <= algos_presc_link_SLR3_regs(algos_presc_link_SLR3_regs'high);
-        q(93) <= algos_link_SLR2_regs(algos_link_SLR2_regs'high);
-        q(92) <= algos_presc_link_SLR2_regs(algos_presc_link_SLR2_regs'high);
+        q(31) <= algos_link_SLR2_regs(algos_link_SLR2_regs'high);
+        q(30) <= algos_bxmask_link_SLR2_regs(algos_bxmask_link_SLR2_regs'high);
+        q(29) <= algos_presc_link_SLR2_regs(algos_presc_link_SLR2_regs'high);
+        q(28) <= algos_link_SLR3_regs(algos_link_SLR3_regs'high);
+        q(27) <= algos_bxmask_link_SLR3_regs(algos_bxmask_link_SLR3_regs'high);
+        q(26) <= algos_presc_link_SLR3_regs(algos_presc_link_SLR3_regs'high);
 
 
     end generate;

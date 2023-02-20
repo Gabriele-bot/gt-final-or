@@ -37,12 +37,13 @@ entity SLR_FinOR_unit is
         lhc_rst   : in std_logic;
         ctrs      : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
         d         : in ldata(NR_LINKS - 1 downto 0);  -- data in
-        valid_out         : out std_logic;
-        trigger_o         : out std_logic_vector(N_TRIGG-1 downto 0);
-        trigger_preview_o : out std_logic_vector(N_TRIGG-1 downto 0);
-        veto_o            : out std_logic;
-        algos             : out std_logic_vector(64*9-1 downto 0);
-        algos_prescaled   : out std_logic_vector(64*9-1 downto 0)
+        valid_out          : out std_logic;
+        trigger_o          : out std_logic_vector(N_TRIGG-1 downto 0);
+        trigger_preview_o  : out std_logic_vector(N_TRIGG-1 downto 0);
+        veto_o             : out std_logic;
+        algos              : out std_logic_vector(64*9-1 downto 0);
+        algos_after_bxmask : out std_logic_vector(64*9-1 downto 0);
+        algos_prescaled    : out std_logic_vector(64*9-1 downto 0)
 
     );
 end entity SLR_FinOR_unit;
@@ -288,6 +289,7 @@ begin
             lhc_rst                 => lhc_rst,
             ctrs                    => ctrs_int,
             algos_in                => algos_in,
+            algos_after_bxmask      => algos_after_bxmask, 
             algos_after_prescaler_o => algos_prescaled,
             trigger_o               => trigger_out,
             trigger_preview_o       => trigger_out_preview,

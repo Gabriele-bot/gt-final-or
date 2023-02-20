@@ -45,6 +45,7 @@ entity m_module is
         ctrs                     : in  ttc_stuff_t;
 
         algos_in                 : in  std_logic_vector(NR_ALGOS-1 downto 0);
+        algos_after_bxmask       : out std_logic_vector(NR_ALGOS-1 downto 0);
         algos_after_prescaler_o  : out std_logic_vector(NR_ALGOS-1 downto 0);
         trigger_o                : out std_logic_vector(N_TRIGG-1  downto 0);
         trigger_preview_o        : out std_logic_vector(N_TRIGG-1  downto 0);
@@ -63,7 +64,6 @@ architecture rtl of m_module is
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
 
     --algos signal
-    signal algos_after_bxmask            : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '0');
     signal algos_delayed                 : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '0');
     signal algos_after_prescaler         : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '0');
     signal algos_after_prescaler_preview : std_logic_vector(NR_ALGOS-1 downto 0) := (others => '0');
