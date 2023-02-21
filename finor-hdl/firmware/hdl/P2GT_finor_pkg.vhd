@@ -12,6 +12,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.emp_data_types.all;
+use work.emp_ttc_decl.all;
+
 package P2GT_finor_pkg is
     
     
@@ -33,6 +36,8 @@ package P2GT_finor_pkg is
     
     type data_arr is array (INPUT_LINKS - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
     type mask_arr is array (N_TRIGG     - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
+    
+    type bctr_array is array (natural range <>) of bctr_t;
     
 
     -- ================= PRE-SCALERS =========================================================================

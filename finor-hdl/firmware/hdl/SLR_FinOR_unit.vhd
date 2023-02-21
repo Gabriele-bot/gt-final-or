@@ -289,7 +289,7 @@ begin
             lhc_rst                 => lhc_rst,
             ctrs                    => ctrs_int,
             algos_in                => algos_in,
-            algos_after_bxmask      => algos_after_bxmask, 
+            algos_after_bxmask_o    => algos_after_bxmask, 
             algos_after_prescaler_o => algos_prescaled,
             trigger_o               => trigger_out,
             trigger_preview_o       => trigger_out_preview,

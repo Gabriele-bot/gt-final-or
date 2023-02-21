@@ -54,6 +54,8 @@ architecture rtl of emp_payload is
     signal begin_lumi_section : std_logic := '0'; -- TODO extract the value from ctrs
     signal l1a_loc            : std_logic_vector(N_REGION - 1 downto 0);
     signal bcres              : std_logic := '0';
+    signal bctr_arr_SLR2      : bctr_array (9+1 downto 0);
+    signal bctr_arr_SLR3      : bctr_array (9+1 downto 0);
 
     signal valid_out_SLR2_regs, valid_out_SLR3_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
     signal valid_in                                 : std_logic;
@@ -75,7 +77,7 @@ architecture rtl of emp_payload is
     signal algos_presc_SLR3        : std_logic_vector(64*9-1 downto 0);
     signal algos_presc_SLR2        : std_logic_vector(64*9-1 downto 0);
 
-    type SLRCross_link_reg_t is array (SLR_CROSSING_LATENCY downto 0) of lword;
+    type SLRCross_link_reg_t is array (8 downto 0) of lword;
     signal algos_link_SLR3_regs        : SLRCross_link_reg_t;
     signal algos_bxmask_link_SLR3_regs : SLRCross_link_reg_t;
     signal algos_presc_link_SLR3_regs  : SLRCross_link_reg_t;
@@ -249,69 +251,73 @@ begin
     -- TODO : lots of timing violation with this debug out, need to think about something
 
     debug_g : if DEBUG generate
+        
+        bctr_arr_SLR2(0) <= ctrs(20).bctr;
+        bctr_arr_SLR3(0) <= ctrs(19).bctr;
+        ctrs_shift_reg : process(clk_p)
+        begin
+            if rising_edge(clk_p) then
+                bctr_arr_SLR2(bctr_arr_SLR2'high downto 1) <= bctr_arr_SLR2(bctr_arr_SLR2'high - 1 downto 0);
+                bctr_arr_SLR3(bctr_arr_SLR3'high downto 1) <= bctr_arr_SLR3(bctr_arr_SLR3'high - 1 downto 0);
+            end if;
+        end process ctrs_shift_reg;
+        
 
-
-        SLR3_higher_algos_out_mux : entity work.mux
+        SLR3_mux_higher_algos_out : entity work.mux
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(19),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                bctr        => bctr_arr_SLR3(bctr_arr_SLR3'high), 
                 input_40MHz => algos_SLR3,
                 valid_in    => valid_out_SLR3_regs(0),
                 output_data => algos_link_SLR3_regs(0)
             );
             
-        SLR3_higher_algos_bxmask_out_mux : entity work.mux
+        SLR3_mux_higher_algos_bxmask_out : entity work.mux
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(19),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                bctr        => bctr_arr_SLR3(bctr_arr_SLR3'high), 
                 input_40MHz => algos_after_bxmask_SLR3,
                 valid_in    => valid_out_SLR3_regs(0),
                 output_data => algos_bxmask_link_SLR3_regs(0)
             );
 
-        SLR3_higher_algos_prescaled_out_mux : entity work.mux
+        SLR3_mux_higher_algos_prescaled_out : entity work.mux
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(19),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                bctr        => bctr_arr_SLR3(bctr_arr_SLR3'high), 
                 input_40MHz => algos_presc_SLR3,
                 valid_in    => valid_out_SLR3_regs(0),
                 output_data => algos_presc_link_SLR3_regs(0)
             );
 
-        SLR2_lower_algos_out_mux : entity work.mux
+        SLR2_mux_lower_algos_out : entity work.mux
             port map(
                 clk360      => clk_p,
-                rst360      => rst_loc(23),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                rst360      => rst_loc(20),
+                bctr        => bctr_arr_SLR2(bctr_arr_SLR2'high), 
                 input_40MHz => algos_SLR2,
                 valid_in    => valid_out_SLR2_regs(0),
                 output_data => algos_link_SLR2_regs(0)
             );
         
-        SLR2_lower_algos_bxmask_out_mux : entity work.mux
+        SLR2_mux_lower_algos_bxmask_out : entity work.mux
             port map(
                 clk360      => clk_p,
-                rst360      => rst_loc(23),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                rst360      => rst_loc(20),
+                bctr        => bctr_arr_SLR2(bctr_arr_SLR2'high), 
                 input_40MHz => algos_after_bxmask_SLR2,
                 valid_in    => valid_out_SLR2_regs(0),
                 output_data => algos_bxmask_link_SLR2_regs(0)
             );
 
-        SLR2_lower_algos_prescaled_out_mux : entity work.mux
+        SLR2_mux_lower_algos_prescaled_out : entity work.mux
             port map(
                 clk360      => clk_p,
-                rst360      => rst_loc(23),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                rst360      => rst_loc(20),
+                bctr        => bctr_arr_SLR2(bctr_arr_SLR2'high), 
                 input_40MHz => algos_presc_SLR2,
                 valid_in    => valid_out_SLR2_regs(0),
                 output_data => algos_presc_link_SLR2_regs(0)

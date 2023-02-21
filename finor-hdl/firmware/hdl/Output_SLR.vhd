@@ -34,7 +34,7 @@ entity Output_SLR is
         lhc_clk     : in std_logic;
         lhc_rst     : in std_logic;
 
-        ctrs                     : in  ttc_stuff_t;
+        ctrs        : in  ttc_stuff_t;
 
         valid_in          : in std_logic;
 
@@ -638,6 +638,7 @@ begin
     link_out.start          <= '1' when frame_cntr = 0 and valid_in = '1' else '0';
     link_out.last           <= '1' when frame_cntr = 8 and valid_in = '1' else '0';
     link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and valid_in_del = '0' else '0';
+    --TODO change start of orbit assertion, same as output muxes (bctr is used there)
 
 
     output_p: process(clk_p)
