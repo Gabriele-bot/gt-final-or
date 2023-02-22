@@ -29,7 +29,7 @@ package emp_project_decl is
 
 
   constant REGION_CONF : region_conf_array_t := (
-    0      => (gty25, buf, no_fmt, buf, gty25),
+    0      => kDummyRegion,             -- Not Used
     1      => (gty25, buf, no_fmt, buf, gty25),
     2      => (gty25, buf, no_fmt, buf, gty25),
     3      => (gty25, buf, no_fmt, buf, gty25),
@@ -40,17 +40,17 @@ package emp_project_decl is
     8      => (gty25, buf, no_fmt, buf, gty25),
     9      => (gty25, buf, no_fmt, buf, gty25),
     10     => (gty25, buf, no_fmt, buf, gty25),
-    11     => (gty25, buf, no_fmt, buf, gty25),
-    12     => (gty25, buf, no_fmt, buf, gty25),
-    13     => (gty25, buf, no_fmt, buf, gty25),
-    14     => (gty25, buf, no_fmt, buf, gty25),
+    11     => kDummyRegion,             -- Not Used
+    12     => kDummyRegion,             -- Not used
+    13     => kDummyRegion,             -- Not Used
+    14     => kDummyRegion,             -- Not Used
     15     => kDummyRegion,             -- Unconnected
     -- Cross-chip
     16     => kDummyRegion,             -- Unconnected
-    17     => (gty25, buf, no_fmt, buf, gty25),
-    18     => (gty25, buf, no_fmt, buf, gty25),
-    19     => (gty25, buf, no_fmt, buf, gty25),
-    20     => (gty25, buf, no_fmt, buf, gty25),
+    17     => kDummyRegion,             -- Not used
+    18     => kDummyRegion,             -- Not Used
+    19     => kDummyRegion,             -- Not Used
+    20     => kDummyRegion,             -- Not Used
     21     => (gty25, buf, no_fmt, buf, gty25),
     22     => (gty25, buf, no_fmt, buf, gty25),
     23     => (gty25, buf, no_fmt, buf, gty25),
@@ -61,7 +61,7 @@ package emp_project_decl is
     28     => (gty25, buf, no_fmt, buf, gty25),
     29     => (gty25, buf, no_fmt, buf, gty25),
     30     => (gty25, buf, no_fmt, buf, gty25),
-    31     => (gty25, buf, no_fmt, buf, gty25),
+    31     => kDummyRegion,             -- Not Used
     others => kDummyRegion
     );
 

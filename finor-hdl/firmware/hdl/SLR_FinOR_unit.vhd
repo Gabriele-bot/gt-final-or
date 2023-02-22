@@ -20,7 +20,7 @@ use work.math_pkg.all;
 
 entity SLR_FinOR_unit is
     generic(
-        NR_LINKS              : natural := INPUT_LINKS;
+        NR_LINKS              : natural := INPUT_LINKS_SLR;
         NR_MON_REG            : natural := MON_REG;
         BEGIN_LUMI_TOGGLE_BIT : natural := 18;
         MAX_DELAY             : natural := MAX_DELAY_PDT
