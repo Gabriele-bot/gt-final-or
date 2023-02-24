@@ -37,12 +37,13 @@ entity SLR_FinOR_unit is
         lhc_rst   : in std_logic;
         ctrs      : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
         d         : in ldata(NR_LINKS - 1 downto 0);  -- data in
-        valid_out         : out std_logic;
-        trigger_o         : out std_logic_vector(N_TRIGG-1 downto 0);
-        trigger_preview_o : out std_logic_vector(N_TRIGG-1 downto 0);
-        veto_o            : out std_logic;
-        algos             : out std_logic_vector(64*9-1 downto 0);
-        algos_prescaled   : out std_logic_vector(64*9-1 downto 0)
+        valid_out          : out std_logic;
+        trigger_o          : out std_logic_vector(N_TRIGG-1 downto 0);
+        trigger_preview_o  : out std_logic_vector(N_TRIGG-1 downto 0);
+        veto_o             : out std_logic;
+        algos              : out std_logic_vector(64*9-1 downto 0);
+        algos_after_bxmask : out std_logic_vector(64*9-1 downto 0);
+        algos_prescaled    : out std_logic_vector(64*9-1 downto 0)
 
     );
 end entity SLR_FinOR_unit;
@@ -74,8 +75,10 @@ architecture RTL of SLR_FinOR_unit is
     signal ctrs_int               : ttc_stuff_t;
     signal ctrs_del               : ttc_stuff_array(1 downto 0);
 
-    signal ctrl_reg : ipb_reg_v(1 downto 0) := (others => (others => '1'));
-    signal stat_reg : ipb_reg_v(0 downto 0);
+    signal ctrl_reg     : ipb_reg_v(1 downto 0) := ((others => '0'),(others => '1'));
+    signal ctrl_reg_stb : ipb_reg_v(1 downto 0) := ((others => '0'),(others => '1'));
+    signal stat_reg     : ipb_reg_v(0 downto 0);
+    signal ctrl_stb     : std_logic_vector(1 downto 0);
 
     signal link_mask       : std_logic_vector(NR_LINKS - 1 downto 0);
     signal rst_align_error : std_logic;
@@ -113,7 +116,7 @@ begin
         end if;
     end process;
 
-    link_mask_regs : entity work.ipbus_ctrlreg_v
+    CSR_regs : entity work.ipbus_ctrlreg_v
         generic map(
             N_CTRL     => 2,
             N_STAT     => 1
@@ -126,8 +129,19 @@ begin
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
-            stb       => open
+            stb       => ctrl_stb
         );
+        
+    strobe_loop : process(clk)
+    begin
+        if rising_edge(clk) then
+            for i  in 1 downto 0 loop
+                if ctrl_stb(i) = '1' then
+                    ctrl_reg_stb(i) <= ctrl_reg(i);
+                end if;
+            end loop;
+        end if;
+    end process;
 
     xpm_cdc_linkmask : xpm_cdc_array_single
         generic map (
@@ -141,7 +155,7 @@ begin
             dest_out => link_mask,
             dest_clk => clk360,
             src_clk  => clk,
-            src_in   => ctrl_reg(0)(NR_LINKS - 1 downto 0)
+            src_in   => ctrl_reg_stb(0)(NR_LINKS - 1 downto 0)
         );
 
     xpm_cdc_rst_error : xpm_cdc_single
@@ -155,7 +169,7 @@ begin
             dest_out => rst_align_error,
             dest_clk => clk360,
             src_clk  => clk,
-            src_in   => ctrl_reg(1)(0)
+            src_in   => ctrl_reg(1)(0) and ctrl_stb(1)
         );
 
     xpm_cdc_error_flag : xpm_cdc_single
@@ -275,6 +289,7 @@ begin
             lhc_rst                 => lhc_rst,
             ctrs                    => ctrs_int,
             algos_in                => algos_in,
+            algos_after_bxmask_o    => algos_after_bxmask, 
             algos_after_prescaler_o => algos_prescaled,
             trigger_o               => trigger_out,
             trigger_preview_o       => trigger_out_preview,
