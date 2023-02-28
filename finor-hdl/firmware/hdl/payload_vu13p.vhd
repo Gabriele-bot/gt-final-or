@@ -152,7 +152,7 @@ begin
             d(23 downto 12)   => d(91 downto 80),
             trigger_o         => trgg_SLRn1_regs(0),
             trigger_preview_o => trgg_prvw_SLRn1_regs(0),
-            valid_out         => valid_out_SLRn0_regs(0),
+            valid_out         => valid_out_SLRn1_regs(0),
             veto_o            => veto_SLRn1_regs(0),
             algos             => algos_SLRn1_regs(0),
             algos_prescaled   => algos_presc_SLRn1_regs(0)
