@@ -57,7 +57,8 @@ architecture rtl of emp_payload is
     signal bctr_arr_SLRn0     : bctr_array (9+1 downto 0);
     signal bctr_arr_SLRn1     : bctr_array (9+1 downto 0);
     signal valid_out_SLRn0_regs, valid_out_SLRn1_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
-    signal valid_in                                 : std_logic;
+    signal valid_in                                   : std_logic;
+    signal algos_valid_SLRn0, algos_valid_SLRn1       : std_logic;
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
@@ -75,7 +76,7 @@ architecture rtl of emp_payload is
     signal algos_presc_SLRn1        : std_logic_vector(64*9-1 downto 0);
     signal algos_presc_SLRn0        : std_logic_vector(64*9-1 downto 0);
 
-    type SLRCross_link_reg_t is array (8 downto 0) of lword;
+    type SLRCross_link_reg_t is array (SLR_CROSSING_LATENCY - 1 downto 0) of lword;
     signal algos_link_SLRn1_regs        : SLRCross_link_reg_t;
     signal algos_bxmask_link_SLRn1_regs : SLRCross_link_reg_t;
     signal algos_presc_link_SLRn1_regs  : SLRCross_link_reg_t;
@@ -157,14 +158,17 @@ begin
             ctrs(5 downto 3)   => ctrs(SLRn1_quads(5) downto SLRn1_quads(3)),
             d(11 downto 0)     => d(SLRn1_channels(11) downto SLRn1_channels(0) ),
             d(23 downto 12)    => d(SLRn1_channels(23) downto SLRn1_channels(12)),
-            valid_out          => valid_out_SLRn1_regs(0),
             trigger_o          => trgg_SLRn1_regs(0),
             trigger_preview_o  => trgg_prvw_SLRn1_regs(0),
+            trigger_valid_out  => valid_out_SLRn1_regs(0),
             veto_o             => veto_SLRn1_regs(0),
             algos              => algos_SLRn1,
             algos_after_bxmask => algos_after_bxmask_SLRn1,
-            algos_prescaled    => algos_presc_SLRn1
+            algos_prescaled    => algos_presc_SLRn1,
+            algos_valid_out    => algos_valid_SLRn1
         );
+
+
 
     SLRn0_module : entity work.SLR_FinOR_unit
         generic map(
@@ -185,14 +189,17 @@ begin
             ctrs(5 downto 3)   => ctrs(SLRn0_quads(5) downto SLRn0_quads(3)),
             d(11 downto 0)     => d(SLRn0_channels(11) downto SLRn0_channels(0) ),
             d(23 downto 12)    => d(SLRn0_channels(23) downto SLRn0_channels(12)),
-            valid_out          => valid_out_SLRn0_regs(0),
             trigger_o          => trgg_SLRn0_regs(0),
             trigger_preview_o  => trgg_prvw_SLRn0_regs(0),
+            trigger_valid_out  => valid_out_SLRn0_regs(0),
             veto_o             => veto_SLRn0_regs(0),
             algos              => algos_SLRn0,
             algos_after_bxmask => algos_after_bxmask_SLRn0,
-            algos_prescaled    => algos_presc_SLRn0
+            algos_prescaled    => algos_presc_SLRn0,
+            algos_valid_out    => algos_valid_SLRn0
         );
+
+
 
     cross_SLR : process(clk_p)
     begin
@@ -238,8 +245,6 @@ begin
             q(0)        => q(OUTPUT_channel)
         );
 
-
-
     --------------------------------------------------------------------------------
     -------------------------------------------DEBUG OUT----------------------------
     --------------------------------------------------------------------------------
@@ -248,6 +253,7 @@ begin
 
     debug_g : if DEBUG generate
         
+        --TODO better alignment here
         bctr_arr_SLRn0(0) <= ctrs(28).bctr;
         bctr_arr_SLRn1(0) <= ctrs(23).bctr;
         ctrs_shift_reg : process(clk_p)
@@ -258,14 +264,18 @@ begin
             end if;
         end process ctrs_shift_reg;
         
+        
+        
 
         SLRn1_mux_higher_algos_out : entity work.mux
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(23),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
                 bctr        => bctr_arr_SLRn1(bctr_arr_SLRn1'high), 
                 input_40MHz => algos_SLRn1,
-                valid_in    => valid_out_SLRn1_regs(0),
+                valid_in    => algos_valid_SLRn1,
                 output_data => algos_link_SLRn1_regs(0)
             );
             
@@ -273,9 +283,11 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(23),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
                 bctr        => bctr_arr_SLRn1(bctr_arr_SLRn1'high), 
                 input_40MHz => algos_after_bxmask_SLRn1,
-                valid_in    => valid_out_SLRn1_regs(0),
+                valid_in    => algos_valid_SLRn1,
                 output_data => algos_bxmask_link_SLRn1_regs(0)
             );
 
@@ -283,9 +295,11 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(23),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
                 bctr        => bctr_arr_SLRn1(bctr_arr_SLRn1'high), 
                 input_40MHz => algos_presc_SLRn1,
-                valid_in    => valid_out_SLRn1_regs(0),
+                valid_in    => algos_valid_SLRn1,
                 output_data => algos_presc_link_SLRn1_regs(0)
             );
 
@@ -293,9 +307,11 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(28),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
                 bctr        => bctr_arr_SLRn0(bctr_arr_SLRn0'high), 
                 input_40MHz => algos_SLRn0,
-                valid_in    => valid_out_SLRn0_regs(0),
+                valid_in    => algos_valid_SLRn0,
                 output_data => algos_link_SLRn0_regs(0)
             );
         
@@ -303,9 +319,11 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(28),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
                 bctr        => bctr_arr_SLRn0(bctr_arr_SLRn0'high), 
                 input_40MHz => algos_after_bxmask_SLRn0,
-                valid_in    => valid_out_SLRn0_regs(0),
+                valid_in    => algos_valid_SLRn0,
                 output_data => algos_bxmask_link_SLRn0_regs(0)
             );
 
@@ -313,9 +331,11 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(28),
+                lhc_clk     => clk_payload(2),
+                lhc_rst     => rst_payload(2),
                 bctr        => bctr_arr_SLRn0(bctr_arr_SLRn0'high), 
                 input_40MHz => algos_presc_SLRn0,
-                valid_in    => valid_out_SLRn0_regs(0),
+                valid_in    => algos_valid_SLRn0,
                 output_data => algos_presc_link_SLRn0_regs(0)
             );
 
