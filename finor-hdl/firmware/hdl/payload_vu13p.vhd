@@ -55,17 +55,17 @@ architecture rtl of emp_payload is
     signal l1a_loc            : std_logic_vector(N_REGION - 1 downto 0);
     signal bcres              : std_logic := '0';
 
-    signal valid_out_SLRn0_regs, valid_out_SLRn1_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
-    signal valid_in                                 : std_logic;
+    signal valid_out_SLRn0_regs, valid_out_SLRn1_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0)  := (others => '0');
+    signal valid_in                                   : std_logic;
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
-    signal trgg_SLRn0_regs      : SLRCross_trigg_t;
-    signal trgg_prvw_SLRn0_regs : SLRCross_trigg_t;
-    signal veto_SLRn0_regs      : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
-    signal trgg_SLRn1_regs      : SLRCross_trigg_t;
-    signal trgg_prvw_SLRn1_regs : SLRCross_trigg_t;
-    signal veto_SLRn1_regs      : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    signal trgg_SLRn0_regs      : SLRCross_trigg_t := (others => (others => '0'));
+    signal trgg_prvw_SLRn0_regs : SLRCross_trigg_t := (others => (others => '0'));
+    signal veto_SLRn0_regs      : std_logic_vector(SLR_CROSSING_LATENCY downto 0) := (others => '0');
+    signal trgg_SLRn1_regs      : SLRCross_trigg_t := (others => (others => '0'));
+    signal trgg_prvw_SLRn1_regs : SLRCross_trigg_t := (others => (others => '0'));
+    signal veto_SLRn1_regs      : std_logic_vector(SLR_CROSSING_LATENCY downto 0) := (others => '0');
 
 
     signal algos_SLRn1       : std_logic_vector(64*9-1 downto 0);
@@ -74,10 +74,10 @@ architecture rtl of emp_payload is
     signal algos_presc_SLRn0 : std_logic_vector(64*9-1 downto 0);
 
     type SLRCross_algos_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(64*9-1 downto 0);
-    signal algos_SLRn1_regs       : SLRCross_algos_t;
-    signal algos_presc_SLRn1_regs : SLRCross_algos_t;
-    signal algos_SLRn0_regs       : SLRCross_algos_t;
-    signal algos_presc_SLRn0_regs : SLRCross_algos_t;
+    signal algos_SLRn1_regs       : SLRCross_algos_t := (others => (others => '0'));
+    signal algos_presc_SLRn1_regs : SLRCross_algos_t := (others => (others => '0'));
+    signal algos_SLRn0_regs       : SLRCross_algos_t := (others => (others => '0'));
+    signal algos_presc_SLRn0_regs : SLRCross_algos_t := (others => (others => '0'));
 
     attribute keep : boolean;
     attribute keep of trgg_SLRn1_regs           : signal is true;
@@ -112,7 +112,7 @@ architecture rtl of emp_payload is
 
 begin
 
-    l1a_loc_wiring_gen : for i in N_REGION -1 downto 0 generate
+    l1a_loc_wiring_gen : for i in N_REGION - 1 downto 0 generate
         l1a_loc(i) <= ctrs(i).l1a;
     end generate;
 
@@ -150,9 +150,9 @@ begin
             ctrs(5 downto 3)  => ctrs(22 downto 20),
             d(11 downto 0)    => d(47 downto 36),
             d(23 downto 12)   => d(91 downto 80),
-            valid_out         => valid_out_SLRn1_regs(0),
             trigger_o         => trgg_SLRn1_regs(0),
             trigger_preview_o => trgg_prvw_SLRn1_regs(0),
+            valid_out         => valid_out_SLRn0_regs(0),
             veto_o            => veto_SLRn1_regs(0),
             algos             => algos_SLRn1_regs(0),
             algos_prescaled   => algos_presc_SLRn1_regs(0)
@@ -177,9 +177,9 @@ begin
             ctrs(5 downto 3)  => ctrs(31 downto 29),
             d(11 downto 0)    => d(11 downto 0),
             d(23 downto 12)   => d(127 downto 116),
-            valid_out         => valid_out_SLRn0_regs(0),
             trigger_o         => trgg_SLRn0_regs(0),
             trigger_preview_o => trgg_prvw_SLRn0_regs(0),
+            valid_out         => valid_out_SLRn0_regs(0),
             veto_o            => veto_SLRn0_regs(0),
             algos             => algos_SLRn0_regs(0),
             algos_prescaled   => algos_presc_SLRn0_regs(0)
@@ -235,6 +235,29 @@ begin
     --------------------------------------------------------------------------------
     -------------------------------------------DEBUG OUT----------------------------
     --------------------------------------------------------------------------------
+    output_p: process(clk_p)
+    begin
+        if rising_edge(clk_p) then
+            q(25).valid          <= valid_in;
+            q(25).start          <= '0';
+            q(25).start_of_orbit <= '0';
+            q(25).last           <= '0';
+            q(25).data(3 downto 0)  <= ctrs(6).pctr;
+            q(25).data(4)           <= rst_loc(6);
+            q(25).data(7 downto 5)  <= (others => '0');
+            q(25).data(8)           <= clk_payload(2);
+            q(25).data(11 downto 9) <= (others => '0');
+            q(25).data(12)          <= rst_payload(2);
+            q(25).data(15 downto 13)<= (others => '0');
+            q(25).data(23 downto 16)<= ctrs(6).ttc_cmd;
+            q(25).data(63 downto 24)<= (others => '0');
+        end if;
+
+
+    end process;
+
+
+
 
     -- TODO : lots of timing violation with this debug out, need to think about something
 

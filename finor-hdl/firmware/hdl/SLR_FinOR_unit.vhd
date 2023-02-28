@@ -37,9 +37,9 @@ entity SLR_FinOR_unit is
         lhc_rst   : in std_logic;
         ctrs      : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
         d         : in ldata(NR_LINKS - 1 downto 0);  -- data in
-        valid_out          : out std_logic;
         trigger_o          : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_preview_o  : out std_logic_vector(N_TRIGG-1 downto 0);
+        valid_out          : out std_logic;
         veto_o             : out std_logic;
         algos              : out std_logic_vector(64*9-1 downto 0);
         algos_after_bxmask : out std_logic_vector(64*9-1 downto 0);
@@ -56,8 +56,8 @@ architecture RTL of SLR_FinOR_unit is
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
 
-    signal valid_shreg : std_logic_vector(LATENCY_360 downto 0);
-    signal d_valids    : std_logic_vector(NR_LINKS - 1 downto 0);
+    signal valid_deser_out : std_logic;
+    signal d_valids        : std_logic_vector(NR_LINKS - 1 downto 0);
 
     signal d_reg : ldata(NR_LINKS - 1 downto 0);
     signal links_data : data_arr;
@@ -98,16 +98,6 @@ begin
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );
-
-    valid_shreg(0) <= d_res.valid;
-
-    process(clk360)
-    begin
-        if rising_edge(clk360) then
-            valid_shreg(LATENCY_360 downto 1) <= valid_shreg(LATENCY_360-1 downto 0);
-        end if;
-    end process;
-
 
     process(clk360)
     begin
@@ -244,7 +234,8 @@ begin
             lane_data_in => d_res,
             rst_err      => rst_align_error,
             align_err_o  => align_error,
-            demux_data_o => algos_in
+            demux_data_o => algos_in,
+            valid_out    => valid_deser_out
         );
 
 
@@ -289,24 +280,15 @@ begin
             lhc_rst                 => lhc_rst,
             ctrs                    => ctrs_int,
             algos_in                => algos_in,
+            valid_algos_in          => valid_deser_out,
             algos_after_bxmask_o    => algos_after_bxmask, 
             algos_after_prescaler_o => algos_prescaled,
             trigger_o               => trigger_out,
             trigger_preview_o       => trigger_out_preview,
+            valid_trigger_o         => valid_out,
             veto_o                  => veto_out
         );
-
-    out_reg_g : if DESER_OUT_REG generate
-        data_40mhz_p: process(lhc_clk)
-        begin
-            if rising_edge(lhc_clk) then
-                valid_out <= valid_shreg(valid_shreg'high);
-            end if;
-        end process;
-    else generate
-        valid_out <= valid_shreg(valid_shreg'high);
-    end generate;
-
+    
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;
     veto_o            <= veto_out;

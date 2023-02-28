@@ -235,6 +235,18 @@ begin
             begin_lumi_per_del1 <= begin_lumi_per;
         end if;
     end process;
+    
+
+    Final_OR_p : process (trgg_0, trgg_1)
+    begin
+        Final_OR           <= trgg_0 or trgg_1;
+        Final_OR_preview   <= trgg_prvw_0 or trgg_prvw_1;
+    end process;
+
+    Final_OR_with_veto_l : for i in 0 to N_TRIGG -1 generate
+        Final_OR_with_veto(i)         <= (trgg_0(i) or trgg_1(i)) and not(veto_0 or veto_1);
+        Final_OR_preview_with_veto(i) <= (trgg_prvw_0(i) or trgg_prvw_1(i)) and not(veto_0 or veto_1);
+    end generate;
 
     delay_element_i : entity work.delay_element_ringbuffer
         generic map(
@@ -289,18 +301,6 @@ begin
             delay  => l1a_latency_delay
         );
 
-
-
-    Final_OR_p : process (trgg_0, trgg_1)
-    begin
-        Final_OR           <= trgg_0 or trgg_1;
-        Final_OR_preview   <= trgg_prvw_0 or trgg_prvw_1;
-    end process;
-
-    Final_OR_with_veto_l : for i in 0 to N_TRIGG -1 generate
-        Final_OR_with_veto(i)         <= (trgg_0(i) or trgg_1(i)) and not(veto_0 or veto_1);
-        Final_OR_preview_with_veto(i) <= (trgg_prvw_0(i) or trgg_prvw_1(i)) and not(veto_0 or veto_1);
-    end generate;
 
     veto_out_s <= veto_0 or veto_1;
 
@@ -637,7 +637,7 @@ begin
     link_out.valid          <= valid_in;
     link_out.start          <= '1' when frame_cntr = 0 and valid_in = '1' else '0';
     link_out.last           <= '1' when frame_cntr = 8 and valid_in = '1' else '0';
-    link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and valid_in_del = '0' else '0';
+    link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and valid_in_del = '0' else '0'; --TODO Modify (include bctr)
 
 
     output_p: process(clk_p)

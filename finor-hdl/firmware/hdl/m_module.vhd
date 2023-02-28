@@ -45,10 +45,12 @@ entity m_module is
         ctrs                     : in  ttc_stuff_t;
 
         algos_in                 : in  std_logic_vector(NR_ALGOS-1 downto 0);
+        valid_algos_in           : in  std_logic;
         algos_after_bxmask_o     : out std_logic_vector(NR_ALGOS-1 downto 0);
         algos_after_prescaler_o  : out std_logic_vector(NR_ALGOS-1 downto 0);
         trigger_o                : out std_logic_vector(N_TRIGG-1  downto 0);
         trigger_preview_o        : out std_logic_vector(N_TRIGG-1  downto 0);
+        valid_trigger_o          : out std_logic;
         veto_o                   : out std_logic
 
     );
@@ -867,10 +869,12 @@ begin
         port map(
             clk                             => lhc_clk,
             algos_in                        => algos_after_prescaler,
+            valid_in                        => valid_algos_in,
             masks                           => masks,
             request_masks_update_pulse      => request_masks_update,
             update_pulse                    => end_lumi_per,
-            trigger_out                     => trigger_out
+            trigger_out                     => trigger_out,
+            valid_out                       => valid_trigger_o
         );
 
     Mask_previev_i : entity work.Mask
@@ -881,10 +885,12 @@ begin
         port map(
             clk                             => lhc_clk,
             algos_in                        => algos_after_prescaler_preview,
+            valid_in                        => valid_algos_in,
             masks                           => masks,
             request_masks_update_pulse      => request_masks_update,
             update_pulse                    => end_lumi_per,
-            trigger_out                     => trigger_out_preview
+            trigger_out                     => trigger_out_preview,
+            valid_out                       => open
         );
 
 

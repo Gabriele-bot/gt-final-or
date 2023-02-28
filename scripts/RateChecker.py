@@ -878,3 +878,10 @@ elif args.test == 'BXmask':
 
 else:
     print('No suitable test was selected!')
+
+
+aligment_err = HWtest.check_alignement_error()
+if aligment_err[0] != 0:
+    print('Missaligment found on SLR 0')
+elif aligment_err[1] != 0:
+    print('Missaligment found on SLR 1')
