@@ -29,18 +29,18 @@ package emp_project_decl is
 
 
   constant REGION_CONF : region_conf_array_t := (
-    0      => kDummyRegion,             -- Not Used
-    1      => (gty25, buf, no_fmt, buf, gty25),
-    2      => (gty25, buf, no_fmt, buf, gty25),
-    3      => (gty25, buf, no_fmt, buf, gty25),
+    0      => (gty25, buf, no_fmt, buf, gty25), --algo links SLR0
+    1      => (gty25, buf, no_fmt, buf, gty25), --algo links SLR0
+    2      => (gty25, buf, no_fmt, buf, gty25), --algo links SLR0
+    3      => kDummyRegion,             -- Not Used
     4      => kDummyRegion,             -- HighSpeedBus
     5      => kDummyRegion,             -- PCIe, AXI & TCDS
-    6      => (gty25, buf, no_fmt, buf, gty25),
-    7      => (gty25, buf, no_fmt, buf, gty25),
-    8      => (gty25, buf, no_fmt, buf, gty25),
-    9      => (gty25, buf, no_fmt, buf, gty25),
-    10     => (gty25, buf, no_fmt, buf, gty25),
-    11     => kDummyRegion,             -- Not Used
+    6      => (gty25, buf, no_fmt, buf, gty25), --output algo-bits links SLR1
+    7      => (gty25, buf, no_fmt, buf, gty25), --output algo-bits links SLR1
+    8      => kDummyRegion,             -- Not used
+    9      => (gty25, buf, no_fmt, buf, gty25), --algo links SLR2
+    10     => (gty25, buf, no_fmt, buf, gty25), --algo links SLR2
+    11     => (gty25, buf, no_fmt, buf, gty25), --algo links SLR2
     12     => kDummyRegion,             -- Not used
     13     => kDummyRegion,             -- Not Used
     14     => kDummyRegion,             -- Not Used
@@ -50,18 +50,18 @@ package emp_project_decl is
     17     => kDummyRegion,             -- Not used
     18     => kDummyRegion,             -- Not Used
     19     => kDummyRegion,             -- Not Used
-    20     => kDummyRegion,             -- Not Used
-    21     => (gty25, buf, no_fmt, buf, gty25),
-    22     => (gty25, buf, no_fmt, buf, gty25),
-    23     => (gty25, buf, no_fmt, buf, gty25),
-    24     => (gty25, buf, no_fmt, buf, gty25),
-    25     => (gty25, buf, no_fmt, buf, gty25),
+    20     => (gty25, buf, no_fmt, buf, gty25), --algo links SLR2
+    21     => (gty25, buf, no_fmt, buf, gty25), --algo links SLR2
+    22     => (gty25, buf, no_fmt, buf, gty25), --algo links SLR2
+    23     => kDummyRegion,             -- Not Used
+    24     => (gty25, buf, no_fmt, buf, gty25), --output trigger-bits link SLR1
+    25     => kDummyRegion,             -- Not Used
     26     => kDummyRegion,             -- Unconnected
     27     => kDummyRegion,             -- HighSpeedBus
-    28     => (gty25, buf, no_fmt, buf, gty25),
-    29     => (gty25, buf, no_fmt, buf, gty25),
-    30     => (gty25, buf, no_fmt, buf, gty25),
-    31     => kDummyRegion,             -- Not Used
+    28     => kDummyRegion,             -- Not Used
+    29     => (gty25, buf, no_fmt, buf, gty25), --algo links SLR0
+    30     => (gty25, buf, no_fmt, buf, gty25), --algo links SLR0
+    31     => (gty25, buf, no_fmt, buf, gty25), --algo links SLR0
     others => kDummyRegion
     );
 

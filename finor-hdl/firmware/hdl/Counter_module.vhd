@@ -39,14 +39,18 @@ architecture RTL of Counter_module is
     signal begin_lumi_sec_int : std_logic;
     signal end_lumi_sec_int   : std_logic;
     signal test_en_int        : std_logic;
-    
+
     signal test : std_logic;
 
 begin
 
-
-    l1a    <= ctrs_in.l1a;
-    bx_cnt <= ctrs_in.bctr;
+    process (lhc_clk)
+    begin
+        if rising_edge(lhc_clk) then
+            l1a    <= ctrs_in.l1a;
+            bx_cnt <= ctrs_in.bctr; --TODO check clk cross here (the signals is 360 synchronous, yet I'm using it at 40...)
+        end if;
+    end process;
 
     bc0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_BC0  else '0';
     oc0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_OC0  else '0';

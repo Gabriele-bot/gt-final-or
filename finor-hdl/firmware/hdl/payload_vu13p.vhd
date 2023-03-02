@@ -54,8 +54,10 @@ architecture rtl of emp_payload is
     signal begin_lumi_section : std_logic := '0'; -- TODO extract the value from ctrs
     signal l1a_loc            : std_logic_vector(N_REGION - 1 downto 0);
     signal bcres              : std_logic := '0';
-    signal bctr_arr_SLRn0     : bctr_array (9+1 downto 0);
-    signal bctr_arr_SLRn1     : bctr_array (9+1 downto 0);
+    signal bctr_arr_SLRn0     : bctr_array (4 + SLR_CROSSING_LATENCY downto 0);
+    signal bctr_arr_SLRn1     : bctr_array (4 + SLR_CROSSING_LATENCY downto 0);
+    signal bctr_40_SLRn0      : bctr_t;
+    signal bctr_40_SLRn1      : bctr_t;
     signal valid_out_SLRn0_regs, valid_out_SLRn1_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
     signal valid_in                                   : std_logic;
     signal algos_valid_SLRn0, algos_valid_SLRn1       : std_logic;
@@ -256,13 +258,21 @@ begin
         --TODO better alignment here
         bctr_arr_SLRn0(0) <= ctrs(28).bctr;
         bctr_arr_SLRn1(0) <= ctrs(23).bctr;
-        ctrs_shift_reg : process(clk_p)
+        bctr_shift_reg : process(clk_p)
         begin
             if rising_edge(clk_p) then
                 bctr_arr_SLRn0(bctr_arr_SLRn0'high downto 1) <= bctr_arr_SLRn0(bctr_arr_SLRn0'high - 1 downto 0);
                 bctr_arr_SLRn1(bctr_arr_SLRn1'high downto 1) <= bctr_arr_SLRn1(bctr_arr_SLRn1'high - 1 downto 0);
             end if;
-        end process ctrs_shift_reg;
+        end process bctr_shift_reg;
+        
+        bctr_40_reg : process(clk_payload(2))
+        begin
+            if rising_edge(clk_payload(2)) then
+                bctr_40_SLRn0 <= bctr_arr_SLRn0(bctr_arr_SLRn0'high);
+                bctr_40_SLRn1 <= bctr_arr_SLRn1(bctr_arr_SLRn1'high);
+            end if;
+        end process bctr_40_reg;
         
         
         
@@ -273,7 +283,7 @@ begin
                 rst360      => rst_loc(23),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
-                bctr        => bctr_arr_SLRn1(bctr_arr_SLRn1'high), 
+                bctr        => bctr_40_SLRn1, 
                 input_40MHz => algos_SLRn1,
                 valid_in    => algos_valid_SLRn1,
                 output_data => algos_link_SLRn1_regs(0)
@@ -285,7 +295,7 @@ begin
                 rst360      => rst_loc(23),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
-                bctr        => bctr_arr_SLRn1(bctr_arr_SLRn1'high), 
+                bctr        => bctr_40_SLRn1, 
                 input_40MHz => algos_after_bxmask_SLRn1,
                 valid_in    => algos_valid_SLRn1,
                 output_data => algos_bxmask_link_SLRn1_regs(0)
@@ -297,7 +307,7 @@ begin
                 rst360      => rst_loc(23),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
-                bctr        => bctr_arr_SLRn1(bctr_arr_SLRn1'high), 
+                bctr        => bctr_40_SLRn1, 
                 input_40MHz => algos_presc_SLRn1,
                 valid_in    => algos_valid_SLRn1,
                 output_data => algos_presc_link_SLRn1_regs(0)
@@ -309,7 +319,7 @@ begin
                 rst360      => rst_loc(28),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
-                bctr        => bctr_arr_SLRn0(bctr_arr_SLRn0'high), 
+                bctr        => bctr_40_SLRn0, 
                 input_40MHz => algos_SLRn0,
                 valid_in    => algos_valid_SLRn0,
                 output_data => algos_link_SLRn0_regs(0)
@@ -321,7 +331,7 @@ begin
                 rst360      => rst_loc(28),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
-                bctr        => bctr_arr_SLRn0(bctr_arr_SLRn0'high), 
+                bctr        => bctr_40_SLRn0, 
                 input_40MHz => algos_after_bxmask_SLRn0,
                 valid_in    => algos_valid_SLRn0,
                 output_data => algos_bxmask_link_SLRn0_regs(0)
@@ -333,7 +343,7 @@ begin
                 rst360      => rst_loc(28),
                 lhc_clk     => clk_payload(2),
                 lhc_rst     => rst_payload(2),
-                bctr        => bctr_arr_SLRn0(bctr_arr_SLRn0'high), 
+                bctr        => bctr_40_SLRn0, 
                 input_40MHz => algos_presc_SLRn0,
                 valid_in    => algos_valid_SLRn0,
                 output_data => algos_presc_link_SLRn0_regs(0)

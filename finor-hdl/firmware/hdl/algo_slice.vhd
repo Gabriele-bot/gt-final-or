@@ -111,7 +111,8 @@ begin
             sys_clk         => sys_clk,
             clk             => lhc_clk,
             sres_counter    => sres_algo_rate_counter,
-            store_cnt_value => begin_lumi_per_del1,
+            store_cnt_value => begin_lumi_per,
+            --store_cnt_value => begin_lumi_per_del1,
             algo_i          => algo_after_algo_bx_mask_int,
             counter_o       => rate_cnt_before_prescaler
         );
