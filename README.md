@@ -143,4 +143,7 @@ python RateChecker.py -t trigger_mask -p random -ls 3 -c my_connections.xml -S
 python RateChecker.py -t veto_mask -p random -ls 3 -c my_connections.xml -S
 python RateChecker.py -t BXmask -p random -ls 3 -c my_connections.xml -S
 ```
-
+Check output unprescaled algobits, this requires that the prescale test is run beforehand.
+```
+python RateChecker.py -t algo-out
+```

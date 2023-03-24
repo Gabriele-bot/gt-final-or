@@ -5,12 +5,12 @@
 import os
 
 import numpy as np
-import random
 import uhal
-# import emp
-import sys
 import time
 import argparse
+from patternfiles import *
+
+from FinOrController import FinOrController
 
 parser = argparse.ArgumentParser(description='GT-Final OR board Rate Checker')
 parser.add_argument('-p', '--ps_column', metavar='N', type=str, default='random',
@@ -34,247 +34,20 @@ uhal.disableLogging()
 lumi_bit = args.lumisection
 
 
-class HWtest_class:
-    def __init__(self, serenity, connection_file='my_connections.xml', device='x0'):
-        self.serenity = serenity
-        self.connection_file = 'file://' + connection_file
-        if self.serenity == 'Serenity3':
-            self.SLRs = [2, 3]
-            self.part = 'vu13p'
-        elif self.serenity == 'Serenity2':
-            self.SLRs = [2, 3]
-            self.part = 'vu9p'
-        self.manager = uhal.ConnectionManager(self.connection_file)
-        self.hw = self.manager.getDevice(device)
+if args.test != 'algo-out':
+    HWtest = FinOrController(serenity='Serenity3', connection_file=args.connections, device='x0', emp_flag=False)
 
-    def set_TimeOutPeriod(self, value):
-        self.hw.setTimeoutPeriod(value)
+    # EMPdevice = HWtest.get_device()
+    # ttcNode   = EMPdevice.getTTC()
+    # ttcNode.forceBCmd(0x24) #Send test enable command
 
-    # ==============================READ_WRITE IPbus regs ==============================
-    def load_prsc_in_RAM(self, prsc_arr, sel):
-        if sel == 0:
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr[1])
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr[0])
-        elif sel == 1:
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr[1])
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr[0])
-        else:
-            raise Exception("Selector is not in [0,1]")
-        self.hw.dispatch()
+    HWtest.set_TimeOutPeriod(5000)
 
-    def send_new_prescale_column_flag(self):
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-        time.sleep(0.01)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.dispatch()
-
-    def send_new_trigger_mask_flag(self):
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
-        time.sleep(0.01)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.dispatch()
-
-    def send_new_veto_mask_flag(self):
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
-        time.sleep(0.01)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.dispatch()
-
-    def read_lumi_sec_prescale_mark(self):
-        mark_3 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
-        mark_2 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
-        self.hw.dispatch()
-
-        return np.uint32(mark_2), np.uint32(mark_3)
-
-    def read_lumi_sec_trigger_mask_mark(self):
-        mark_3 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-        mark_2 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-        self.hw.dispatch()
-
-        return np.uint32(mark_2), np.uint32(mark_3)
-
-    def read_lumi_sec_veto_mask_mark(self):
-        mark_3 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
-        mark_2 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
-        self.hw.dispatch()
-
-        return np.uint32(mark_2), np.uint32(mark_3)
-
-    def load_mask_arr(self, mask_arr):
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.trgg_mask").writeBlock(mask_arr[1])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.trgg_mask").writeBlock(mask_arr[0])
-        self.hw.dispatch()
-
-    def load_veto_mask(self, veto_mask):
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.veto_mask").writeBlock(veto_mask[1])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.veto_mask").writeBlock(veto_mask[0])
-        self.hw.dispatch()
-
-    def load_BXmask_arr(self, BXmask_arr):
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[1][0])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[1][1])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[1][2])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_96_127").writeBlock(BXmask_arr[1][3])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[1][4])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[1][5])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[1][6])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[1][7])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[1][8])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[1][9])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[1][10])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[1][11])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[1][12])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[1][13])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[1][14])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[1][15])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[1][16])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[1][17])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr[0][0])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_32_63").writeBlock(BXmask_arr[0][1])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_64_95").writeBlock(BXmask_arr[0][2])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_96_127").writeBlock(BXmask_arr[0][3])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_128_159").writeBlock(BXmask_arr[0][4])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_160_191").writeBlock(BXmask_arr[0][5])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_192_223").writeBlock(BXmask_arr[0][6])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_224_255").writeBlock(BXmask_arr[0][7])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_256_287").writeBlock(BXmask_arr[0][8])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_288_319").writeBlock(BXmask_arr[0][9])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_320_351").writeBlock(BXmask_arr[0][10])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_352_383").writeBlock(BXmask_arr[0][11])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_384_415").writeBlock(BXmask_arr[0][12])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_416_447").writeBlock(BXmask_arr[0][13])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_448_479").writeBlock(BXmask_arr[0][14])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_480_511").writeBlock(BXmask_arr[0][15])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_512_543").writeBlock(BXmask_arr[0][16])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr[0][17])
-        self.hw.dispatch()
-
-    def set_link_mask(self, link_mask_1, link_mask_0):
-        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.link_mask").write(link_mask_1)
-        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.link_mask").write(link_mask_0)
-        self.hw.dispatch()
-
-    def check_alignement_error(self):
-        err_1 = self.hw.getNode("payload.SLRn1_monitor.CSR.stat.align_err").read()
-        err_0 = self.hw.getNode("payload.SLRn0_monitor.CSR.stat.align_err").read()
-        self.hw.dispatch()
-
-        return err_1, err_0
-
-    def reset_alignement_error(self):
-        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.rst_align_err").write(1)
-        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.rst_align_err").write(1)
-        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.rst_align_err").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.rst_align_err").write(0)
-        self.hw.dispatch()
-
-    def load_latancy_delay(self, latency):
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
-        self.hw.dispatch()
-
-    def read_latancy_delay(self):
-        latency_3 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
-        latency_2 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
-        self.hw.dispatch()
-
-        return latency_2, latency_3
-
-    def check_counter_ready_flags(self):
-        ready_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.ready").read()
-        ready_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.ready").read()
-        self.hw.dispatch()
-
-        return ready_1, ready_0
-
-    def read_cnt_arr(self, sel):
-        if sel == 0:
-            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_before_prsc").readBlock(576)
-            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_before_prsc").readBlock(576)
-        elif sel == 1:
-            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_after_prsc").readBlock(576)
-            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_after_prsc").readBlock(576)
-        elif sel == 2:
-            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_after_prsc_prvw").readBlock(576)
-            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_after_prsc_prvw").readBlock(576)
-        elif sel == 3:
-            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_pdt").readBlock(576)
-            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_pdt").readBlock(576)
-        else:
-            raise Exception("Selector is not in [0,1,2,3]")
-        self.hw.dispatch()
-        cnt = np.vstack((cnt_0, cnt_1)).flatten()
-
-        return np.array(cnt, dtype=np.uint32)
-
-    def check_trigger_counter_ready_flag(self):
-        ready = self.hw.getNode("payload.SLR_FINOR.CSR.stat.ready").read()
-        self.hw.dispatch()
-
-        return ready
-
-    def read_trigg_cnt(self, sel):
-        if sel == 0:
-            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor").readBlock(8)
-        elif sel == 1:
-            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_pdt").readBlock(8)
-        elif sel == 2:
-            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_preview").readBlock(8)
-        elif sel == 3:
-            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_preview_pdt").readBlock(8)
-        elif sel == 4:
-            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_with_veto").readBlock(8)
-        elif sel == 5:
-            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_with_veto_pdt").readBlock(8)
-        elif sel == 6:
-            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_preview_with_veto").readBlock(8)
-        elif sel == 7:
-            cnt = self.hw.getNode("payload.SLR_FINOR.cnt_rate_finor_preview_with_veto_pdt").readBlock(8)
-        else:
-            raise Exception("Selector is not in [0,1,2,3,4,5,6,7]")
-        self.hw.dispatch()
-
-        return np.array(cnt, dtype=np.uint32)
-
-    def read_veto_cnt(self):
-        cnt = self.hw.getNode("payload.SLR_FINOR.Veto_reg.stat.Veto_cnt").read()
-        self.hw.dispatch()
-
-        return cnt
-
-
-# def get_device(self):
-#    device = emp.Controller(self.hw)
-#
-#    return device
-
-
-HWtest = HWtest_class('Serenity3', args.connections, 'x0')
-
-# EMPdevice = HWtest.get_device()
-# ttcNode   = EMPdevice.getTTC()
-# ttcNode.forceBCmd(0x24) #Send test enable command
-
-HWtest.set_TimeOutPeriod(5000)
-
-# Set the l1a-latency delay
-l1_latency_delay = int(100)
-HWtest.load_latancy_delay(l1_latency_delay)
-HWtest.set_link_mask(0x00ffffff, 0x00ffffff)
-time.sleep(2)
+    # Set the l1a-latency delay
+    l1_latency_delay = int(100)
+    HWtest.load_latancy_delay(l1_latency_delay)
+    HWtest.set_link_mask(0x00ffffff, 0x00ffffff)
+    time.sleep(2)
 
 
 # -------------------------------------------------------------------------------------
@@ -875,6 +648,64 @@ elif args.test == 'BXmask':
         raise Exception("Error found! Check the counters!")
     else:
         print("No mismatch found!")
+
+# -------------------------------------------------------------------------------------
+# ----------------------------ALGO OUT TEST--------------------------------------------
+# -------------------------------------------------------------------------------------
+if args.test == 'algo-out':
+
+    # TODO maybe put this in a config file? Or directly parse the vhdl pkg?
+    unprescaled_low_bits_link = 27
+    unprescaled_high_bits_link = 24
+
+
+    in_valid, in_data, _ = read_pattern_file('Pattern_files/Finor_input_pattern_prescaler_test.txt', True)
+    try:
+        out_valid, out_data, links = read_pattern_file('../out_prescaler_test.txt', True)
+    except:
+        raise("Did you run the prescale test beforehand?")
+
+    # TODO maybe put this in a config file?
+    input_links = [
+        [127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+        [91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36]]
+
+    temp_or = np.zeros(np.shape(in_data)[1], dtype=np.uint64)
+    # put to 0 invalid frames
+    temp_data_in = in_valid[:24] * in_data[:24]
+
+    for i in range(np.shape(input_links)[1]):
+        temp_or = np.bitwise_or(temp_or, temp_data_in[i, :])
+
+    # extract deserialized valid data
+    output_link_data = []
+    for i in range(np.shape(out_data)[1]):
+        if out_valid[unprescaled_low_bits_link, i] == 1:
+            output_link_data = np.append(output_link_data, out_data[np.where(links == unprescaled_low_bits_link), i])
+
+    # print(output_link_data)
+
+    if np.array_equal(output_link_data, temp_or[:len(output_link_data)]):
+        print("Lower output algobit pattern match the input data ORing (unprescaled)")
+    else:
+        print('Mismatch was found, check your pattern files and/or the registers')
+
+    temp_or = np.zeros(np.shape(in_data)[1], dtype=np.uint64)
+    temp_data_in = in_valid[24:48] * in_data[24:48]
+
+    for i in range(np.shape(input_links)[1]):
+        temp_or = np.bitwise_or(temp_or, temp_data_in[i, :])
+
+    output_link_data = []
+    for i in range(np.shape(out_data)[1]):
+        if out_valid[unprescaled_high_bits_link, i] == 1:
+            output_link_data = np.append(output_link_data, out_data[np.where(links == unprescaled_high_bits_link), i])
+
+    if np.array_equal(output_link_data, temp_or[:len(output_link_data)]):
+        print("Higher output algobit pattern match the input data ORing (unprescaled)")
+    else:
+        print('Mismatch was found, check your pattern files and/or the registers')
+
 
 else:
     print('No suitable test was selected!')

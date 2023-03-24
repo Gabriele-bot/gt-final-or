@@ -106,6 +106,9 @@ test:serenity:
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - python3.6 RateChecker.py -p random -t BXmask -c my_connections.xml -ls 18
+    # Output algobits test
+    - python3.6 RateChecker.py -t algo-out
+  rules:
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
