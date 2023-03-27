@@ -223,7 +223,7 @@ begin
             q         => d_res
         ) ;
 
-    deser_i : entity work.In_deser
+    deser_i : entity work.Link_deserializer
         generic map(
             OUT_REG => DESER_OUT_REG
         )

@@ -661,7 +661,7 @@ if args.test == 'algo-out':
 
     in_valid, in_data, _ = read_pattern_file('Pattern_files/Finor_input_pattern_prescaler_test.txt', True)
     try:
-        out_valid, out_data, links = read_pattern_file('../out_prescaler_test.txt', True)
+        out_valid, out_data, links = read_pattern_file('out_prescaler_test.txt', True)
     except:
         raise("Did you run the prescale test beforehand?")
 

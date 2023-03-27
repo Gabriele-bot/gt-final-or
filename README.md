@@ -3,7 +3,7 @@
 # Overview
 
 <center>
-    <img src="./docs/images/Finor_overview.png" alt="Drawing" style="width: 500px"/>
+    <img src="./docs/Images/Finor_overview.png" alt="Drawing" style="width: 500px"/>
 </center>
 
 | Link | Quad | Direction | Description | Target |
@@ -12,9 +12,9 @@
 | 116-127 | 29-31 | IN | Links 1 low algos| Algo boards 0-11 |
 | 36-47 | 9-11 | IN | Links 0 high algos| Algo boards 0-11 |
 | 80-91 |20-22 | IN | Links 1 high algos| Algo boards 0-11 |
-| 24-26 |6 | OUT | Low algobits| scouting(?) |
-| 27-29 |6-7 | OUT | High algos bits| scouting(?) |
-| 96 |24 | OUT | Finor out bits| TCDS2(?) | 
+| 24-26 |6 | OUT | Low algobits| DAQ, Scounting |
+| 27-29 |6-7 | OUT | High algos bits| DAQ, Scounting |
+| 96 |24 | OUT | Finor out bits| TCDS-2 | 
 
 # Supported boards
 

@@ -32,11 +32,11 @@ architecture RTL of Link_merger is
     signal data_mapped          : data_trnsp_t ;
     signal q_int : lword;
 
-    signal valid_error             : std_logic;
-    signal start_of_orbit_error    : std_logic;
-    signal start_error             : std_logic;
-    signal last_error              : std_logic;
-    signal allign_error            : std_logic;
+    --signal valid_error             : std_logic;
+    --signal start_of_orbit_error    : std_logic;
+    --signal start_error             : std_logic;
+    --signal last_error              : std_logic;
+    --signal allign_error            : std_logic;
 
     signal or_valid          : std_logic;
     signal or_start_of_orbit : std_logic;
@@ -56,16 +56,16 @@ begin
     end generate;
     
     -- TODO waht to do if a link is masked??
-    valid_error <= xor d_valids;
-    start_of_orbit_error <= xor d_starts_of_orbit;
-    start_error <= xor d_starts;
-    last_error  <= xor d_lasts;
+    --valid_error <= xor d_valids;
+    --start_of_orbit_error <= xor d_starts_of_orbit;
+    --start_error <= xor d_starts;
+    --last_error  <= xor d_lasts;
 
-    allign_error <= valid_error or start_of_orbit_error or start_error or last_error;
+    --allign_error <= valid_error or start_of_orbit_error or start_error or last_error;
 
     mapping_i : for i in 0 to 63 generate
         mapping_j : for j in 0 to NR_LINKS -1 generate
-            data_mapped(i)(j) <= d_data(j)(i) and link_mask(j);
+            data_mapped(i)(j) <= d_data(j)(i) and link_mask(j) and d_valids(j);
         end generate;
     end generate;
 
