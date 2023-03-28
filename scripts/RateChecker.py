@@ -106,21 +106,21 @@ if args.test == 'prescaler':
     index_high = index[np.where(index >= 576)[0]]
 
     if args.ps_column == "random":
-        prsc_fct[1][np.int16(index_high - 576)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_high)))
-        prsc_fct[0][np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_low)))
+        prsc_fct[1][np.int16(index_high - 576)] = np.uint32(np.random.randint(100, 2 ** 32 - 101, len(index_high)))
+        prsc_fct[0][np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 32 - 101, len(index_low)))
     elif args.ps_column == "linear":
-        prsc_fct[1][np.int16(index_high - 576)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_high)))
-        prsc_fct[0][np.int16(index_low)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_low)))
+        prsc_fct[1][np.int16(index_high - 576)] = np.int32(np.linspace(100, 2 ** 32 - 101, len(index_high)))
+        prsc_fct[0][np.int16(index_low)] = np.int32(np.linspace(100, 2 ** 32 - 101, len(index_low)))
 
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     print("pre-scale factors loaded in RAM")
 
     if args.ps_column == "random":
-        prsc_fct_prvw[1][np.int16(index_high - 576)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_high)))
-        prsc_fct_prvw[0][np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_low)))
+        prsc_fct_prvw[1][np.int16(index_high - 576)] = np.uint32(np.random.randint(100, 2 ** 32 - 101, len(index_high)))
+        prsc_fct_prvw[0][np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 32 - 101, len(index_low)))
     elif args.ps_column == "linear":
-        prsc_fct_prvw[1][np.int16(index_high - 576)] = np.uint32(np.linspace(100, 2 ** 24 - 101, len(index_high)))
-        prsc_fct_prvw[0][np.int16(index_low)] = np.uint32(np.linspace(100, 2 ** 24 - 101, len(index_low)))
+        prsc_fct_prvw[1][np.int16(index_high - 576)] = np.uint32(np.linspace(100, 2 ** 32 - 101, len(index_high)))
+        prsc_fct_prvw[0][np.int16(index_low)] = np.uint32(np.linspace(100, 2 ** 32 - 101, len(index_low)))
 
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
     print("pre-scale factors loaded in RAM")
