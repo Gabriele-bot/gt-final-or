@@ -1,3 +1,8 @@
+--=================================================================
+--Data Link Merger
+--Simple merge perforemed with a bitwise OR
+--If necessary links can be masked and treated as LWORD_NULL (others => '0', 0, 0, 0, 0, 0)
+--=================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -11,11 +16,11 @@ entity Link_merger is
         NR_LINKS : natural := 3
     );
     port(
-        clk_p     : in std_logic;
-        rst_p     : in std_logic;
-        link_mask : in std_logic_vector(NR_LINKS - 1 downto 0);
-        d         : in   ldata(NR_LINKS - 1 downto 0);  -- data in
-        q         : out  lword  -- data out
+        clk360     : in std_logic;
+        rst360     : in std_logic;
+        link_mask  : in std_logic_vector(NR_LINKS - 1 downto 0);
+        d          : in   ldata(NR_LINKS - 1 downto 0);  -- data in
+        q          : out  lword  -- data out
     );
 end entity Link_merger;
 
@@ -55,7 +60,7 @@ begin
         d_strobes(i)         <= d(i).strobe;
     end generate;
     
-    -- TODO waht to do if a link is masked??
+    -- TODO what to do if a link is masked??
     --valid_error <= xor d_valids;
     --start_of_orbit_error <= xor d_starts_of_orbit;
     --start_error <= xor d_starts;
@@ -65,25 +70,29 @@ begin
 
     mapping_i : for i in 0 to 63 generate
         mapping_j : for j in 0 to NR_LINKS -1 generate
-            data_mapped(i)(j) <= d_data(j)(i) and link_mask(j) and d_valids(j);
+            data_mapped(i)(j) <= d_data(j)(i) and d_valids(j);
         end generate;
     end generate;
-
+    
+    --Merge
     Merge_i : for k in 0 to 63 generate
-        q_int.data(k) <= or data_mapped(k);
+        q_int.data(k) <= or (data_mapped(k) and link_mask(k));
     end generate;
-
-    q_int.valid  <= or (d_valids  and link_mask);
-    q_int.start_of_orbit  <= or (d_starts_of_orbit  and link_mask);
-    q_int.start  <= or (d_starts  and link_mask);
-    q_int.last   <= or (d_lasts  and link_mask);
+    q_int.valid  <= or (d_valids and link_mask);
+    q_int.start_of_orbit  <= or (d_starts_of_orbit and link_mask);
+    q_int.start  <= or (d_starts and link_mask);
+    q_int.last   <= or (d_lasts and link_mask);
     q_int.strobe <= or (d_strobes and link_mask);
 
 
-    process(clk_p)
+    process(clk360)
     begin
-        if rising_edge(clk_p) then
-            q <= q_int;
+        if rising_edge(clk360) then
+            if rst360 ='1' then
+                q <= LWORD_NULL;
+            else
+                q <= q_int;
+            end if;
         end if;
     end process;
 

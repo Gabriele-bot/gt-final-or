@@ -652,11 +652,11 @@ elif args.test == 'BXmask':
 # -------------------------------------------------------------------------------------
 # ----------------------------ALGO OUT TEST--------------------------------------------
 # -------------------------------------------------------------------------------------
-if args.test == 'algo-out':
+elif args.test == 'algo-out':
 
     # TODO maybe put this in a config file? Or directly parse the vhdl pkg?
-    unprescaled_low_bits_link = 27
-    unprescaled_high_bits_link = 24
+    unprescaled_low_bits_link = 29
+    unprescaled_high_bits_link = 26
 
 
     in_valid, in_data, _ = read_pattern_file('Pattern_files/Finor_input_pattern_prescaler_test.txt', True)

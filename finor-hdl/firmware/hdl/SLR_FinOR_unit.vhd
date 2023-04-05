@@ -20,9 +20,10 @@ use work.math_pkg.all;
 
 entity SLR_FinOR_unit is
     generic(
-        NR_LINKS              : natural := INPUT_LINKS_SLR;
-        NR_MON_REG            : natural := MON_REG;
-        BEGIN_LUMI_TOGGLE_BIT : natural := 18;
+        NR_RIGHT_LINKS        : natural := INPUT_R_LINKS_SLR;
+        NR_LEFT_LINKS         : natural := INPUT_L_LINKS_SLR;
+        NR_QUADS              : natural := INPUT_QUADS;
+        BEGIN_LUMI_TOGGLE_BIT : natural := BEGIN_LUMI_SEC_BIT;
         MAX_DELAY             : natural := MAX_DELAY_PDT
     );
     port(
@@ -33,10 +34,10 @@ entity SLR_FinOR_unit is
         --====================================================================--
         clk360    : in std_logic;
         rst360    : in std_logic;
-        lhc_clk   : in std_logic;
-        lhc_rst   : in std_logic;
-        ctrs      : in ttc_stuff_array(NR_MON_REG - 1 downto 0);
-        d         : in ldata(NR_LINKS - 1 downto 0);  -- data in
+        clk40     : in std_logic;
+        rst40     : in std_logic;
+        ctrs      : in ttc_stuff_array(NR_QUADS - 1 downto 0);
+        d         : in ldata(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);  -- data in
         trigger_o          : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_preview_o  : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_valid_out  : out std_logic;
@@ -57,16 +58,16 @@ architecture RTL of SLR_FinOR_unit is
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
 
     signal valid_deser_out : std_logic;
-    signal d_valids        : std_logic_vector(NR_LINKS - 1 downto 0);
+    signal d_valids        : std_logic_vector(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);
 
-    signal d_reg : ldata(NR_LINKS - 1 downto 0);
+    signal d_reg      : ldata(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0);
     signal links_data : data_arr;
 
     signal algos_in                : std_logic_vector(64*9-1 downto 0);
     signal algos_after_prescaler   : std_logic_vector(64*9-1 downto 0);
 
     signal d_left, d_right: ldata(1 downto 0);
-    signal d_res : lword;
+    signal d_res          : lword;
 
     signal trigger_out            : std_logic_vector(N_TRIGG-1 downto 0);
     signal trigger_out_preview    : std_logic_vector(N_TRIGG-1 downto 0);
@@ -80,7 +81,7 @@ architecture RTL of SLR_FinOR_unit is
     signal stat_reg     : ipb_reg_v(0 downto 0);
     signal ctrl_stb     : std_logic_vector(1 downto 0);
 
-    signal link_mask       : std_logic_vector(NR_LINKS - 1 downto 0);
+    signal link_mask       : std_logic_vector(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);
     signal rst_align_error : std_logic;
     signal align_error     : std_logic;
 
@@ -139,7 +140,7 @@ begin
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
             SRC_INPUT_REG  => 1,
-            WIDTH          => NR_LINKS
+            WIDTH          => NR_RIGHT_LINKS + NR_LEFT_LINKS 
         )
         port map (
             dest_out => link_mask,
@@ -180,25 +181,25 @@ begin
 
     Right_merge : entity work.Link_merger
         generic map(
-            NR_LINKS => NR_LINKS/2
+            NR_LINKS => NR_RIGHT_LINKS
         )
         port map(
-            clk_p     => clk360,
-            rst_p     => rst360,
-            link_mask => link_mask(NR_LINKS/2 - 1 downto 0),
-            d         => d_reg(NR_LINKS/2 - 1 downto 0),
+            clk360    => clk360,
+            rst360    => rst360,
+            link_mask => link_mask(NR_RIGHT_LINKS - 1 downto 0),
+            d         => d_reg(NR_RIGHT_LINKS - 1 downto 0),
             q         => d_right(0)
         ) ;
 
     Left_merge : entity work.Link_merger
         generic map(
-            NR_LINKS => NR_LINKS/2
+            NR_LINKS => NR_LEFT_LINKS
         )
         port map(
-            clk_p     => clk360,
-            rst_p     => rst360,
-            link_mask => link_mask(NR_LINKS - 1 downto NR_LINKS/2),
-            d         => d_reg(NR_LINKS - 1 downto NR_LINKS/2),
+            clk360    => clk360,
+            rst360    => rst360,
+            link_mask => link_mask(NR_LEFT_LINKS- 1 downto NR_RIGHT_LINKS),
+            d         => d_reg(NR_LEFT_LINKS - 1 downto NR_RIGHT_LINKS),
             q         => d_left(0)
         ) ;
 
@@ -215,11 +216,11 @@ begin
             NR_LINKS => 2
         )
         port map(
-            clk_p     => clk360,
-            rst_p     => rst360,
+            clk360    => clk360,
+            rst360    => rst360,
             link_mask => (others => '1'),
-            d(0)      => d_left(1),
-            d(1)      => d_right(1),
+            d(0)      => d_right(1),
+            d(1)      => d_left(1),
             q         => d_res
         ) ;
 
@@ -229,8 +230,8 @@ begin
         )
         port map(
             clk360       => clk360,
-            lhc_clk      => lhc_clk,
-            lhc_rst      => lhc_rst,
+            clk40        => clk40,
+            rst40        => rst40,
             lane_data_in => d_res,
             rst_err      => rst_align_error,
             align_err_o  => align_error,
@@ -248,9 +249,9 @@ begin
     --TODO Where to stat counting, need some latency? How much?
 
     ctrs_del(0) <= ctrs(0);
-    ctrs_del_p: process(lhc_clk)
+    ctrs_del_p: process(clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             ctrs_del(1) <= ctrs_del(0);
         end if;
     end process;
@@ -276,8 +277,8 @@ begin
             rst                     => rst,
             ipb_in                  => ipb_to_slaves(N_SLV_MONITORING_MODULE),
             ipb_out                 => ipb_from_slaves(N_SLV_MONITORING_MODULE),
-            lhc_clk                 => lhc_clk,
-            lhc_rst                 => lhc_rst,
+            lhc_clk                 => clk40,
+            lhc_rst                 => clk40,
             ctrs                    => ctrs_int,
             algos_in                => algos_in,
             valid_algos_in          => valid_deser_out,

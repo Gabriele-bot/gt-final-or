@@ -24,8 +24,10 @@ package P2GT_finor_pkg is
     -- =======================================================================================================
     constant N_BOARD                : integer := 12;
     constant N_SLR                  : integer := 4;
-    constant INPUT_LINKS_SLR        : integer := 24;
-    constant MON_REG                : integer := 6;
+    constant INPUT_R_LINKS_SLR      : integer := 12;
+    constant INPUT_L_LINKS_SLR      : integer := 12;
+    constant INPUT_LINKS_SLR        : integer := INPUT_R_LINKS_SLR + INPUT_L_LINKS_SLR;
+    constant INPUT_QUADS            : integer := 3 + 3;
     constant N_TRIGG                : integer := 8;
     constant BEGIN_LUMI_SEC_BIT     : integer := 18;
     constant BEGIN_LUMI_SEC_BIT_SIM : integer := 3;
@@ -72,14 +74,14 @@ package P2GT_finor_pkg is
     -- Prescaler increment (1*10**fraction_digits)
     constant PRESCALER_INCR : unsigned(31 downto 0) := to_unsigned(10**PRESCALE_FACTOR_FRACTION_DIGITS, 32);
 
-    type prescale_factor_array is array (9*64-1 downto 0) of std_logic_vector(PRESCALE_FACTOR_WIDTH-1 downto 0);
+    type prescale_factor_array is array (natural range <>) of std_logic_vector(PRESCALE_FACTOR_WIDTH-1 downto 0);
 
     -- ================= RATE COUNTERS ========================================================================
     -- Definitions for rate counters (P2GT FinalOR)
 
     constant RATE_COUNTER_WIDTH         : natural := 32;
 
-    type rate_counter_array is array (9*64-1 downto 0) of std_logic_vector(RATE_COUNTER_WIDTH-1 downto 0);
+    type rate_counter_array is array (natural range <>)) of std_logic_vector(RATE_COUNTER_WIDTH-1 downto 0);
 
 
 end package;

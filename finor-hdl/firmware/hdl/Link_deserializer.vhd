@@ -1,8 +1,10 @@
--- GB 29-07-2022: new version, deserializer synchronized with link_valid.
+--=================================================================
+--Data Link Deserializer
+--Transalte 64 bit@360 MHz data stream into 576 bit @ 40MHz data stream
+--Alignemnt check is perfrometd at the very last comparing the metadata against the expected values
+--=================================================================
 library ieee;
 use ieee.std_logic_1164.all;
-library unisim;
-use unisim.VComponents.all;
 
 use work.emp_data_types.all;
 use work.emp_ttc_decl.all;
@@ -12,8 +14,9 @@ entity Link_deserializer is
     );
     port(
         clk360             : in std_logic;
-        lhc_clk            : in std_logic;
-        lhc_rst            : in std_logic;
+        rst360             : in std_logic;
+        clk40              : in std_logic;
+        rst40              : in std_logic;
         lane_data_in       : in lword;
         rst_err            : in std_logic;
         align_err_o        : out std_logic;
@@ -85,11 +88,16 @@ begin
 
 
     out_reg_g : if OUT_REG generate
-        data_40mhz_p: process(lhc_clk)
+        data_40mhz_p: process(clk40)
         begin
-            if rising_edge(lhc_clk) then
-                demux_data_o <= data_deserialized;
-                valid_out    <= data_in_valid_del_arr(9);
+            if rising_edge(clk40) then
+                if rst40 ='1' then
+                    demux_data_o <= (others => '0');
+                    valid_out    <= '0';
+                else
+                    demux_data_o <= data_deserialized;
+                    valid_out    <= data_in_valid_del_arr(9);
+                end if;
             end if;
         end process;
     else generate
@@ -102,7 +110,7 @@ begin
     begin
         if rising_edge(clk360) then
             if align_err = '1' then
-                if rst_err = '1' then
+                if rst_err = '1' or rst360 = '1' then
                     align_err <= '0';
                 end if;
             else

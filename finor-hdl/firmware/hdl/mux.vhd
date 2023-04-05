@@ -11,8 +11,8 @@ entity mux is
     port(
         clk360      : in std_logic;
         rst360      : in std_logic;
-        lhc_clk     : in std_logic;
-        lhc_rst     : in std_logic;
+        clk40       : in std_logic;
+        rst40       : in std_logic;
         bctr        : in  bctr_t;
         -- input
         input_40MHz : in std_logic_vector(64*9-1 downto 0);
@@ -45,9 +45,9 @@ architecture arch of mux is
 
 begin
     
-    in_reg : process (lhc_clk)
+    in_reg : process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             input_40MHz_reg <= input_40MHz;
             valid_40MHz_reg <= valid_in; 
         end if;
