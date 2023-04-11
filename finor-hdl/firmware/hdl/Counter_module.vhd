@@ -9,8 +9,8 @@ entity Counter_module is
         BEGIN_LUMI_BIT : integer := 18
     );
     port(
-        lhc_clk  : in std_logic;
-        lhc_rst  : in std_logic;
+        clk360  : in std_logic;
+        rst360  : in std_logic;
         ctrs_in  : in ttc_stuff_t;
         bc0            : out std_logic;
         ec0            : out std_logic;
@@ -40,28 +40,21 @@ architecture RTL of Counter_module is
     signal end_lumi_sec_int   : std_logic;
     signal test_en_int        : std_logic;
 
-    signal test : std_logic;
+    signal end_lumi_red_bit : std_logic;
 
 begin
 
-    process (lhc_clk)
-    begin
-        if rising_edge(lhc_clk) then
-            l1a    <= ctrs_in.l1a;
-            bx_cnt <= ctrs_in.bctr; --TODO check clk cross here (the signals is 360 synchronous, yet I'm using it at 40...)
-        end if;
-    end process;
 
     bc0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_BC0  else '0';
     oc0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_OC0  else '0';
     ec0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_EC0  else '0';
 
-    process (lhc_clk)
+    process (clk360)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk360) then
             if oc0_s = '1' then
                 o_cnt <= (others => '0');
-            elsif unsigned(bx_cnt) = LHC_BUNCH_COUNT-1 then
+            elsif unsigned(ctrs_in.bctr) = LHC_BUNCH_COUNT-1 and ctrs_in.pctr = "1000" then
                 o_cnt <= std_logic_vector(unsigned(o_cnt) + 1);
             end if;
         end if;
@@ -69,20 +62,20 @@ begin
 
     o_cntbls <= o_cnt(BEGIN_LUMI_BIT);
 
-    process (lhc_clk)
+    process (clk360)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk360) then
             if ec0_s = '1' then
                 e_cnt  <= (others => '0');
-            elsif l1a = '1' then
+            elsif l1a = '1' and ctrs_in.pctr = "0000" then
                 e_cnt <= std_logic_vector(unsigned(e_cnt) + 1);
             end if;
         end if;
     end process;
 
-    process (lhc_clk)
+    process (clk360)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk360) then
             if ec0_s = '1' then
                 ls_cnt <= (others => '0');
             else
@@ -92,25 +85,30 @@ begin
             o_cntbls_temp <= o_cntbls;
         end if;
     end process;
-
+    
+    -- in the 360MHz domain
     begin_lumi_sec_int <= '1' when o_cntbls_temp /= o_cntbls  else '0';
-
-    process(o_cnt, bx_cnt)
+        
+    end_lumi_red_bit <= and (o_cnt(BEGIN_LUMI_BIT-1 downto 0));
+        
+    process (clk360)
     begin
-        if  (and o_cnt(BEGIN_LUMI_BIT-1 downto 0) = '1') and (unsigned(bx_cnt) = LHC_BUNCH_COUNT-1) then
-            end_lumi_sec_int <= '1';
-        else
-            end_lumi_sec_int <= '0';
+        if rising_edge(clk360) then
+            if unsigned(ctrs_in.bctr) = LHC_BUNCH_COUNT-1 and ctrs_in.pctr = "0111" and end_lumi_red_bit = '1' then
+                end_lumi_sec_int <= '1';
+            else
+                end_lumi_sec_int <= '0';
+            end if;
         end if;
     end process;
 
 
-    process (lhc_clk)
+    process (clk360)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk360) then
             if ctrs_in.ttc_cmd = TTC_BCMD_TEST_ENABLE then
                 test_en_int <= '1';
-            elsif unsigned(bx_cnt) = LHC_BUNCH_COUNT-1 then
+            elsif unsigned(bx_cnt) = LHC_BUNCH_COUNT-1 and ctrs_in.pctr = "1000" then
                 test_en_int <= '0';
             end if;
         end if;

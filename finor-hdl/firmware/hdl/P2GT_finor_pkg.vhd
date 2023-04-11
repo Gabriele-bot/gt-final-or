@@ -81,7 +81,7 @@ package P2GT_finor_pkg is
 
     constant RATE_COUNTER_WIDTH         : natural := 32;
 
-    type rate_counter_array is array (natural range <>)) of std_logic_vector(RATE_COUNTER_WIDTH-1 downto 0);
+    type rate_counter_array is array (natural range <>) of std_logic_vector(RATE_COUNTER_WIDTH-1 downto 0);
 
 
 end package;

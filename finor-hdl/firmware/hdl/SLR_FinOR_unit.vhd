@@ -20,6 +20,7 @@ use work.math_pkg.all;
 
 entity SLR_FinOR_unit is
     generic(
+        TTC_CMD_DELAY         : natural := 6;
         NR_RIGHT_LINKS        : natural := INPUT_R_LINKS_SLR;
         NR_LEFT_LINKS         : natural := INPUT_L_LINKS_SLR;
         NR_QUADS              : natural := INPUT_QUADS;
@@ -42,9 +43,9 @@ entity SLR_FinOR_unit is
         trigger_preview_o  : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_valid_out  : out std_logic;
         veto_o             : out std_logic;
-        algos              : out std_logic_vector(64*9-1 downto 0);
-        algos_after_bxmask : out std_logic_vector(64*9-1 downto 0);
-        algos_prescaled    : out std_logic_vector(64*9-1 downto 0);
+        algos              : out std_logic_vector(64-1 downto 0);
+        algos_after_bxmask : out std_logic_vector(64-1 downto 0);
+        algos_prescaled    : out std_logic_vector(64-1 downto 0);
         algos_valid_out    : out std_logic
     );
 end entity SLR_FinOR_unit;
@@ -73,8 +74,7 @@ architecture RTL of SLR_FinOR_unit is
     signal trigger_out_preview    : std_logic_vector(N_TRIGG-1 downto 0);
     signal veto_out               : std_logic;
 
-    signal ctrs_int               : ttc_stuff_t;
-    signal ctrs_del               : ttc_stuff_array(1 downto 0);
+    signal ctrs_del               : ttc_stuff_array(TTC_CMD_DELAY downto 0);
 
     signal ctrl_reg     : ipb_reg_v(1 downto 0) := ((others => '0'),(others => '1'));
     signal ctrl_reg_stb : ipb_reg_v(1 downto 0) := ((others => '0'),(others => '1'));
@@ -136,7 +136,7 @@ begin
 
     xpm_cdc_linkmask : xpm_cdc_array_single
         generic map (
-            DEST_SYNC_FF   => 3,
+            DEST_SYNC_FF   => 5,
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
             SRC_INPUT_REG  => 1,
@@ -146,12 +146,12 @@ begin
             dest_out => link_mask,
             dest_clk => clk360,
             src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(NR_LINKS - 1 downto 0)
+            src_in   => ctrl_reg_stb(0)(INPUT_LINKS_SLR - 1 downto 0)
         );
 
     xpm_cdc_rst_error : xpm_cdc_single
         generic map (
-            DEST_SYNC_FF   => 3,
+            DEST_SYNC_FF   => 5,
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
             SRC_INPUT_REG  => 1
@@ -165,7 +165,7 @@ begin
 
     xpm_cdc_error_flag : xpm_cdc_single
         generic map (
-            DEST_SYNC_FF   => 3,
+            DEST_SYNC_FF   => 5,
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
             SRC_INPUT_REG  => 1
@@ -198,8 +198,8 @@ begin
         port map(
             clk360    => clk360,
             rst360    => rst360,
-            link_mask => link_mask(NR_LEFT_LINKS- 1 downto NR_RIGHT_LINKS),
-            d         => d_reg(NR_LEFT_LINKS - 1 downto NR_RIGHT_LINKS),
+            link_mask => link_mask(NR_RIGHT_LINKS + NR_LEFT_LINKS- 1 downto NR_RIGHT_LINKS),
+            d         => d_reg(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto NR_RIGHT_LINKS),
             q         => d_left(0)
         ) ;
 
@@ -230,17 +230,19 @@ begin
         )
         port map(
             clk360       => clk360,
+            rst360       => rst360, 
             clk40        => clk40,
             rst40        => rst40,
             lane_data_in => d_res,
             rst_err      => rst_align_error,
             align_err_o  => align_error,
-            demux_data_o => algos_in,
-            valid_out    => valid_deser_out
+            demux_data_o => open,
+            valid_out    => open
         );
 
-
-    algos <= algos_in;
+    suppress_data: for i in 0 to 63 generate
+        algos(i) <= d_res.data(i) and d_res.valid;
+    end generate;
 
 
     ----------------------------------------------------------------------------------
@@ -249,26 +251,18 @@ begin
     --TODO Where to stat counting, need some latency? How much?
 
     ctrs_del(0) <= ctrs(0);
-    ctrs_del_p: process(clk40)
+    ctrs_del_p: process(clk360)
     begin
-        if rising_edge(clk40) then
-            ctrs_del(1) <= ctrs_del(0);
+        if rising_edge(clk360) then
+            ctrs_del(ctrs_del'high downto 1) <= ctrs_del(ctrs_del'high - 1 downto 0);
         end if;
     end process;
 
 
-    crts_del_g: if DESER_OUT_REG generate
-        ctrs_int <= ctrs_del(1);
-    else generate
-        ctrs_int <= ctrs_del(0);
-    end generate;
-
-
-
-    monitoring_module : entity work.m_module
+    monitoring_module : entity work.mmonitoring_module_360
         generic map(
             NR_ALGOS              => 64*9,
-            PRESCALE_FACTOR_INIT  => X"00000064", --1.00,
+            PRESCALE_FACTOR_INIT  => X"00000064",
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
             MAX_DELAY             => MAX_DELAY
         )
@@ -277,17 +271,17 @@ begin
             rst                     => rst,
             ipb_in                  => ipb_to_slaves(N_SLV_MONITORING_MODULE),
             ipb_out                 => ipb_from_slaves(N_SLV_MONITORING_MODULE),
-            lhc_clk                 => clk40,
-            lhc_rst                 => clk40,
-            ctrs                    => ctrs_int,
-            algos_in                => algos_in,
-            valid_algos_in          => valid_deser_out,
-            algos_after_bxmask_o    => algos_after_bxmask, 
+            clk360                  => clk360,
+            rst360                  => rst360,
+            ctrs                    => ctrs_del(ctrs_del'high),
+            algos_in                => algos,
+            valid_algos_in          => d_res.valid,
+            algos_after_bxmask_o    => algos_after_bxmask,
             algos_after_prescaler_o => algos_prescaled,
-            trigger_o               => trigger_out,
-            trigger_preview_o       => trigger_out_preview,
+            trigger_o               => trigger_o,
+            trigger_preview_o       => trigger_preview_o,
             valid_trigger_o         => trigger_valid_out,
-            veto_o                  => veto_out
+            veto_o                  => veto_o
         );
     
     algos_valid_out   <= valid_deser_out; 

@@ -13,8 +13,7 @@ use ieee.numeric_std.all;
 
 package pre_scaler_pkg is
 
-    -- *******************************************************************************************************
-    -- GT FinalOR definitions
+    -- ================= PRE-SCALERS =========================================================================
     -- Definitions for prescalers (P2GT FinalOR)
 
     -- fixed point prescale factor format, e.g. 2 digits (!) in 32 bits integer
@@ -29,9 +28,13 @@ package pre_scaler_pkg is
     constant PRESCALE_FACTOR_INIT_VALUE_INTEGER : integer               := integer(PRESCALE_FACTOR_INIT_VALUE * real(10**PRESCALE_FACTOR_FRACTION_DIGITS));
     constant PRESCALE_FACTOR_INIT_VALUE_UNSGND  : unsigned(31 downto 0) := to_unsigned(PRESCALE_FACTOR_INIT_VALUE_INTEGER, 32);
     --     constant PRESCALE_FACTOR_INIT : ipb_regs_array(0 to 511) := (others => PRESCALE_FACTOR_INIT_VALUE_VEC);
-    
+
     -- Prescaler increment (1*10**fraction_digits)
     constant PRESCALER_INCR : unsigned(31 downto 0) := to_unsigned(10**PRESCALE_FACTOR_FRACTION_DIGITS, 32);
+
+    type prescale_factor_array is array (natural range <>) of std_logic_vector(PRESCALE_FACTOR_WIDTH-1 downto 0);
+    type rate_counter_array is array (natural range <>) of std_logic_vector(31 downto 0);
+
 
     -- *******************************************************************************************************
 

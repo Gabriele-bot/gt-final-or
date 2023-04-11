@@ -19,15 +19,17 @@ src --vhdl2008 ipbus/ipbus_dpram_4096x576.vhd
 
 src --vhdl2008 Counter_module.vhd
 src --vhdl2008 update_process.vhd
-src --vhdl2008 algo_pre_scaler.vhd
+src --vhdl2008 algo_pre_scaler_360.vhd
+src --vhdl2008 algo_rate_counter_360.vhd
+src --vhdl2008 algo_rate_counter_pdt_360.vhd 
 src --vhdl2008 algo_rate_counter.vhd
 src --vhdl2008 algo_rate_counter_pdt.vhd 
-src --vhdl2008 algo_slice.vhd
+src --vhdl2008 algo_slice_360.vhd
 src --vhdl2008 delay_element_ringbuffer.vhd
 src --vhdl2008 Mask.vhd
 src --vhdl2008 read_FSM.vhd
 src --vhdl2008 write_FSM.vhd
-src --vhdl2008 m_module.vhd
+src --vhdl2008 monitoring_module_360.vhd
 src --vhdl2008 Link_merger.vhd
 src --vhdl2008 Link_deserializer.vhd
 src --vhdl2008 mux.vhd

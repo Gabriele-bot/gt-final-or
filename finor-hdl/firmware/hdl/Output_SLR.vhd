@@ -29,8 +29,8 @@ entity Output_SLR is
         ipb_in      : in  ipb_wbus;
         ipb_out     : out ipb_rbus;
         --==========================================================--
-        clk_p       : in std_logic;
-        rst_p       : in std_logic;
+        clk360      : in std_logic;
+        rst360      : in std_logic;
         lhc_clk     : in std_logic;
         lhc_rst     : in std_logic;
 
@@ -106,9 +106,9 @@ architecture RTL of Output_SLR is
 begin
 
 
-    frame_counter_p : process (clk_p)
+    frame_counter_p : process (clk360)
     begin
-        if rising_edge(clk_p) then -- rising clock edge
+        if rising_edge(clk360) then -- rising clock edge
             valid_in_del <= valid_in;
             if valid_in = '0' then
                 frame_cntr <= 0;
@@ -145,14 +145,14 @@ begin
             ctrs_internal(FINOR_LATENCY downto 1) <= ctrs_internal(FINOR_LATENCY - 1 downto 0);
         end if;
     end process;
-
+        
     Counters_i : entity work.Counter_module
         generic map (
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map (
-            lhc_clk        => lhc_clk,
-            lhc_rst        => lhc_rst,
+            clk360         => clk360,
+            rst360         => rst360,
             ctrs_in        => ctrs_internal(FINOR_LATENCY),
             bc0            => bc0,
             ec0            => ec0,
@@ -160,10 +160,10 @@ begin
             bx_nr          => open,
             event_nr       => open,
             orbit_nr       => open,
+            lumi_sec_nr    => open,
             begin_lumi_sec => begin_lumi_per,
             end_lumi_sec   => end_lumi_per,
             test_en        => open
-
         );
 
 
@@ -640,10 +640,10 @@ begin
     link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and valid_in_del = '0' else '0'; --TODO Modify (include bctr)
 
 
-    output_p: process(clk_p)
+    output_p: process(clk360)
     begin
-        if rising_edge(clk_p) then
-            if (rst_p = '1') then
+        if rising_edge(clk360) then
+            if (rst360 = '1') then
                 q(0).data           <= (others => '0');
                 q(0).valid          <= '0';
                 q(0).start_of_orbit <= '0';

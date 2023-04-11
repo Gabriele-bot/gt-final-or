@@ -70,13 +70,13 @@ begin
 
     mapping_i : for i in 0 to 63 generate
         mapping_j : for j in 0 to NR_LINKS -1 generate
-            data_mapped(i)(j) <= d_data(j)(i) and d_valids(j);
+            data_mapped(i)(j) <= d_data(j)(i) and d_valids(j) and link_mask(j);
         end generate;
     end generate;
     
     --Merge
     Merge_i : for k in 0 to 63 generate
-        q_int.data(k) <= or (data_mapped(k) and link_mask(k));
+        q_int.data(k) <= or data_mapped(k);
     end generate;
     q_int.valid  <= or (d_valids and link_mask);
     q_int.start_of_orbit  <= or (d_starts_of_orbit and link_mask);
