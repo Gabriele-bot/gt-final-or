@@ -680,7 +680,7 @@ elif args.test == 'algo-out':
     # extract deserialized valid data
     output_link_data = []
     for i in range(np.shape(out_data)[1]):
-        if out_valid[unprescaled_low_bits_link, i] == 1:
+        if out_valid[np.where(links == unprescaled_low_bits_link), i] == 1:
             output_link_data = np.append(output_link_data, out_data[np.where(links == unprescaled_low_bits_link), i])
 
     # print(output_link_data)
@@ -698,7 +698,7 @@ elif args.test == 'algo-out':
 
     output_link_data = []
     for i in range(np.shape(out_data)[1]):
-        if out_valid[unprescaled_high_bits_link, i] == 1:
+        if out_valid[np.where(links ==unprescaled_high_bits_link), i] == 1:
             output_link_data = np.append(output_link_data, out_data[np.where(links == unprescaled_high_bits_link), i])
 
     if np.array_equal(output_link_data, temp_or[:len(output_link_data)]):
