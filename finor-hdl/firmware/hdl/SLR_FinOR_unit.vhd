@@ -136,7 +136,7 @@ begin
 
     xpm_cdc_linkmask : xpm_cdc_array_single
         generic map (
-            DEST_SYNC_FF   => 3,
+            DEST_SYNC_FF   => 5,
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
             SRC_INPUT_REG  => 1,
@@ -146,12 +146,12 @@ begin
             dest_out => link_mask,
             dest_clk => clk360,
             src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(NR_LINKS - 1 downto 0)
+            src_in   => ctrl_reg_stb(0)(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0)
         );
 
     xpm_cdc_rst_error : xpm_cdc_single
         generic map (
-            DEST_SYNC_FF   => 3,
+            DEST_SYNC_FF   => 5,
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
             SRC_INPUT_REG  => 1
@@ -165,7 +165,7 @@ begin
 
     xpm_cdc_error_flag : xpm_cdc_single
         generic map (
-            DEST_SYNC_FF   => 3,
+            DEST_SYNC_FF   => 5,
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
             SRC_INPUT_REG  => 1
@@ -198,8 +198,8 @@ begin
         port map(
             clk360    => clk360,
             rst360    => rst360,
-            link_mask => link_mask(NR_LEFT_LINKS- 1 downto NR_RIGHT_LINKS),
-            d         => d_reg(NR_LEFT_LINKS - 1 downto NR_RIGHT_LINKS),
+            link_mask => link_mask(NR_LEFT_LINKS + NR_RIGHT_LINKS- 1 downto NR_RIGHT_LINKS),
+            d         => d_reg(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
             q         => d_left(0)
         ) ;
 
@@ -230,6 +230,7 @@ begin
         )
         port map(
             clk360       => clk360,
+            rst360       => rst360,
             clk40        => clk40,
             rst40        => rst40,
             lane_data_in => d_res,
@@ -265,7 +266,7 @@ begin
 
 
 
-    monitoring_module : entity work.m_module
+    monitoring_module : entity work.monitoring_module
         generic map(
             NR_ALGOS              => 64*9,
             PRESCALE_FACTOR_INIT  => X"00000064", --1.00,
@@ -277,8 +278,8 @@ begin
             rst                     => rst,
             ipb_in                  => ipb_to_slaves(N_SLV_MONITORING_MODULE),
             ipb_out                 => ipb_from_slaves(N_SLV_MONITORING_MODULE),
-            lhc_clk                 => clk40,
-            lhc_rst                 => clk40,
+            clk40                   => clk40,
+            rst40                   => rst40,
             ctrs                    => ctrs_int,
             algos_in                => algos_in,
             valid_algos_in          => valid_deser_out,

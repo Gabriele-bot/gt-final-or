@@ -1,5 +1,3 @@
-
-
 -- Description:
 -- Prescale and rate monitoring structure for one algo (slice) for the P2GT FinalOR board
 -- algo-bx-mask at algo input
@@ -7,13 +5,6 @@
 -- Created by Gabriele Bortolato 14-03-2022
 -- Code based on the MP7 GT firmware (https://github.com/cms-l1-globaltrigger/mp7_ugt_legacy/tree/master/firmware) 
 
--- Version-history:
--- GB : make some modifications
-
-
-
--- Issues / Upgrades
--- Reuse logic??
 
 -- Resources utilization
 -- |       | Synth |  Impl |
@@ -39,29 +30,23 @@ entity algo_slice is
     );
     port(
         --clocks
-        sys_clk : in std_logic;
-        lhc_clk : in std_logic;
-        lhc_rst : in std_logic;
+        clk40 : in std_logic;
+        rst40 : in std_logic;
 
-        -- HB 2015-09-17: added "sres_algo_rate_counter" and "sres_algo_pre_scaler"
         -- counters synchronous resets 
         sres_algo_rate_counter           : in std_logic;
         sres_algo_pre_scaler             : in std_logic;
         sres_algo_post_dead_time_counter : in std_logic;
 
-        -- HB 2016-06-17: added suppress_cal_trigger, used to suppress counting algos caused by calibration trigger at bx=3490.
         suppress_cal_trigger : in std_logic; -- pos. active signal: '1' = suppression of algos caused by calibration trigger !!!
-
-        -- HB 2015-09-2: added "l1a" and "l1a_latency_delay" for post-dead-time counter
-        l1a               : in std_logic;
+        l1a                  : in std_logic;
 
         request_update_factor_pulse : in std_logic;
-        request_update_veto_pulse   : in std_logic;
         begin_lumi_per              : in std_logic;
         end_lumi_per                : in std_logic;
 
         algo_i                      : in std_logic;
-        algo_del_i                  : in std_logic;
+        algo_after_prscl_del_i      : in std_logic;
 
         prescale_factor             : in std_logic_vector(PRESCALE_FACTOR_WIDTH-1 DOWNTO 0);
         prescale_factor_preview     : in std_logic_vector(PRESCALE_FACTOR_WIDTH-1 DOWNTO 0);
@@ -88,15 +73,13 @@ architecture rtl of algo_slice is
     signal algo_after_prescaler_int         : std_logic;
     signal algo_after_prescaler_preview_int : std_logic;
     signal begin_lumi_per_del1              : std_logic;
-    signal veto_vec                         : std_logic_vector(0  downto 0);
-    signal veto_int                         : std_logic_vector(0  downto 0);
 
 
 begin
 
-    begin_lumi_per_del_p: process(lhc_clk)
+    begin_lumi_per_del_p: process(clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             begin_lumi_per_del1 <= begin_lumi_per;
         end if;
     end process;
@@ -108,8 +91,8 @@ begin
             COUNTER_WIDTH => RATE_COUNTER_WIDTH
         )
         port map(
-            sys_clk         => sys_clk,
-            clk             => lhc_clk,
+            clk40           => clk40,
+            rst40           => rst40,
             sres_counter    => sres_algo_rate_counter,
             store_cnt_value => begin_lumi_per,
             --store_cnt_value => begin_lumi_per_del1,
@@ -123,7 +106,8 @@ begin
             PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT
         )
         port map(
-            clk                         => lhc_clk,
+            clk40                       => clk40,
+            rst40                       => rst40,
             sres_counter                => sres_algo_pre_scaler,
             algo_i                      => algo_after_algo_bx_mask_int,
             request_update_factor_pulse => request_update_factor_pulse,
@@ -137,8 +121,8 @@ begin
             COUNTER_WIDTH => RATE_COUNTER_WIDTH
         )
         port map(
-            sys_clk         => sys_clk,
-            clk             => lhc_clk,
+            clk40           => clk40,
+            rst40           => rst40,
             sres_counter    => sres_algo_rate_counter,
             store_cnt_value => begin_lumi_per,
             --store_cnt_value => begin_lumi_per_del1,
@@ -153,7 +137,8 @@ begin
             PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT
         )
         port map(
-            clk                         => lhc_clk,
+            clk40                       => clk40,
+            rst40                       => rst40,
             sres_counter                => sres_algo_pre_scaler,
             algo_i                      => algo_after_algo_bx_mask_int,
             request_update_factor_pulse => request_update_factor_pulse,
@@ -169,8 +154,8 @@ begin
             COUNTER_WIDTH => RATE_COUNTER_WIDTH
         )
         port map(
-            sys_clk         => sys_clk,
-            clk             => lhc_clk,
+            clk40           => clk40,
+            rst40           => rst40,
             sres_counter    => sres_algo_rate_counter,
             store_cnt_value => begin_lumi_per,
             --store_cnt_value => begin_lumi_per_del1,
@@ -185,20 +170,20 @@ begin
             COUNTER_WIDTH => RATE_COUNTER_WIDTH
         )
         port map(
-            sys_clk         => sys_clk,
-            lhc_clk         => lhc_clk,
-            lhc_rst         => lhc_rst,
+            clk40           => clk40,
+            rst40           => rst40,
             sres_counter    => sres_algo_post_dead_time_counter,
             store_cnt_value => begin_lumi_per,
             --store_cnt_value => begin_lumi_per_del1,
             l1a             => l1a,
-            algo_del_i      => algo_del_i,
+            algo_del_i      => algo_after_prscl_del_i,
             counter_o       => rate_cnt_post_dead_time
         );
 
 
     -- ****************************************************************************************************
-
+    
+    --TODO maybe add algos with and w/o veto
     veto_exclusion: if EXCLUDE_ALGO_VETOED generate
         algo_after_bxomask           <= algo_after_algo_bx_mask_int      and not veto_mask;
         algo_after_prescaler         <= algo_after_prescaler_int         and not veto_mask;

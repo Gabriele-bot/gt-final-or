@@ -31,7 +31,7 @@ package P2GT_finor_pkg is
     constant N_TRIGG                : integer := 8;
     constant BEGIN_LUMI_SEC_BIT     : integer := 18;
     constant BEGIN_LUMI_SEC_BIT_SIM : integer := 3;
-    constant MAX_DELAY_PDT          : integer := 255;
+    constant MAX_DELAY_PDT          : integer := 511;
     constant SLR_CROSSING_LATENCY   : integer := 9;
     constant FINOR_LATENCY          : integer := 3;
     constant DESER_OUT_REG          : boolean := FALSE;
@@ -81,7 +81,7 @@ package P2GT_finor_pkg is
 
     constant RATE_COUNTER_WIDTH         : natural := 32;
 
-    type rate_counter_array is array (natural range <>)) of std_logic_vector(RATE_COUNTER_WIDTH-1 downto 0);
+    type rate_counter_array is array (natural range <>) of std_logic_vector(RATE_COUNTER_WIDTH-1 downto 0);
 
 
 end package;

@@ -1,13 +1,8 @@
-
 -- Description:
 -- Prescalers for algorithms in P2GT FinalOR with fractional prescale values in fixed point notation.
 
 -- Created by Gabriele Bortolato 14-03-2022
 -- Code based on the MP7 GT firmware (https://github.com/cms-l1-globaltrigger/mp7_ugt_legacy/tree/master/firmware) 
-
--- Version-history:
--- GB : make some modifications;
--- GB 24-03-2022 : changed the algo output process;
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -23,7 +18,8 @@ entity algo_pre_scaler is
         SIM : boolean := false
     );
     port(
-        clk                         : in std_logic;
+        clk40                       : in std_logic;
+        rst40                       : in std_logic;
         sres_counter                : in std_logic;
         algo_i                      : in std_logic;
         request_update_factor_pulse : in std_logic;
@@ -57,7 +53,7 @@ begin
             INIT_VALUE => PRESCALE_FACTOR_INIT
         )
         port map(
-            clk                  => clk,
+            clk                  => clk40,
             request_update_pulse => request_update_factor_pulse,
             update_pulse         => update_factor_pulse,
             data_i               => prescale_factor(PRESCALE_FACTOR_WIDTH-1 downto 0),
@@ -79,9 +75,9 @@ begin
     end process compare_p;
 
     -- Counting algos, INCR is defined in the pre_scaler_pkg
-    counter_p: process (clk)
+    counter_p: process (clk40)
     begin
-        if rising_edge(clk) then
+        if rising_edge(clk40) then
             if (sres_counter = '1' and algo_i = '0') then
                 counter <= (others => '0');
             elsif (sres_counter = '1' and algo_i = '1') then
@@ -119,12 +115,12 @@ begin
 
     -- Generating signals for simulation
     prescaled_algo_cnt_i: if SIM generate
-        prescaled_algo_cnt_p: process (clk)
+        prescaled_algo_cnt_p: process (clk40)
             variable algo_cnt           : natural := 0;
             variable prescaled_algo_cnt : natural := 0;
         begin
             -- TODO ask if it is correct
-            if falling_edge(clk) then           -- not sure on this one
+            if falling_edge(clk40) then           -- not sure on this one
                 if sres_counter = '1' or update_factor_pulse = '1' then
                     prescaled_algo_cnt := 0;
                     algo_cnt := 0;

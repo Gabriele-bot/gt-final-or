@@ -29,10 +29,10 @@ entity Output_SLR is
         ipb_in      : in  ipb_wbus;
         ipb_out     : out ipb_rbus;
         --==========================================================--
-        clk_p       : in std_logic;
-        rst_p       : in std_logic;
-        lhc_clk     : in std_logic;
-        lhc_rst     : in std_logic;
+        clk360      : in std_logic;
+        rst360      : in std_logic;
+        clk40       : in std_logic;
+        rst40       : in std_logic;
 
         ctrs        : in  ttc_stuff_t;
 
@@ -106,9 +106,9 @@ architecture RTL of Output_SLR is
 begin
 
 
-    frame_counter_p : process (clk_p)
+    frame_counter_p : process (clk360)
     begin
-        if rising_edge(clk_p) then -- rising clock edge
+        if rising_edge(clk360) then -- rising clock edge
             valid_in_del <= valid_in;
             if valid_in = '0' then
                 frame_cntr <= 0;
@@ -139,9 +139,9 @@ begin
     ----------------------------------------------------------------------------------
     --TODO Where to stat counting, need some latency? How much?
     ctrs_internal(0) <= ctrs;
-    bx_cnt_int_p : process(lhc_clk)
+    bx_cnt_int_p : process(clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             ctrs_internal(FINOR_LATENCY downto 1) <= ctrs_internal(FINOR_LATENCY - 1 downto 0);
         end if;
     end process;
@@ -151,8 +151,8 @@ begin
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map (
-            lhc_clk        => lhc_clk,
-            lhc_rst        => lhc_rst,
+            clk40          => clk40,
+            rst40          => rst40,
             ctrs_in        => ctrs_internal(FINOR_LATENCY),
             bc0            => bc0,
             ec0            => ec0,
@@ -172,8 +172,8 @@ begin
             RAM_DEPTH => N_TRIGG
         )
         port map(
-            clk        => lhc_clk,
-            rst        => lhc_rst,
+            clk        => clk40,
+            rst        => rst40,
             write_flag => begin_lumi_per_del1,
             addr_o     => addr,
             addr_w_o   => open,
@@ -206,7 +206,7 @@ begin
         )
         port map (
             dest_out => l1a_latency_delay,
-            dest_clk => lhc_clk,
+            dest_clk => clk40,
             src_clk  => clk,
             src_in   => ctrl_reg(0)(log2c(MAX_DELAY) - 1 downto 0)
         );
@@ -223,15 +223,15 @@ begin
         port map (
             dest_out => stat_reg(0)(0),
             dest_clk => clk,
-            src_clk  => lhc_clk,
+            src_clk  => clk40,
             src_in   => ready
         );
 
 
     -- rate counters are updated with begin_lumi_per_del1
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             begin_lumi_per_del1 <= begin_lumi_per;
         end if;
     end process;
@@ -254,8 +254,8 @@ begin
             MAX_DELAY  => MAX_DELAY
         )
         port map(
-            clk    => lhc_clk,
-            rst    => lhc_rst,
+            clk    => clk40,
+            rst    => rst40,
             data_i => Final_OR,
             data_o => Final_OR_delayed,
             delay  => l1a_latency_delay
@@ -267,8 +267,8 @@ begin
             MAX_DELAY  => MAX_DELAY
         )
         port map(
-            clk    => lhc_clk,
-            rst    => lhc_rst,
+            clk    => clk40,
+            rst    => rst40,
             data_i => Final_OR_preview,
             data_o => Final_OR_preview_delayed,
             delay  => l1a_latency_delay
@@ -281,8 +281,8 @@ begin
             MAX_DELAY  => MAX_DELAY
         )
         port map(
-            clk    => lhc_clk,
-            rst    => lhc_rst,
+            clk    => clk40,
+            rst    => rst40,
             data_i => Final_OR_with_veto,
             data_o => Final_OR_with_veto_delayed,
             delay  => l1a_latency_delay
@@ -294,8 +294,8 @@ begin
             MAX_DELAY  => MAX_DELAY
         )
         port map(
-            clk    => lhc_clk,
-            rst    => lhc_rst,
+            clk    => clk40,
+            rst    => rst40,
             data_i => Final_OR_preview_with_veto,
             data_o => Final_OR_preview_with_veto_delayed,
             delay  => l1a_latency_delay
@@ -313,8 +313,8 @@ begin
             COUNTER_WIDTH => RATE_COUNTER_WIDTH
         )
         port map(
-            sys_clk         => clk,
-            clk             => lhc_clk,
+            clk40           => clk40,
+            rst40           => rst40,
             sres_counter    => '0',
             store_cnt_value => begin_lumi_per_del1,
             algo_i          => veto_out_s,
@@ -332,7 +332,7 @@ begin
         port map (
             dest_out => veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0),
             dest_clk => clk,
-            src_clk  => lhc_clk,
+            src_clk  => clk40,
             src_in   => veto_cnt
         );
 
@@ -359,8 +359,8 @@ begin
                 COUNTER_WIDTH => RATE_COUNTER_WIDTH
             )
             port map(
-                sys_clk         => clk,
-                clk             => lhc_clk,
+                clk40           => clk40,
+                rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
                 algo_i          => Final_OR(i),
@@ -372,9 +372,8 @@ begin
                 COUNTER_WIDTH => RATE_COUNTER_WIDTH
             )
             port map(
-                sys_clk         => clk,
-                lhc_clk         => lhc_clk,
-                lhc_rst         => lhc_rst,
+                clk40           => clk40,
+                rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
                 l1a             => ctrs_internal(FINOR_LATENCY).l1a,
@@ -388,8 +387,8 @@ begin
                 COUNTER_WIDTH => RATE_COUNTER_WIDTH
             )
             port map(
-                sys_clk         => clk,
-                clk             => lhc_clk,
+                clk40           => clk40,
+                rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
                 algo_i          => Final_OR_preview(i),
@@ -401,9 +400,8 @@ begin
                 COUNTER_WIDTH => RATE_COUNTER_WIDTH
             )
             port map(
-                sys_clk         => clk,
-                lhc_clk         => lhc_clk,
-                lhc_rst         => lhc_rst,
+                clk40           => clk40,
+                rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
                 l1a             => ctrs_internal(FINOR_LATENCY).l1a,
@@ -417,8 +415,8 @@ begin
                 COUNTER_WIDTH => RATE_COUNTER_WIDTH
             )
             port map(
-                sys_clk         => clk,
-                clk             => lhc_clk,
+                clk40           => clk40,
+                rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
                 algo_i          => Final_OR_with_veto(i),
@@ -430,9 +428,8 @@ begin
                 COUNTER_WIDTH => RATE_COUNTER_WIDTH
             )
             port map(
-                sys_clk         => clk,
-                lhc_clk         => lhc_clk,
-                lhc_rst         => lhc_rst,
+                clk40           => clk40,
+                rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
                 l1a             => ctrs_internal(FINOR_LATENCY).l1a,
@@ -445,8 +442,8 @@ begin
                 COUNTER_WIDTH => RATE_COUNTER_WIDTH
             )
             port map(
-                sys_clk         => clk,
-                clk             => lhc_clk,
+                clk40           => clk40,
+                rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
                 algo_i          => Final_OR_preview_with_veto(i),
@@ -458,9 +455,8 @@ begin
                 COUNTER_WIDTH => RATE_COUNTER_WIDTH
             )
             port map(
-                sys_clk         => clk,
-                lhc_clk         => lhc_clk,
-                lhc_rst         => lhc_rst,
+                clk40           => clk40,
+                rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
                 l1a             => ctrs_internal(FINOR_LATENCY).l1a,
@@ -492,7 +488,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_finor,
             q       => open,
@@ -511,7 +507,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR_PDT),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR_PDT),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_finor_pdt,
             q       => open,
@@ -529,7 +525,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR_PREVIEW),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR_PREVIEW),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_finor_prvw,
             q       => open,
@@ -548,7 +544,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR_PREVIEW_PDT),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR_PREVIEW_PDT),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_finor_prvw_pdt,
             q       => open,
@@ -566,7 +562,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR_WITH_VETO),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR_WITH_VETO),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_finor_with_veto,
             q       => open,
@@ -585,7 +581,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR_WITH_VETO_PDT),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR_WITH_VETO_PDT),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_finor_with_veto_pdt,
             q       => open,
@@ -603,7 +599,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR_PREVIEW_WITH_VETO),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR_PREVIEW_WITH_VETO),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_finor_prvw_with_veto,
             q       => open,
@@ -622,7 +618,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_FINOR_PREVIEW_WITH_VETO_PDT),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_FINOR_PREVIEW_WITH_VETO_PDT),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_finor_prvw_with_veto_pdt,
             q       => open,
@@ -640,10 +636,10 @@ begin
     link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and valid_in_del = '0' else '0'; --TODO Modify (include bctr)
 
 
-    output_p: process(clk_p)
+    output_p: process(clk360)
     begin
-        if rising_edge(clk_p) then
-            if (rst_p = '1') then
+        if rising_edge(clk360) then
+            if (rst360 = '1') then
                 q(0).data           <= (others => '0');
                 q(0).valid          <= '0';
                 q(0).start_of_orbit <= '0';

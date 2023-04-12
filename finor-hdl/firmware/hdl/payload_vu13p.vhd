@@ -143,7 +143,9 @@ begin
 
     SLRn1_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS              => INPUT_LINKS_SLR,
+            NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
+            NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
+            NR_QUADS              => INPUT_QUADS,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
             MAX_DELAY             => MAX_DELAY_PDT
         )
@@ -154,8 +156,8 @@ begin
             ipb_out            => ipb_from_slaves(N_SLV_SLRn1_MONITOR),
             clk360             => clk_p,
             rst360             => rst_loc(SLRn1_quads(0)),
-            lhc_clk            => clk_payload(2),
-            lhc_rst            => rst_payload(2),
+            clk40              => clk_payload(2),
+            rst40              => rst_payload(2),
             ctrs(2 downto 0)   => ctrs(SLRn1_quads(2) downto SLRn1_quads(0)),
             ctrs(5 downto 3)   => ctrs(SLRn1_quads(5) downto SLRn1_quads(3)),
             d(11 downto 0)     => d(SLRn1_channels(11) downto SLRn1_channels(0) ),
@@ -174,7 +176,9 @@ begin
 
     SLRn0_module : entity work.SLR_FinOR_unit
         generic map(
-            NR_LINKS              => INPUT_LINKS_SLR,
+            NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
+            NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
+            NR_QUADS              => INPUT_QUADS,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
             MAX_DELAY             => MAX_DELAY_PDT
         )
@@ -185,8 +189,8 @@ begin
             ipb_out            => ipb_from_slaves(N_SLV_SLRn0_MONITOR),
             clk360             => clk_p,
             rst360             => rst_loc(SLRn0_quads(0)),
-            lhc_clk            => clk_payload(2),
-            lhc_rst            => rst_payload(2),
+            clk40              => clk_payload(2),
+            rst40              => rst_payload(2),
             ctrs(2 downto 0)   => ctrs(SLRn0_quads(2) downto SLRn0_quads(0)),
             ctrs(5 downto 3)   => ctrs(SLRn0_quads(5) downto SLRn0_quads(3)),
             d(11 downto 0)     => d(SLRn0_channels(11) downto SLRn0_channels(0) ),
@@ -232,10 +236,10 @@ begin
             rst         => rst,
             ipb_in      => ipb_to_slaves(N_SLV_SLR_FINOR),
             ipb_out     => ipb_from_slaves(N_SLV_SLR_FINOR),
-            clk_p       => clk_p,
-            rst_p       => rst_loc(OUTPUT_QUAD),
-            lhc_clk     => clk_payload(2),
-            lhc_rst     => rst_payload(2),
+            clk360      => clk_p,
+            rst360      => rst_loc(OUTPUT_QUAD),
+            clk40       => clk_payload(2),
+            rst40       => rst_payload(2),
             ctrs        => ctrs(OUTPUT_QUAD),
             valid_in    => valid_in,
             trgg_0      => trgg_SLRn0_regs(trgg_SLRn0_regs'high),
@@ -281,8 +285,8 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(23),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                clk40       => clk_payload(2),
+                rst40       => rst_payload(2),
                 bctr        => bctr_40_SLRn1, 
                 input_40MHz => algos_SLRn1,
                 valid_in    => algos_valid_SLRn1,
@@ -293,8 +297,8 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(23),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                clk40       => clk_payload(2),
+                rst40       => rst_payload(2),
                 bctr        => bctr_40_SLRn1, 
                 input_40MHz => algos_after_bxmask_SLRn1,
                 valid_in    => algos_valid_SLRn1,
@@ -305,8 +309,8 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(23),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                clk40       => clk_payload(2),
+                rst40       => rst_payload(2),
                 bctr        => bctr_40_SLRn1, 
                 input_40MHz => algos_presc_SLRn1,
                 valid_in    => algos_valid_SLRn1,
@@ -317,8 +321,8 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(28),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                clk40       => clk_payload(2),
+                rst40       => rst_payload(2),
                 bctr        => bctr_40_SLRn0, 
                 input_40MHz => algos_SLRn0,
                 valid_in    => algos_valid_SLRn0,
@@ -329,8 +333,8 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(28),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                clk40       => clk_payload(2),
+                rst40       => rst_payload(2),
                 bctr        => bctr_40_SLRn0, 
                 input_40MHz => algos_after_bxmask_SLRn0,
                 valid_in    => algos_valid_SLRn0,
@@ -341,8 +345,8 @@ begin
             port map(
                 clk360      => clk_p,
                 rst360      => rst_loc(28),
-                lhc_clk     => clk_payload(2),
-                lhc_rst     => rst_payload(2),
+                clk40       => clk_payload(2),
+                rst40       => rst_payload(2),
                 bctr        => bctr_40_SLRn0, 
                 input_40MHz => algos_presc_SLRn0,
                 valid_in    => algos_valid_SLRn0,

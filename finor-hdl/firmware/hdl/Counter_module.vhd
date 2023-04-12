@@ -9,9 +9,9 @@ entity Counter_module is
         BEGIN_LUMI_BIT : integer := 18
     );
     port(
-        lhc_clk  : in std_logic;
-        lhc_rst  : in std_logic;
-        ctrs_in  : in ttc_stuff_t;
+        clk40          : in  std_logic;
+        rst40          : in  std_logic;
+        ctrs_in        : in  ttc_stuff_t;
         bc0            : out std_logic;
         ec0            : out std_logic;
         oc0            : out std_logic;
@@ -44,9 +44,9 @@ architecture RTL of Counter_module is
 
 begin
 
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             l1a    <= ctrs_in.l1a;
             bx_cnt <= ctrs_in.bctr; --TODO check clk cross here (the signals is 360 synchronous, yet I'm using it at 40...)
         end if;
@@ -56,9 +56,9 @@ begin
     oc0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_OC0  else '0';
     ec0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_EC0  else '0';
 
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             if oc0_s = '1' then
                 o_cnt <= (others => '0');
             elsif unsigned(bx_cnt) = LHC_BUNCH_COUNT-1 then
@@ -69,9 +69,9 @@ begin
 
     o_cntbls <= o_cnt(BEGIN_LUMI_BIT);
 
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             if ec0_s = '1' then
                 e_cnt  <= (others => '0');
             elsif l1a = '1' then
@@ -80,9 +80,9 @@ begin
         end if;
     end process;
 
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             if ec0_s = '1' then
                 ls_cnt <= (others => '0');
             else
@@ -105,9 +105,9 @@ begin
     end process;
 
 
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             if ctrs_in.ttc_cmd = TTC_BCMD_TEST_ENABLE then
                 test_en_int <= '1';
             elsif unsigned(bx_cnt) = LHC_BUNCH_COUNT-1 then
