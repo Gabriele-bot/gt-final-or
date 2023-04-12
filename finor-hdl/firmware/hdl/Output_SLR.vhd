@@ -75,6 +75,7 @@ architecture RTL of Output_SLR is
     signal l1a_latency_delay           : std_logic_vector(log2c(MAX_DELAY)-1 downto 0);
 
     signal ctrs_internal               : ttc_stuff_array(FINOR_LATENCY downto 0);
+    signal ctrs_align                  : ttc_stuff_t;
 
     signal rate_cnt_finor        : ipb_reg_v(N_TRIGG - 1 downto 0);
     signal rate_cnt_finor_pdt    : ipb_reg_v(N_TRIGG - 1 downto 0);
@@ -145,6 +146,20 @@ begin
             ctrs_internal(FINOR_LATENCY downto 1) <= ctrs_internal(FINOR_LATENCY - 1 downto 0);
         end if;
     end process;
+    
+    ctrs_align_i : entity work.ctrs_alignment
+        generic map(
+            MAX_LATENCY_360 => 255
+        )
+        port map(
+            clk360     => clk360,
+            rst360     => rst360,
+            clk40      => clk40,
+            rst40      => rst40,
+            link_valid => valid_in,
+            ctrs_in    => ctrs,
+            ctrs_out   => ctrs_align
+        );
 
     Counters_i : entity work.Counter_module
         generic map (
@@ -153,7 +168,7 @@ begin
         port map (
             clk40          => clk40,
             rst40          => rst40,
-            ctrs_in        => ctrs_internal(FINOR_LATENCY),
+            ctrs_in        => ctrs_align,
             bc0            => bc0,
             ec0            => ec0,
             oc0            => oc0,
@@ -376,7 +391,7 @@ begin
                 rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
-                l1a             => ctrs_internal(FINOR_LATENCY).l1a,
+                l1a             => ctrs_align.l1a,
                 algo_del_i      => Final_OR_delayed(i),
                 counter_o       => rate_cnt_finor_pdt(i)
             ) ;
@@ -404,7 +419,7 @@ begin
                 rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
-                l1a             => ctrs_internal(FINOR_LATENCY).l1a,
+                l1a             => ctrs_align.l1a,
                 algo_del_i      => Final_OR_preview_delayed(i),
                 counter_o       => rate_cnt_finor_prvw_pdt(i)
             ) ;
@@ -432,7 +447,7 @@ begin
                 rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
-                l1a             => ctrs_internal(FINOR_LATENCY).l1a,
+                l1a             => ctrs_align.l1a,
                 algo_del_i      => Final_OR_with_veto_delayed(i),
                 counter_o       => rate_cnt_finor_with_veto_pdt(i)
             ) ;
@@ -459,7 +474,7 @@ begin
                 rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
-                l1a             => ctrs_internal(FINOR_LATENCY).l1a,
+                l1a             => ctrs_align.l1a,
                 algo_del_i      => Final_OR_preview_with_veto_delayed(i),
                 counter_o       => rate_cnt_finor_prvw_with_veto_pdt(i)
             ) ;
@@ -633,7 +648,7 @@ begin
     link_out.valid          <= valid_in;
     link_out.start          <= '1' when frame_cntr = 0 and valid_in = '1' else '0';
     link_out.last           <= '1' when frame_cntr = 8 and valid_in = '1' else '0';
-    link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and valid_in_del = '0' else '0'; --TODO Modify (include bctr)
+    link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and (ctrs_align.bctr = std_logic_vector(to_unsigned(0,12))) else '0';
 
 
     output_p: process(clk360)
@@ -645,7 +660,7 @@ begin
                 q(0).start_of_orbit <= '0';
                 q(0).start          <= '0';
                 q(0).last           <= '0';
-            --q(0).strobe         <= '1';
+                --q(0).strobe         <= '1';
             else
                 q(0) <= link_out;
                 --q(0).strobe         <= '1';

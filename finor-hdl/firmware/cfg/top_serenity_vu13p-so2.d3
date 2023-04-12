@@ -1,4 +1,4 @@
-src top_serenity_vu13p-so2_decl.vhd
+src --vhdl2008  top_serenity_vu13p-so2_decl.vhd
 
 include -c emp-fwk:boards/serenity/dc_vu13p dc_vu13p_so2.dep
 

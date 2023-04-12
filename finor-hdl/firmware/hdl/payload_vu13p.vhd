@@ -50,7 +50,7 @@ architecture rtl of emp_payload is
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
-
+    
     signal begin_lumi_section : std_logic := '0'; -- TODO extract the value from ctrs
     signal l1a_loc            : std_logic_vector(N_REGION - 1 downto 0);
     signal bcres              : std_logic := '0';
@@ -145,7 +145,6 @@ begin
         generic map(
             NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
             NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
-            NR_QUADS              => INPUT_QUADS,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
             MAX_DELAY             => MAX_DELAY_PDT
         )
@@ -158,8 +157,7 @@ begin
             rst360             => rst_loc(SLRn1_quads(0)),
             clk40              => clk_payload(2),
             rst40              => rst_payload(2),
-            ctrs(2 downto 0)   => ctrs(SLRn1_quads(2) downto SLRn1_quads(0)),
-            ctrs(5 downto 3)   => ctrs(SLRn1_quads(5) downto SLRn1_quads(3)),
+            ctrs               => ctrs(SLRn1_quads(0)),
             d(11 downto 0)     => d(SLRn1_channels(11) downto SLRn1_channels(0) ),
             d(23 downto 12)    => d(SLRn1_channels(23) downto SLRn1_channels(12)),
             trigger_o          => trgg_SLRn1_regs(0),
@@ -172,13 +170,10 @@ begin
             algos_valid_out    => algos_valid_SLRn1
         );
 
-
-
     SLRn0_module : entity work.SLR_FinOR_unit
         generic map(
             NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
             NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
-            NR_QUADS              => INPUT_QUADS,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
             MAX_DELAY             => MAX_DELAY_PDT
         )
@@ -191,8 +186,7 @@ begin
             rst360             => rst_loc(SLRn0_quads(0)),
             clk40              => clk_payload(2),
             rst40              => rst_payload(2),
-            ctrs(2 downto 0)   => ctrs(SLRn0_quads(2) downto SLRn0_quads(0)),
-            ctrs(5 downto 3)   => ctrs(SLRn0_quads(5) downto SLRn0_quads(3)),
+            ctrs               => ctrs(SLRn0_quads(0)),
             d(11 downto 0)     => d(SLRn0_channels(11) downto SLRn0_channels(0) ),
             d(23 downto 12)    => d(SLRn0_channels(23) downto SLRn0_channels(12)),
             trigger_o          => trgg_SLRn0_regs(0),

@@ -31,6 +31,7 @@ src --vhdl2008 monitoring_module.vhd
 src --vhdl2008 Link_merger.vhd
 src --vhdl2008 Link_deserializer.vhd
 src --vhdl2008 mux.vhd
+src --vhdl2008 ctrs_alignment.vhd
 src --vhdl2008 SLR_FinOR_unit.vhd
 src --vhdl2008 Output_SLR.vhd
 

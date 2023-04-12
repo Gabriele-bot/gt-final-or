@@ -22,7 +22,6 @@ entity SLR_FinOR_unit is
     generic(
         NR_RIGHT_LINKS        : natural := INPUT_R_LINKS_SLR;
         NR_LEFT_LINKS         : natural := INPUT_L_LINKS_SLR;
-        NR_QUADS              : natural := INPUT_QUADS;
         BEGIN_LUMI_TOGGLE_BIT : natural := BEGIN_LUMI_SEC_BIT;
         MAX_DELAY             : natural := MAX_DELAY_PDT
     );
@@ -36,7 +35,7 @@ entity SLR_FinOR_unit is
         rst360    : in std_logic;
         clk40     : in std_logic;
         rst40     : in std_logic;
-        ctrs      : in ttc_stuff_array(NR_QUADS - 1 downto 0);
+        ctrs      : in ttc_stuff_t;
         d         : in ldata(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);  -- data in
         trigger_o          : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_preview_o  : out std_logic_vector(N_TRIGG-1 downto 0);
@@ -84,6 +83,11 @@ architecture RTL of SLR_FinOR_unit is
     signal link_mask       : std_logic_vector(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);
     signal rst_align_error : std_logic;
     signal align_error     : std_logic;
+    
+    signal ctrs_align : ttc_stuff_t;
+    
+    signal links_valids  : std_logic_vector(INPUT_LINKS_SLR - 1 downto 0);
+    signal link_valid_OR : std_logic;
 
 begin
 
@@ -98,6 +102,26 @@ begin
             sel             => ipbus_sel_SLR_FinOR_unit(ipb_in.ipb_addr),
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
+        );
+        
+    link_valid_gen_l : for i in 0 to NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 generate
+        links_valids(i) <= d(i).valid;
+    end generate;
+    
+    link_valid_OR <= or links_valids;
+    
+    ctrs_align_i : entity work.ctrs_alignment
+        generic map(
+            MAX_LATENCY_360 => 255
+        )
+        port map(
+            clk360     => clk360,
+            rst360     => rst360,
+            clk40      => clk40,
+            rst40      => rst40,
+            link_valid => link_valid_OR,
+            ctrs_in    => ctrs,
+            ctrs_out   => ctrs_align
         );
 
     process(clk360)
@@ -249,7 +273,7 @@ begin
     ----------------------------------------------------------------------------------
     --TODO Where to stat counting, need some latency? How much?
 
-    ctrs_del(0) <= ctrs(0);
+    ctrs_del(0) <= ctrs_align;
     ctrs_del_p: process(clk40)
     begin
         if rising_edge(clk40) then
