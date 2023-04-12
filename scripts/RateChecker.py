@@ -44,7 +44,7 @@ if args.test != 'algo-out':
     HWtest.set_TimeOutPeriod(5000)
 
     # Set the l1a-latency delay
-    l1_latency_delay = int(100)
+    l1_latency_delay = int(300)
     HWtest.load_latancy_delay(l1_latency_delay)
     HWtest.set_link_mask(0x00ffffff, 0x00ffffff)
     time.sleep(2)
