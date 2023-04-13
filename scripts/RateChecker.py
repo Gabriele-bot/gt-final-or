@@ -48,6 +48,10 @@ if args.test != 'algo-out':
     HWtest.load_latancy_delay(l1_latency_delay)
     HWtest.set_link_mask(0x00ffffff, 0x00ffffff)
     time.sleep(2)
+    if args.simulation:
+    	HWtest.set_GT_algo_delay(0)
+    else:
+    	HWtest.set_GT_algo_delay(0)
 
 
 # -------------------------------------------------------------------------------------

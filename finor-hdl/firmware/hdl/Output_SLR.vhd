@@ -50,6 +50,10 @@ entity Output_SLR is
 end entity Output_SLR;
 
 architecture RTL of Output_SLR is
+    
+    constant MAX_CTRS_DELAY_360 : integer := 511;
+    constant N_CTRL_REGS        : integer := 2;
+    constant N_STAT_REGS        : integer := 1; 
 
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
@@ -74,8 +78,9 @@ architecture RTL of Output_SLR is
     signal end_lumi_per                : std_logic;
     signal l1a_latency_delay           : std_logic_vector(log2c(MAX_DELAY)-1 downto 0);
 
-    signal ctrs_internal               : ttc_stuff_array(FINOR_LATENCY downto 0);
+    signal ctrs_internal               : ttc_stuff_t;
     signal ctrs_align                  : ttc_stuff_t;
+    signal GT_algo_delay               : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0) := (others => '0');
 
     signal rate_cnt_finor        : ipb_reg_v(N_TRIGG - 1 downto 0);
     signal rate_cnt_finor_pdt    : ipb_reg_v(N_TRIGG - 1 downto 0);
@@ -86,8 +91,8 @@ architecture RTL of Output_SLR is
     signal rate_cnt_finor_prvw_with_veto        : ipb_reg_v(N_TRIGG - 1 downto 0);
     signal rate_cnt_finor_prvw_with_veto_pdt    : ipb_reg_v(N_TRIGG - 1 downto 0);
 
-    signal ctrl_reg : ipb_reg_v(0 downto 0) := (others => (others => '0'));
-    signal stat_reg : ipb_reg_v(0 downto 0) := (others => (others => '0'));
+    signal ctrl_reg : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := (others => (others => '0'));
+    signal stat_reg : ipb_reg_v(N_STAT_REGS - 1 downto 0) := (others => (others => '0'));
 
     type state_t is (idle, start, increment);
     signal state           : state_t := idle;
@@ -139,26 +144,26 @@ begin
     ---------------COUNTERS INTERNAL---------------------------------------------------
     ----------------------------------------------------------------------------------
     --TODO Where to stat counting, need some latency? How much?
-    ctrs_internal(0) <= ctrs;
     bx_cnt_int_p : process(clk40)
     begin
         if rising_edge(clk40) then
-            ctrs_internal(FINOR_LATENCY downto 1) <= ctrs_internal(FINOR_LATENCY - 1 downto 0);
+            ctrs_internal <= ctrs_align;
         end if;
     end process;
     
     ctrs_align_i : entity work.ctrs_alignment
         generic map(
-            MAX_LATENCY_360 => 255
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
+            DELAY_OFFSET    => 9+4+9
         )
         port map(
-            clk360     => clk360,
-            rst360     => rst360,
-            clk40      => clk40,
-            rst40      => rst40,
-            link_valid => valid_in,
-            ctrs_in    => ctrs,
-            ctrs_out   => ctrs_align
+            clk360         => clk360,
+            rst360         => rst360,
+            clk40          => clk40,
+            rst40          => rst40,
+            ctrs_delay_val => GT_algo_delay,
+            ctrs_in        => ctrs,
+            ctrs_out       => ctrs_align
         );
 
     Counters_i : entity work.Counter_module
@@ -168,7 +173,7 @@ begin
         port map (
             clk40          => clk40,
             rst40          => rst40,
-            ctrs_in        => ctrs_align,
+            ctrs_in        => ctrs_internal,
             bc0            => bc0,
             ec0            => ec0,
             oc0            => oc0,
@@ -197,8 +202,8 @@ begin
 
     Ctrl_stat_regs : entity work.ipbus_ctrlreg_v
         generic map(
-            N_CTRL     => 1,
-            N_STAT     => 1
+            N_CTRL     => N_CTRL_REGS,
+            N_STAT     => N_STAT_REGS
         )
         port map(
             clk       => clk,
@@ -224,6 +229,21 @@ begin
             dest_clk => clk40,
             src_clk  => clk,
             src_in   => ctrl_reg(0)(log2c(MAX_DELAY) - 1 downto 0)
+        );
+        
+    xpm_cdc_GT_finor_delay : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => log2c(MAX_CTRS_DELAY_360)
+        )
+        port map (
+            dest_out => GT_algo_delay,
+            dest_clk => clk360,
+            src_clk  => clk,
+            src_in   => ctrl_reg(1)(log2c(MAX_CTRS_DELAY_360) - 1 downto 0)
         );
 
     ready <= not we;
@@ -648,7 +668,7 @@ begin
     link_out.valid          <= valid_in;
     link_out.start          <= '1' when frame_cntr = 0 and valid_in = '1' else '0';
     link_out.last           <= '1' when frame_cntr = 8 and valid_in = '1' else '0';
-    link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and (ctrs_align.bctr = std_logic_vector(to_unsigned(0,12))) else '0';
+    link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and (ctrs_internal.bctr = std_logic_vector(to_unsigned(0,12))) else '0';
 
 
     output_p: process(clk360)

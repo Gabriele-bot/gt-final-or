@@ -50,7 +50,11 @@ end entity SLR_FinOR_unit;
 
 architecture RTL of SLR_FinOR_unit is
 
-    constant LATENCY_360 : integer := 9  + 1;
+    constant LATENCY_360        : integer := 9  + 1;
+    constant MAX_CTRS_DELAY_360 : integer := 511;
+    constant CTRS_DELAY_OFFSET  : integer := 4 + 9; --4 due to link merging and 9 due to deserialization
+    constant N_CTRL_REGS        : integer := 3;
+    constant N_STAT_REGS        : integer := 1;   
 
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
@@ -73,18 +77,21 @@ architecture RTL of SLR_FinOR_unit is
     signal veto_out               : std_logic;
 
     signal ctrs_int               : ttc_stuff_t;
+    signal ctrs_prev_int          : ttc_stuff_t;
     signal ctrs_del               : ttc_stuff_array(1 downto 0);
+    signal ctrs_prev_del          : ttc_stuff_array(1 downto 0);
+    signal GT_algo_delay          : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0) := (others => '0');
 
-    signal ctrl_reg     : ipb_reg_v(1 downto 0) := ((others => '0'),(others => '1'));
-    signal ctrl_reg_stb : ipb_reg_v(1 downto 0) := ((others => '0'),(others => '1'));
-    signal stat_reg     : ipb_reg_v(0 downto 0);
-    signal ctrl_stb     : std_logic_vector(1 downto 0);
+    signal ctrl_reg     : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '0'), (others => '1'));
+    signal ctrl_reg_stb : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '0'), (others => '1'));
+    signal stat_reg     : ipb_reg_v(N_STAT_REGS - 1 downto 0);
+    signal ctrl_stb     : std_logic_vector(N_CTRL_REGS - 1 downto 0);
 
     signal link_mask       : std_logic_vector(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);
     signal rst_align_error : std_logic;
     signal align_error     : std_logic;
     
-    signal ctrs_align : ttc_stuff_t;
+    signal ctrs_align, ctrs_prev : ttc_stuff_t;
     
     signal links_valids  : std_logic_vector(INPUT_LINKS_SLR - 1 downto 0);
     signal link_valid_OR : std_logic;
@@ -112,16 +119,34 @@ begin
     
     ctrs_align_i : entity work.ctrs_alignment
         generic map(
-            MAX_LATENCY_360 => 255
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
+            DELAY_OFFSET    => 4+9 --4 due to link merging and 9 due to deserialization
         )
         port map(
-            clk360     => clk360,
-            rst360     => rst360,
-            clk40      => clk40,
-            rst40      => rst40,
-            link_valid => link_valid_OR,
-            ctrs_in    => ctrs,
-            ctrs_out   => ctrs_align
+            clk360         => clk360,
+            rst360         => rst360,
+            clk40          => clk40,
+            rst40          => rst40,
+            ctrs_delay_val => GT_algo_delay,
+            ctrs_in        => ctrs,
+            ctrs_out       => ctrs_align
+        );
+    
+    --TODO change this, I really dont like this workaround
+    --this is to tackle the fact that BXmask mem need BX number 1 clock cycles before, weird
+    ctrs_previous_i : entity work.ctrs_alignment
+        generic map(
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
+            DELAY_OFFSET    => 4 
+        )
+        port map(
+            clk360         => clk360,
+            rst360         => rst360,
+            clk40          => clk40,
+            rst40          => rst40,
+            ctrs_delay_val => GT_algo_delay,
+            ctrs_in        => ctrs,
+            ctrs_out       => ctrs_prev
         );
 
     process(clk360)
@@ -133,8 +158,8 @@ begin
 
     CSR_regs : entity work.ipbus_ctrlreg_v
         generic map(
-            N_CTRL     => 2,
-            N_STAT     => 1
+            N_CTRL     => N_CTRL_REGS,
+            N_STAT     => N_STAT_REGS
         )
         port map(
             clk       => clk,
@@ -150,7 +175,7 @@ begin
     strobe_loop : process(clk)
     begin
         if rising_edge(clk) then
-            for i  in 1 downto 0 loop
+            for i  in N_CTRL_REGS - 1 downto 0 loop
                 if ctrl_stb(i) = '1' then
                     ctrl_reg_stb(i) <= ctrl_reg(i);
                 end if;
@@ -173,6 +198,21 @@ begin
             src_in   => ctrl_reg_stb(0)(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0)
         );
 
+    xpm_cdc_GT_algo_del : xpm_cdc_array_single
+        generic map (
+            DEST_SYNC_FF   => 5,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1,
+            WIDTH          => log2c(MAX_CTRS_DELAY_360)
+        )
+        port map (
+            dest_out => GT_algo_delay,
+            dest_clk => clk360,
+            src_clk  => clk,
+            src_in   => ctrl_reg(1)(log2c(MAX_CTRS_DELAY_360) - 1 downto 0)
+        );
+        
     xpm_cdc_rst_error : xpm_cdc_single
         generic map (
             DEST_SYNC_FF   => 5,
@@ -184,7 +224,7 @@ begin
             dest_out => rst_align_error,
             dest_clk => clk360,
             src_clk  => clk,
-            src_in   => ctrl_reg(1)(0) and ctrl_stb(1)
+            src_in   => ctrl_reg(2)(0) and ctrl_stb(1)
         );
 
     xpm_cdc_error_flag : xpm_cdc_single
@@ -273,19 +313,23 @@ begin
     ----------------------------------------------------------------------------------
     --TODO Where to stat counting, need some latency? How much?
 
-    ctrs_del(0) <= ctrs_align;
+    ctrs_del(0)      <= ctrs_align;
+    ctrs_prev_del(0) <= ctrs_prev;
     ctrs_del_p: process(clk40)
     begin
         if rising_edge(clk40) then
-            ctrs_del(1) <= ctrs_del(0);
+            ctrs_del(1)      <= ctrs_del(0);
+            ctrs_prev_del(1) <= ctrs_prev_del(0);
         end if;
     end process;
 
 
     crts_del_g: if DESER_OUT_REG generate
         ctrs_int <= ctrs_del(1);
+        ctrs_prev_int <= ctrs_prev_del(1);
     else generate
         ctrs_int <= ctrs_del(0);
+        ctrs_prev_int <= ctrs_prev_del(0);
     end generate;
 
 
@@ -305,6 +349,7 @@ begin
             clk40                   => clk40,
             rst40                   => rst40,
             ctrs                    => ctrs_int,
+            ctrs_prev               => ctrs_prev_int,
             algos_in                => algos_in,
             valid_algos_in          => valid_deser_out,
             algos_after_bxmask_o    => algos_after_bxmask, 

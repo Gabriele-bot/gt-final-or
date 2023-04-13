@@ -67,8 +67,6 @@ begin
         end if;
     end process;
 
-    o_cntbls <= o_cnt(BEGIN_LUMI_BIT);
-
     process (clk40)
     begin
         if rising_edge(clk40) then
@@ -79,19 +77,18 @@ begin
             end if;
         end if;
     end process;
+    
+    o_cntbls <= o_cnt(BEGIN_LUMI_BIT);
 
-    process (clk40)
+    process(clk40)
     begin
         if rising_edge(clk40) then
-            if ec0_s = '1' then
-                ls_cnt <= (others => '0');
-            else
-                ls_cnt(o_cnt'high - BEGIN_LUMI_BIT downto 0) <=  o_cnt(o_cnt'high downto BEGIN_LUMI_BIT);
-                ls_cnt(o_cnt'high  downto o_cnt'high - BEGIN_LUMI_BIT + 1 ) <= (others => '0');
-            end if;
             o_cntbls_temp <= o_cntbls;
         end if;
     end process;
+
+    ls_cnt(o_cnt'high - BEGIN_LUMI_BIT downto 0)                <=  o_cnt(o_cnt'high downto BEGIN_LUMI_BIT);
+    ls_cnt(o_cnt'high  downto o_cnt'high - BEGIN_LUMI_BIT + 1 ) <= (others => '0');
 
     begin_lumi_sec_int <= '1' when o_cntbls_temp /= o_cntbls  else '0';
 

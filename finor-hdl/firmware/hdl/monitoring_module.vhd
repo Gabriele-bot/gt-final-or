@@ -7,7 +7,7 @@ use xpm.vcomponents.all;
 
 use work.ipbus.all;
 use work.ipbus_reg_types.all;
-use work.ipbus_decode_m_module.all;
+use work.ipbus_decode_monitoring_module.all;
 
 use work.emp_data_types.all;
 use work.emp_project_decl.all;
@@ -43,7 +43,8 @@ entity monitoring_module is
         rst40                    : in  std_logic;
 
         ctrs                     : in  ttc_stuff_t;
-
+        ctrs_prev                : in  ttc_stuff_t;
+    
         algos_in                 : in  std_logic_vector(NR_ALGOS-1 downto 0);
         valid_algos_in           : in  std_logic;
         algos_after_bxmask_o     : out std_logic_vector(NR_ALGOS-1 downto 0);
@@ -176,7 +177,7 @@ begin
         port map (
             clk40          => clk40,
             rst40          => rst40,
-            ctrs_in        => ctrs_internal,
+            ctrs_in        => ctrs,
             bc0            => bc0,
             ec0            => ec0,
             oc0            => oc0,
@@ -295,7 +296,7 @@ begin
         port map(
             ipb_in          => ipb_in,
             ipb_out         => ipb_out,
-            sel             => ipbus_sel_m_module(ipb_in.ipb_addr),
+            sel             => ipbus_sel_monitoring_module(ipb_in.ipb_addr),
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );
@@ -780,7 +781,8 @@ begin
             we      => '0',
             d       => (others => '1'),
             q       => algo_bx_mask_mem_out,
-            addr    => ctrs.bctr -- note that this one is not delayed
+            addr    => ctrs_prev.bctr -- note that this one is not delayed
+            
         ) ;
 
 
