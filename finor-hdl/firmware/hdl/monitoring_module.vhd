@@ -43,7 +43,6 @@ entity monitoring_module is
         rst40                    : in  std_logic;
 
         ctrs                     : in  ttc_stuff_t;
-        ctrs_prev                : in  ttc_stuff_t;
     
         algos_in                 : in  std_logic_vector(NR_ALGOS-1 downto 0);
         valid_algos_in           : in  std_logic;
@@ -158,8 +157,7 @@ begin
     ----------------------------------------------------------------------------------
     ---------------COUNTERS INTERNAL---------------------------------------------------
     ----------------------------------------------------------------------------------
-    --TODO Where to stat counting, need some latency? How much?
-    bx_cnt_int_p : process(clk40)
+    sync_ctrs_p : process(clk40)
     begin
         if rising_edge(clk40) then
             ctrs_internal <= ctrs;
@@ -177,7 +175,7 @@ begin
         port map (
             clk40          => clk40,
             rst40          => rst40,
-            ctrs_in        => ctrs,
+            ctrs_in        => ctrs_internal,
             bc0            => bc0,
             ec0            => ec0,
             oc0            => oc0,
@@ -192,9 +190,7 @@ begin
 
 
 
-    -- TODO check delay
-
-    -- rate counters are updated with begin_lumi_per_del1
+    -- rate counter registers update starts with begin_lumi_per_del1
     process (clk40)
     begin
         if rising_edge(clk40) then
@@ -450,20 +446,22 @@ begin
     d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time         (to_integer(unsigned(addr)));
 
 
-    CSR_regs : entity work.ipbus_ctrlreg_v
+    CSR_regs : entity work.ipbus_syncreg_v
         generic map(
             N_CTRL     => 2,
             N_STAT     => 4
         )
         port map(
             clk       => clk,
-            reset     => rst,
-            ipbus_in  => ipb_to_slaves(N_SLV_CSR),
-            ipbus_out => ipb_from_slaves(N_SLV_CSR),
+            rst       => rst,
+            ipb_in    => ipb_to_slaves(N_SLV_CSR),
+            ipb_out   => ipb_from_slaves(N_SLV_CSR),
+            slv_clk   => clk40,
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
-            stb       => ctrl_stb
+            stb       => ctrl_stb,
+            rstb      => open
         );
 
     strobe_loop : process(clk)
@@ -476,160 +474,169 @@ begin
             end loop;
         end if;
     end process;
-
-
-    xpm_cdc_new_prescale_column : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
-        )
-        port map (
-            dest_out => new_prescale_column,
-            dest_clk => clk40,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(0)
-        );
-
-    xpm_cdc_new_trgg_masks : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
-        )
-        port map (
-            dest_out => new_trgg_masks,
-            dest_clk => clk40,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(1)
-        );
-
-    xpm_cdc_new_veto : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
-        )
-        port map (
-            dest_out => new_veto,
-            dest_clk => clk40,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(2)
-        );
-
-    xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => log2c(MAX_DELAY)
-        )
-        port map (
-            dest_out => l1a_latency_delay,
-            dest_clk => clk40,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(log2c(MAX_DELAY) + 2 downto 3)
-        );
-
-    xpm_cdc_supp_BX_low : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 12
-        )
-        port map (
-            dest_out => supp_cal_BX_low,
-            dest_clk => clk40,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(1)(11 downto 0)
-        );
-
-    xpm_cdc_supp_BX_high : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 12
-        )
-        port map (
-            dest_out => supp_cal_BX_high,
-            dest_clk => clk40,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(1)(23 downto 12)
-        );
-
+    
+    new_prescale_column <= ctrl_reg(0)(0) and ctrl_stb(0);
+    new_trgg_masks      <= ctrl_reg(0)(1) and ctrl_stb(0);
+    new_veto            <= ctrl_reg(0)(2) and ctrl_stb(0);
+    l1a_latency_delay   <= ctrl_reg_stb(0)(log2c(MAX_DELAY) + 2 downto 3);
+    supp_cal_BX_low     <= ctrl_reg_stb(1)(11 downto 0);
+    supp_cal_BX_high    <= ctrl_reg_stb(1)(23 downto 12);
+    
     ready <= not we;
+    
+    stat_reg(0)(0) <= ready;
+    stat_reg(1)    <= lumi_sec_load_prscl_mark;
+    stat_reg(2)    <= lumi_sec_load_masks_mark;
+    stat_reg(3)    <= lumi_sec_load_veto_mark;
 
-    xpm_cdc_ready : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG => 1
-        )
-        port map (
-            dest_out => stat_reg(0)(0),
-            dest_clk => clk,
-            src_clk  => clk40,
-            src_in   => ready
-        );
 
-    xpm_cdc_prescaler_lumi_mark : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 32
-        )
-        port map (
-            dest_out => stat_reg(1),
-            dest_clk => clk,
-            src_clk  => clk40,
-            src_in   => lumi_sec_load_prscl_mark
-        );
-
-    xpm_cdc_masks_lumi_mark : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 32
-        )
-        port map (
-            dest_out => stat_reg(2),
-            dest_clk => clk,
-            src_clk  => clk40,
-            src_in   => lumi_sec_load_masks_mark
-        );
-
-    xpm_cdc_veto_lumi_mark : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 32
-        )
-        port map (
-            dest_out => stat_reg(3),
-            dest_clk => clk,
-            src_clk  => clk40,
-            src_in   => lumi_sec_load_veto_mark
-        );
-
-    --begin_lumi_per        <= ctrl_reg(0)(0);
-    --request_factor_update <= ctrl_reg(0)(1);
-    --l1a_latency_delay     <= ctrl_reg(0)(log2c(MAX_DELAY) + 1 downto 2);
-    --stat_reg(0)(0)        <= ready;
+    --xpm_cdc_new_prescale_column : xpm_cdc_single
+    --    generic map (
+    --        DEST_SYNC_FF => 3,
+    --        INIT_SYNC_FF => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1
+    --    )
+    --    port map (
+    --        dest_out => new_prescale_column,
+    --        dest_clk => clk40,
+    --        src_clk  => clk,
+    --        src_in   => ctrl_reg_stb(0)(0)
+    --    );
+    --
+    --xpm_cdc_new_trgg_masks : xpm_cdc_single
+    --    generic map (
+    --        DEST_SYNC_FF => 3,
+    --        INIT_SYNC_FF => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1
+    --    )
+    --    port map (
+    --        dest_out => new_trgg_masks,
+    --        dest_clk => clk40,
+    --        src_clk  => clk,
+    --        src_in   => ctrl_reg_stb(0)(1)
+    --    );
+    --
+    --xpm_cdc_new_veto : xpm_cdc_single
+    --    generic map (
+    --        DEST_SYNC_FF => 3,
+    --        INIT_SYNC_FF => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1
+    --    )
+    --    port map (
+    --        dest_out => new_veto,
+    --        dest_clk => clk40,
+    --        src_clk  => clk,
+    --        src_in   => ctrl_reg_stb(0)(2)
+    --    );
+    --
+    --xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF => 3,
+    --        INIT_SYNC_FF => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => log2c(MAX_DELAY)
+    --    )
+    --    port map (
+    --        dest_out => l1a_latency_delay,
+    --        dest_clk => clk40,
+    --        src_clk  => clk,
+    --        src_in   => ctrl_reg_stb(0)(log2c(MAX_DELAY) + 2 downto 3)
+    --    );
+    --
+    --xpm_cdc_supp_BX_low : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF => 3,
+    --        INIT_SYNC_FF => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => 12
+    --    )
+    --    port map (
+    --        dest_out => supp_cal_BX_low,
+    --        dest_clk => clk40,
+    --        src_clk  => clk,
+    --        src_in   => ctrl_reg_stb(1)(11 downto 0)
+    --    );
+    --
+    --xpm_cdc_supp_BX_high : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF => 3,
+    --        INIT_SYNC_FF => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => 12
+    --    )
+    --    port map (
+    --        dest_out => supp_cal_BX_high,
+    --        dest_clk => clk40,
+    --        src_clk  => clk,
+    --        src_in   => ctrl_reg_stb(1)(23 downto 12)
+    --    );
+    --
+    --ready <= not we;
+    --
+    --xpm_cdc_ready : xpm_cdc_single
+    --    generic map (
+    --        DEST_SYNC_FF => 3,
+    --        INIT_SYNC_FF => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG => 1
+    --    )
+    --    port map (
+    --        dest_out => stat_reg(0)(0),
+    --        dest_clk => clk,
+    --        src_clk  => clk40,
+    --        src_in   => ready
+    --    );
+    --
+    --xpm_cdc_prescaler_lumi_mark : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF   => 3,
+    --        INIT_SYNC_FF   => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => 32
+    --    )
+    --    port map (
+    --        dest_out => stat_reg(1),
+    --        dest_clk => clk,
+    --        src_clk  => clk40,
+    --        src_in   => lumi_sec_load_prscl_mark
+    --    );
+    --
+    --xpm_cdc_masks_lumi_mark : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF   => 3,
+    --        INIT_SYNC_FF   => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => 32
+    --    )
+    --    port map (
+    --        dest_out => stat_reg(2),
+    --        dest_clk => clk,
+    --        src_clk  => clk40,
+    --        src_in   => lumi_sec_load_masks_mark
+    --    );
+    --
+    --xpm_cdc_veto_lumi_mark : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF   => 3,
+    --        INIT_SYNC_FF   => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => 32
+    --    )
+    --    port map (
+    --        dest_out => stat_reg(3),
+    --        dest_clk => clk,
+    --        src_clk  => clk40,
+    --        src_in   => lumi_sec_load_veto_mark
+    --    );
 
     ----------------------------------------------------------------------------------
     ---------------RESET PRE-SCALE COUTNER LOGIC--------------------------------------
@@ -781,7 +788,7 @@ begin
             we      => '0',
             d       => (others => '1'),
             q       => algo_bx_mask_mem_out,
-            addr    => ctrs_prev.bctr -- note that this one is not delayed
+            addr    => ctrs.bctr -- note that this one is not delayed
             
         ) ;
 
@@ -911,36 +918,40 @@ begin
             counter_o       => veto_cnt
         );
 
-    xpm_cdc_veto_cnt_reg : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => RATE_COUNTER_WIDTH
-        )
-        port map (
-            dest_out => veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0),
-            dest_clk => clk,
-            src_clk  => clk40,
-            src_in   => veto_cnt
-        );
+    --xpm_cdc_veto_cnt_reg : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF   => 3,
+    --        INIT_SYNC_FF   => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => RATE_COUNTER_WIDTH
+    --    )
+    --    port map (
+    --        dest_out => veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0),
+    --        dest_clk => clk,
+    --        src_clk  => clk40,
+    --        src_in   => veto_cnt
+    --    );
 
-    Veto_cnt_regs : entity work.ipbus_ctrlreg_v
+    Veto_cnt_regs : entity work.ipbus_syncreg_v
         generic map(
             N_CTRL     => 0,
             N_STAT     => 1
         )
         port map(
             clk       => clk,
-            reset     => rst,
-            ipbus_in  => ipb_to_slaves(N_SLV_VETO_REG),
-            ipbus_out => ipb_from_slaves(N_SLV_VETO_REG),
+            rst       => rst,
+            ipb_in    => ipb_to_slaves(N_SLV_VETO_REG),
+            ipb_out   => ipb_from_slaves(N_SLV_VETO_REG),
+            slv_clk   => clk40,
             d         => veto_stat_reg,
             q         => open,
             qmask     => open,
-            stb       => open
+            stb       => open,
+            rstb      => open
         );
+        
+    veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0) <= veto_cnt;
 
     veto_reg_p : process(clk40)
     begin

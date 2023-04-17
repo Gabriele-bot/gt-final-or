@@ -48,10 +48,10 @@ if args.test != 'algo-out':
     HWtest.load_latancy_delay(l1_latency_delay)
     HWtest.set_link_mask(0x00ffffff, 0x00ffffff)
     time.sleep(2)
-    if args.simulation:
-    	HWtest.set_GT_algo_delay(0)
-    else:
-    	HWtest.set_GT_algo_delay(0)
+    
+    delay = HWtest.read_ctrs_delay()
+    print("Delay SLR n1 = %d" % delay[1])
+    print("Delay SLR n0 = %d" % delay[0])
 
 
 # -------------------------------------------------------------------------------------
@@ -173,8 +173,7 @@ if args.test == 'prescaler':
             HWtest.hw.dispatch()
         o_ctr_temp = o_ctr
 
-        ready_1 = 0
-        ready_0 = 0
+        ready_1, ready_0 = HWtest.check_counter_ready_flags()
         while not (ready_1 and ready_0):
             print("Counters are not ready to be read")
             time.sleep(5)
@@ -316,8 +315,8 @@ elif args.test == 'trigger_mask':
             HWtest.hw.dispatch()
         o_ctr_temp = o_ctr
 
-        ready = 0
-        while ready < 1:
+        ready = HWtest.check_trigger_counter_ready_flag()
+        while not ready:
             time.sleep(5)
             ready = HWtest.check_trigger_counter_ready_flag()
         # ttcStatus = ttcNode.readStatus()
@@ -464,8 +463,8 @@ elif args.test == 'veto_mask':
             HWtest.hw.dispatch()
         o_ctr_temp = o_ctr
         
-        ready = 0
-        while ready < 1:
+        ready = HWtest.check_trigger_counter_ready_flag()
+        while not ready:
             time.sleep(5)
             ready = HWtest.check_trigger_counter_ready_flag()
         # ttcStatus = ttcNode.readStatus()
@@ -620,8 +619,7 @@ elif args.test == 'BXmask':
             HWtest.hw.dispatch()
         o_ctr_temp = o_ctr
 
-        ready_1 = 0
-        ready_0 = 0
+        ready_1, ready_0 = HWtest.check_counter_ready_flags()
         while not (ready_1 and ready_0):
             print("Counters are not ready to be read")
             time.sleep(5)

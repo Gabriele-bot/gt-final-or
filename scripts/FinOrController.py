@@ -156,11 +156,12 @@ class FinOrController:
         self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.link_mask").write(link_mask_0)
         self.hw.dispatch()
         
-    def set_GT_algo_delay(self, algo_delay):
-        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.GT_algo_delay").write(algo_delay)
-        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.GT_algo_delay").write(algo_delay)
-        self.hw.getNode("payload.SLR_FINOR.CSR.ctrl.GT_finor_delay").write(algo_delay)
+    def read_ctrs_delay(self):
+        ctrs_delay_1 = self.hw.getNode("payload.SLRn1_monitor.CSR.stat.input_delay").read()
+        ctrs_delay_0 = self.hw.getNode("payload.SLRn0_monitor.CSR.stat.input_delay").read()
         self.hw.dispatch()
+        
+        return ctrs_delay_1,ctrs_delay_0
         
     def check_alignement_error(self):
         err_1 = self.hw.getNode("payload.SLRn1_monitor.CSR.stat.align_err").read()

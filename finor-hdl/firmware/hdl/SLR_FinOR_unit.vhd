@@ -37,6 +37,7 @@ entity SLR_FinOR_unit is
         rst40     : in std_logic;
         ctrs      : in ttc_stuff_t;
         d         : in ldata(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);  -- data in
+        delay_out          : out std_logic_vector(log2c(255) - 1 downto 0);
         trigger_o          : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_preview_o  : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_valid_out  : out std_logic;
@@ -53,8 +54,8 @@ architecture RTL of SLR_FinOR_unit is
     constant LATENCY_360        : integer := 9  + 1;
     constant MAX_CTRS_DELAY_360 : integer := 511;
     constant CTRS_DELAY_OFFSET  : integer := 4 + 9; --4 due to link merging and 9 due to deserialization
-    constant N_CTRL_REGS        : integer := 3;
-    constant N_STAT_REGS        : integer := 1;   
+    constant N_CTRL_REGS        : integer := 2;
+    constant N_STAT_REGS        : integer := 1;
 
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
@@ -82,19 +83,23 @@ architecture RTL of SLR_FinOR_unit is
     signal ctrs_prev_del          : ttc_stuff_array(1 downto 0);
     signal GT_algo_delay          : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0) := (others => '0');
 
-    signal ctrl_reg     : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '0'), (others => '1'));
-    signal ctrl_reg_stb : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '0'), (others => '1'));
+    signal ctrl_reg     : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '1'));
+    signal ctrl_reg_stb : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '1'));
     signal stat_reg     : ipb_reg_v(N_STAT_REGS - 1 downto 0);
     signal ctrl_stb     : std_logic_vector(N_CTRL_REGS - 1 downto 0);
 
     signal link_mask       : std_logic_vector(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);
     signal rst_align_error : std_logic;
     signal align_error     : std_logic;
-    
+
     signal ctrs_align, ctrs_prev : ttc_stuff_t;
-    
+    signal ctrs_test : ttc_stuff_t;
+
     signal links_valids  : std_logic_vector(INPUT_LINKS_SLR - 1 downto 0);
     signal link_valid_OR : std_logic;
+
+    signal bx_nr_360, bx_nr_40 : bctr_t := (others => '0');
+    signal delay_measured      : std_logic_vector(log2c(255) - 1 downto 0)  := std_logic_vector(to_unsigned(50,log2c(255)));
 
 begin
 
@@ -110,44 +115,12 @@ begin
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );
-        
+
     link_valid_gen_l : for i in 0 to NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 generate
         links_valids(i) <= d(i).valid;
     end generate;
-    
+
     link_valid_OR <= or links_valids;
-    
-    ctrs_align_i : entity work.ctrs_alignment
-        generic map(
-            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            DELAY_OFFSET    => 4+9 --4 due to link merging and 9 due to deserialization
-        )
-        port map(
-            clk360         => clk360,
-            rst360         => rst360,
-            clk40          => clk40,
-            rst40          => rst40,
-            ctrs_delay_val => GT_algo_delay,
-            ctrs_in        => ctrs,
-            ctrs_out       => ctrs_align
-        );
-    
-    --TODO change this, I really dont like this workaround
-    --this is to tackle the fact that BXmask mem need BX number 1 clock cycles before, weird
-    ctrs_previous_i : entity work.ctrs_alignment
-        generic map(
-            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            DELAY_OFFSET    => 4 
-        )
-        port map(
-            clk360         => clk360,
-            rst360         => rst360,
-            clk40          => clk40,
-            rst40          => rst40,
-            ctrs_delay_val => GT_algo_delay,
-            ctrs_in        => ctrs,
-            ctrs_out       => ctrs_prev
-        );
 
     process(clk360)
     begin
@@ -156,22 +129,24 @@ begin
         end if;
     end process;
 
-    CSR_regs : entity work.ipbus_ctrlreg_v
+    CSR_regs : entity work.ipbus_syncreg_v
         generic map(
             N_CTRL     => N_CTRL_REGS,
             N_STAT     => N_STAT_REGS
         )
         port map(
             clk       => clk,
-            reset     => rst,
-            ipbus_in  => ipb_to_slaves(N_SLV_CSR),
-            ipbus_out => ipb_from_slaves(N_SLV_CSR),
+            rst       => rst,
+            ipb_in    => ipb_to_slaves(N_SLV_CSR),
+            ipb_out   => ipb_from_slaves(N_SLV_CSR),
+            slv_clk   => clk360, 
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
-            stb       => ctrl_stb
+            stb       => ctrl_stb,
+            rstb      => open
         );
-        
+
     strobe_loop : process(clk)
     begin
         if rising_edge(clk) then
@@ -182,66 +157,71 @@ begin
             end loop;
         end if;
     end process;
+    
+    link_mask       <= ctrl_reg_stb(0)(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0);
+    rst_align_error <= ctrl_reg(1)(0) and ctrl_stb(1);
+    
+    stat_reg(0)(0)                        <= align_error;
+    stat_reg(0)(log2c(255) downto 1)      <= delay_measured;
+    stat_reg(0)(31 downto log2c(255) + 1) <= (others => '0');
 
-    xpm_cdc_linkmask : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 5,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => NR_RIGHT_LINKS + NR_LEFT_LINKS 
-        )
-        port map (
-            dest_out => link_mask,
-            dest_clk => clk360,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0)
-        );
-
-    xpm_cdc_GT_algo_del : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 5,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => log2c(MAX_CTRS_DELAY_360)
-        )
-        port map (
-            dest_out => GT_algo_delay,
-            dest_clk => clk360,
-            src_clk  => clk,
-            src_in   => ctrl_reg(1)(log2c(MAX_CTRS_DELAY_360) - 1 downto 0)
-        );
-        
-    xpm_cdc_rst_error : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF   => 5,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
-        )
-        port map (
-            dest_out => rst_align_error,
-            dest_clk => clk360,
-            src_clk  => clk,
-            src_in   => ctrl_reg(2)(0) and ctrl_stb(1)
-        );
-
-    xpm_cdc_error_flag : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF   => 5,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
-        )
-        port map (
-            dest_out => stat_reg(0)(0),
-            dest_clk => clk,
-            src_clk  => clk360,
-            src_in   => align_error
-        );
-
-    stat_reg(0)(31 downto 1) <= (others => '0');
+    --xpm_cdc_linkmask : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF   => 5,
+    --        INIT_SYNC_FF   => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => NR_RIGHT_LINKS + NR_LEFT_LINKS
+    --    )
+    --    port map (
+    --        dest_out => link_mask,
+    --        dest_clk => clk360,
+    --        src_clk  => clk,
+    --        src_in   => ctrl_reg_stb(0)(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0)
+    --    );
+    --
+    --xpm_cdc_rst_error : xpm_cdc_single
+    --    generic map (
+    --        DEST_SYNC_FF   => 5,
+    --        INIT_SYNC_FF   => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1
+    --    )
+    --    port map (
+    --        dest_out => rst_align_error,
+    --        dest_clk => clk360,
+    --        src_clk  => clk,
+    --        src_in   => ctrl_reg(1)(0) and ctrl_stb(1)
+    --    );
+    --
+    --xpm_cdc_error_flag : xpm_cdc_single
+    --    generic map (
+    --        DEST_SYNC_FF   => 5,
+    --        INIT_SYNC_FF   => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1
+    --    )
+    --    port map (
+    --        dest_out => stat_reg(0)(0),
+    --        dest_clk => clk,
+    --        src_clk  => clk360,
+    --        src_in   => align_error
+    --    );
+    --    
+    --xpm_cdc_delay_mes : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF   => 5,
+    --        INIT_SYNC_FF   => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => log2c(255)
+    --    )
+    --    port map (
+    --        dest_out => stat_reg(0)(log2c(255) downto 1),
+    --        dest_clk => clk,
+    --        src_clk  => clk360,
+    --        src_in   => delay_measured
+    --    );
 
     Right_merge : entity work.Link_merger
         generic map(
@@ -288,6 +268,41 @@ begin
             q         => d_res
         ) ;
 
+    BX_producer_i : entity work.BX_nr_producer
+        port map(
+            clk360         => clk360,
+            rst360         => rst360,
+            clk40          => clk40,
+            rst40          => rst40,
+            valid          => d_res.valid,
+            last           => d_res.last,
+            start          => d_res.start,
+            start_of_orbit => d_res.start_of_orbit,
+            bx_nr_40       => bx_nr_40,
+            bx_nr_360      => bx_nr_360
+        );
+    
+    -----------------------------------------------------------------------------------
+    ---------------COUNTERS ALIGN------------------------------------------------------
+    -----------------------------------------------------------------------------------
+    
+    CRTS_align_i : entity work.CTRS_BX_alignment
+        generic map(
+            MAX_LATENCY_360 => 255,
+            OUT_REG_40      => DESER_OUT_REG
+        )
+        port map(
+            clk360    => clk360,
+            rst360    => rst360,
+            clk40     => clk40,
+            rst40     => rst40,
+            ref_bx_nr => bx_nr_360,
+            ctrs_in   => ctrs,
+            ctrs_out  => ctrs_align,
+            delay_val => delay_measured
+        );
+
+
     deser_i : entity work.Link_deserializer
         generic map(
             OUT_REG => DESER_OUT_REG
@@ -308,32 +323,6 @@ begin
     algos <= algos_in;
 
 
-    ----------------------------------------------------------------------------------
-    ---------------COUNTERS INTERNAL---------------------------------------------------
-    ----------------------------------------------------------------------------------
-    --TODO Where to stat counting, need some latency? How much?
-
-    ctrs_del(0)      <= ctrs_align;
-    ctrs_prev_del(0) <= ctrs_prev;
-    ctrs_del_p: process(clk40)
-    begin
-        if rising_edge(clk40) then
-            ctrs_del(1)      <= ctrs_del(0);
-            ctrs_prev_del(1) <= ctrs_prev_del(0);
-        end if;
-    end process;
-
-
-    crts_del_g: if DESER_OUT_REG generate
-        ctrs_int <= ctrs_del(1);
-        ctrs_prev_int <= ctrs_prev_del(1);
-    else generate
-        ctrs_int <= ctrs_del(0);
-        ctrs_prev_int <= ctrs_prev_del(0);
-    end generate;
-
-
-
     monitoring_module : entity work.monitoring_module
         generic map(
             NR_ALGOS              => 64*9,
@@ -348,11 +337,10 @@ begin
             ipb_out                 => ipb_from_slaves(N_SLV_MONITORING_MODULE),
             clk40                   => clk40,
             rst40                   => rst40,
-            ctrs                    => ctrs_int,
-            ctrs_prev               => ctrs_prev_int,
+            ctrs                    => ctrs_align,
             algos_in                => algos_in,
             valid_algos_in          => valid_deser_out,
-            algos_after_bxmask_o    => algos_after_bxmask, 
+            algos_after_bxmask_o    => algos_after_bxmask,
             algos_after_prescaler_o => algos_prescaled,
             trigger_o               => trigger_out,
             trigger_preview_o       => trigger_out_preview,
@@ -360,7 +348,8 @@ begin
             veto_o                  => veto_out
         );
     
-    algos_valid_out   <= valid_deser_out; 
+    delay_out         <= delay_measured;
+    algos_valid_out   <= valid_deser_out;
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;
     veto_o            <= veto_out;

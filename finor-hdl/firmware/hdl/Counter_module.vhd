@@ -6,12 +6,14 @@ use work.emp_ttc_decl.all;
 
 entity Counter_module is
     generic(
-        BEGIN_LUMI_BIT : integer := 18
+        BEGIN_LUMI_BIT : integer := 18;
+        SYNC_CTRS_OUT  : boolean := FALSE
     );
     port(
         clk40          : in  std_logic;
         rst40          : in  std_logic;
         ctrs_in        : in  ttc_stuff_t;
+        ctrs_out       : out ttc_stuff_t;
         bc0            : out std_logic;
         ec0            : out std_logic;
         oc0            : out std_logic;
@@ -51,6 +53,18 @@ begin
             bx_cnt <= ctrs_in.bctr; --TODO check clk cross here (the signals is 360 synchronous, yet I'm using it at 40...)
         end if;
     end process;
+    
+    sync_g : if SYNC_CTRS_OUT generate
+        process (clk40)
+        begin
+            if rising_edge(clk40) then
+                ctrs_out <= ctrs_in;
+            end if;
+        end process;
+    else generate
+        ctrs_out <= ctrs_in;
+    end generate;
+    
 
     bc0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_BC0  else '0';
     oc0_s       <= '1' when ctrs_in.ttc_cmd = TTC_BCMD_OC0  else '0';

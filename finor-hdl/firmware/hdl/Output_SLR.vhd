@@ -21,7 +21,7 @@ use work.P2GT_finor_pkg.all;
 entity Output_SLR is
     generic(
         BEGIN_LUMI_TOGGLE_BIT : natural := 18;
-        MAX_DELAY             : natural := 127
+        MAX_DELAY             : natural := MAX_DELAY_PDT
     );
     port(
         clk         : in  std_logic;        -- ipbus signals
@@ -35,6 +35,8 @@ entity Output_SLR is
         rst40       : in std_logic;
 
         ctrs        : in  ttc_stuff_t;
+        
+        delay_in    : in std_logic_vector(log2c(255) - 1 downto 0);
 
         valid_in    : in std_logic;
 
@@ -51,8 +53,7 @@ end entity Output_SLR;
 
 architecture RTL of Output_SLR is
     
-    constant MAX_CTRS_DELAY_360 : integer := 511;
-    constant N_CTRL_REGS        : integer := 2;
+    constant N_CTRL_REGS        : integer := 1;
     constant N_STAT_REGS        : integer := 1; 
 
     -- fabric signals        
@@ -80,7 +81,6 @@ architecture RTL of Output_SLR is
 
     signal ctrs_internal               : ttc_stuff_t;
     signal ctrs_align                  : ttc_stuff_t;
-    signal GT_algo_delay               : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0) := (others => '0');
 
     signal rate_cnt_finor        : ipb_reg_v(N_TRIGG - 1 downto 0);
     signal rate_cnt_finor_pdt    : ipb_reg_v(N_TRIGG - 1 downto 0);
@@ -143,28 +143,28 @@ begin
     ----------------------------------------------------------------------------------
     ---------------COUNTERS INTERNAL---------------------------------------------------
     ----------------------------------------------------------------------------------
-    --TODO Where to stat counting, need some latency? How much?
-    bx_cnt_int_p : process(clk40)
-    begin
-        if rising_edge(clk40) then
-            ctrs_internal <= ctrs_align;
-        end if;
-    end process;
     
-    ctrs_align_i : entity work.ctrs_alignment
+    ctrs_align_i : entity work.CTRS_fixed_alignment
         generic map(
-            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            DELAY_OFFSET    => 9+4+9
+            MAX_LATENCY_360 => 255,
+            DELAY_OFFSET    => 9+9 --deserializer + SLR cross
         )
         port map(
             clk360         => clk360,
             rst360         => rst360,
             clk40          => clk40,
             rst40          => rst40,
-            ctrs_delay_val => GT_algo_delay,
+            ctrs_delay_val => delay_in,
             ctrs_in        => ctrs,
             ctrs_out       => ctrs_align
         );
+        
+    bx_cnt_int_p : process(clk40)
+    begin
+        if rising_edge(clk40) then
+            ctrs_internal <= ctrs_align;
+        end if;
+    end process;
 
     Counters_i : entity work.Counter_module
         generic map (
@@ -200,67 +200,60 @@ begin
             we_o       => we
         ) ;
 
-    Ctrl_stat_regs : entity work.ipbus_ctrlreg_v
+    Ctrl_stat_regs : entity work.ipbus_syncreg_v
         generic map(
             N_CTRL     => N_CTRL_REGS,
             N_STAT     => N_STAT_REGS
         )
         port map(
             clk       => clk,
-            reset     => rst,
-            ipbus_in  => ipb_to_slaves(N_SLV_CSR),
-            ipbus_out => ipb_from_slaves(N_SLV_CSR),
+            rst       => rst,
+            ipb_in    => ipb_to_slaves(N_SLV_CSR),
+            ipb_out   => ipb_from_slaves(N_SLV_CSR),
+            slv_clk   => clk40,
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
-            stb       => open
-        );
-
-    xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => log2c(MAX_DELAY)
-        )
-        port map (
-            dest_out => l1a_latency_delay,
-            dest_clk => clk40,
-            src_clk  => clk,
-            src_in   => ctrl_reg(0)(log2c(MAX_DELAY) - 1 downto 0)
+            stb       => open,
+            rstb      => open
         );
         
-    xpm_cdc_GT_finor_delay : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => log2c(MAX_CTRS_DELAY_360)
-        )
-        port map (
-            dest_out => GT_algo_delay,
-            dest_clk => clk360,
-            src_clk  => clk,
-            src_in   => ctrl_reg(1)(log2c(MAX_CTRS_DELAY_360) - 1 downto 0)
-        );
-
+    l1a_latency_delay <= ctrl_reg(0)(log2c(MAX_DELAY) - 1 downto 0);
+    
     ready <= not we;
+    
+    stat_reg(0)(0) <= ready;
 
-    xpm_cdc_ready : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG => 1
-        )
-        port map (
-            dest_out => stat_reg(0)(0),
-            dest_clk => clk,
-            src_clk  => clk40,
-            src_in   => ready
-        );
+    --xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
+    --    generic map (
+    --        DEST_SYNC_FF   => 3,
+    --        INIT_SYNC_FF   => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG  => 1,
+    --        WIDTH          => log2c(MAX_DELAY)
+    --    )
+    --    port map (
+    --        dest_out => l1a_latency_delay,
+    --        dest_clk => clk40,
+    --        src_clk  => clk,
+    --        src_in   => ctrl_reg(0)(log2c(MAX_DELAY) - 1 downto 0)
+    --    );
+    --
+    --
+    --
+    --xpm_cdc_ready : xpm_cdc_single
+    --    generic map (
+    --        DEST_SYNC_FF => 3,
+    --        INIT_SYNC_FF => 0,
+    --        SIM_ASSERT_CHK => 0,
+    --        SRC_INPUT_REG => 1
+    --    )
+    --    port map (
+    --        dest_out => stat_reg(0)(0),
+    --        dest_clk => clk,
+    --        src_clk  => clk40,
+    --        src_in   => ready
+    --    );
 
 
     -- rate counters are updated with begin_lumi_per_del1
@@ -356,37 +349,40 @@ begin
             counter_o       => veto_cnt
         );
 
-    xpm_cdc_veto_cnt_reg : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => RATE_COUNTER_WIDTH
-        )
-        port map (
-            dest_out => veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0),
-            dest_clk => clk,
-            src_clk  => clk40,
-            src_in   => veto_cnt
-        );
+    --dxpm_cdc_veto_cnt_reg : xpm_cdc_array_single
+    --d    generic map (
+    --d        DEST_SYNC_FF   => 3,
+    --d        INIT_SYNC_FF   => 0,
+    --d        SIM_ASSERT_CHK => 0,
+    --d        SRC_INPUT_REG  => 1,
+    --d        WIDTH          => RATE_COUNTER_WIDTH
+    --d    )
+    --d    port map (
+    --d        dest_out => veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0),
+    --d        dest_clk => clk,
+    --d        src_clk  => clk40,
+    --d        src_in   => veto_cnt
+    --d    );
 
-    Veto_cnt_regs : entity work.ipbus_ctrlreg_v
+     Veto_cnt_regs : entity work.ipbus_syncreg_v
         generic map(
             N_CTRL     => 0,
             N_STAT     => 1
         )
         port map(
             clk       => clk,
-            reset     => rst,
-            ipbus_in  => ipb_to_slaves(N_SLV_VETO_REG),
-            ipbus_out => ipb_from_slaves(N_SLV_VETO_REG),
+            rst       => rst,
+            ipb_in    => ipb_to_slaves(N_SLV_VETO_REG),
+            ipb_out   => ipb_from_slaves(N_SLV_VETO_REG),
+            slv_clk   => clk40,
             d         => veto_stat_reg,
             q         => open,
             qmask     => open,
-            stb       => open
+            stb       => open,
+            rstb      => open
         );
 
+    veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0) <= veto_cnt;
 
     gen_rate_counters_l : for i in 0 to N_TRIGG - 1 generate
         rate_counters_i : entity work.algo_rate_counter

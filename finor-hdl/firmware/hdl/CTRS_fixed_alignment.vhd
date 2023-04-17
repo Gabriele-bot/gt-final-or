@@ -18,7 +18,7 @@ use work.P2GT_finor_pkg.all;
 
 use work.math_pkg.all;
 
-entity ctrs_alignment is
+entity CTRS_fixed_alignment is
     generic(
         MAX_LATENCY_360 : integer := 255;
         DELAY_OFFSET    : integer := 0 
@@ -34,9 +34,9 @@ entity ctrs_alignment is
         ctrs_in        : in  ttc_stuff_t;
         ctrs_out       : out ttc_stuff_t
     );
-end entity ctrs_alignment;
+end entity CTRS_fixed_alignment;
 
-architecture RTL of ctrs_alignment is
+architecture RTL of CTRS_fixed_alignment is
     
     signal ctrs_del_arr : ttc_stuff_array(MAX_LATENCY_360 downto 0) := (others => TTC_STUFF_NULL);
     
