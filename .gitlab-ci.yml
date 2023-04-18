@@ -1,16 +1,16 @@
 include:
   - project: cms-cactus/phase2/firmware/ci-templates
-    ref: v0.1.4
+    ref: v0.1.5
     file: 
       - pipelines/workflow.yml
       - pipelines/vivado-build-emp.yml
       #- templates/xilinx/build-emp.yml
     
-.ci_templates_ref: v0.1.4
+.ci_templates_ref: v0.1.5
 
 variables:
   #QUESTASIM_VERSION: "2021.1_2"
-  VIVADO_VERSION: "2021.1"
+  VIVADO_VERSION: "2022.2"
   BUILD_DIR: "build"
   MTI_VCO_MODE: "64"
   HARDWARE_TEST_IMAGE_TAG: v0-3-39
