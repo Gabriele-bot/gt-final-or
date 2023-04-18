@@ -446,10 +446,14 @@ begin
     d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time         (to_integer(unsigned(addr)));
 
 
-    CSR_regs : entity work.ipbus_syncreg_v
+    CSR_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
-            N_CTRL     => 2,
-            N_STAT     => 4
+            N_CTRL         => 2,
+            N_STAT         => 4,
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1
         )
         port map(
             clk       => clk,
@@ -460,8 +464,7 @@ begin
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
-            stb       => ctrl_stb,
-            rstb      => open
+            stb       => ctrl_stb
         );
 
     strobe_loop : process(clk)
@@ -933,10 +936,14 @@ begin
     --        src_in   => veto_cnt
     --    );
 
-    Veto_cnt_regs : entity work.ipbus_syncreg_v
+    Veto_cnt_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
-            N_CTRL     => 0,
-            N_STAT     => 1
+            N_CTRL         => 0,
+            N_STAT         => 1,
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1
         )
         port map(
             clk       => clk,
@@ -947,8 +954,7 @@ begin
             d         => veto_stat_reg,
             q         => open,
             qmask     => open,
-            stb       => open,
-            rstb      => open
+            stb       => open
         );
         
     veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0) <= veto_cnt;

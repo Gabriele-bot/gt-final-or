@@ -200,10 +200,14 @@ begin
             we_o       => we
         ) ;
 
-    Ctrl_stat_regs : entity work.ipbus_syncreg_v
+    Ctrl_stat_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
-            N_CTRL     => N_CTRL_REGS,
-            N_STAT     => N_STAT_REGS
+            N_CTRL         => N_CTRL_REGS,
+            N_STAT         => N_STAT_REGS,
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1
         )
         port map(
             clk       => clk,
@@ -214,8 +218,7 @@ begin
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
-            stb       => open,
-            rstb      => open
+            stb       => open
         );
         
     l1a_latency_delay <= ctrl_reg(0)(log2c(MAX_DELAY) - 1 downto 0);
@@ -364,10 +367,14 @@ begin
     --d        src_in   => veto_cnt
     --d    );
 
-     Veto_cnt_regs : entity work.ipbus_syncreg_v
+     Veto_cnt_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
-            N_CTRL     => 0,
-            N_STAT     => 1
+            N_CTRL         => 0,
+            N_STAT         => 1,
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1
         )
         port map(
             clk       => clk,
@@ -378,8 +385,7 @@ begin
             d         => veto_stat_reg,
             q         => open,
             qmask     => open,
-            stb       => open,
-            rstb      => open
+            stb       => open
         );
 
     veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0) <= veto_cnt;

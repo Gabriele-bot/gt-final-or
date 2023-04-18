@@ -129,10 +129,14 @@ begin
         end if;
     end process;
 
-    CSR_regs : entity work.ipbus_syncreg_v
+    CSR_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
-            N_CTRL     => N_CTRL_REGS,
-            N_STAT     => N_STAT_REGS
+            N_CTRL         => N_CTRL_REGS,
+            N_STAT         => N_STAT_REGS,
+            DEST_SYNC_FF   => 5,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1
         )
         port map(
             clk       => clk,
@@ -143,8 +147,7 @@ begin
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
-            stb       => ctrl_stb,
-            rstb      => open
+            stb       => ctrl_stb
         );
 
     strobe_loop : process(clk)

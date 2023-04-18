@@ -12,7 +12,7 @@ package tb_decl is
   -- "Quiet" time at the beginning of the simulation, sometime useful to let the firmware settle (?!?)
   constant WAIT_CYCLES_AT_START : natural := 0;
   -- Playback offset, index of the first frame to be palyed back
-  constant PLAYBACK_OFFSET : natural := 0;
+  constant PLAYBACK_OFFSET : natural := 32;
   -- Capture offset, number of the first clock cycle to be captured
   constant CAPTURE_OFFSET : natural := 0;
   -- Toggle loop playback: continuously loop data

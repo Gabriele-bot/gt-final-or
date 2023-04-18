@@ -17,6 +17,7 @@ src --vhdl2008 decoders/ipbus_decode_Output_SLR.vhd
 
 src --vhdl2008 ipbus/ipbus_initialized_dpram.vhd
 src --vhdl2008 ipbus/ipbus_dpram_4096x576.vhd
+src --vhdl2008 ipbus/ipbus_ctrlreg_cdc_v.vhd
 
 src --vhdl2008 Counter_module.vhd
 src --vhdl2008 update_process.vhd
