@@ -32,7 +32,8 @@ entity SLR_FinOR_unit is
         ipb_out   : out ipb_rbus;
         --====================================================================--
         clk360    : in std_logic;
-        rst360    : in std_logic;
+        rst360_r  : in std_logic;
+        rst360_l  : in std_logic;
         clk40     : in std_logic;
         rst40     : in std_logic;
         ctrs      : in ttc_stuff_t;
@@ -60,6 +61,8 @@ architecture RTL of SLR_FinOR_unit is
     -- fabric signals        
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
+    
+    signal rst360 : std_logic;
 
     signal valid_deser_out : std_logic;
     signal d_valids        : std_logic_vector(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);
@@ -102,6 +105,8 @@ architecture RTL of SLR_FinOR_unit is
     signal delay_measured      : std_logic_vector(log2c(255) - 1 downto 0)  := std_logic_vector(to_unsigned(50,log2c(255)));
 
 begin
+    
+    rst360 <= rst360_r or rst360_l;
 
     fabric_i: entity work.ipbus_fabric_sel
         generic map(
@@ -232,7 +237,7 @@ begin
         )
         port map(
             clk360    => clk360,
-            rst360    => rst360,
+            rst360    => rst360_r,
             link_mask => link_mask(NR_RIGHT_LINKS - 1 downto 0),
             d         => d_reg(NR_RIGHT_LINKS - 1 downto 0),
             q         => d_right(0)
@@ -244,7 +249,7 @@ begin
         )
         port map(
             clk360    => clk360,
-            rst360    => rst360,
+            rst360    => rst360_l,
             link_mask => link_mask(NR_LEFT_LINKS + NR_RIGHT_LINKS- 1 downto NR_RIGHT_LINKS),
             d         => d_reg(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
             q         => d_left(0)

@@ -162,7 +162,8 @@ begin
             ipb_in             => ipb_to_slaves(N_SLV_SLRn1_MONITOR),
             ipb_out            => ipb_from_slaves(N_SLV_SLRn1_MONITOR),
             clk360             => clk_p,
-            rst360             => rst_loc(SLRn1_quads(0)),
+            rst360_r           => rst_loc(SLRn1_quads(0)),
+            rst360_l           => rst_loc(SLRn1_quads(3)), --TODO need to get rid of the hard coding
             clk40              => clk_payload(2),
             rst40              => rst_payload(2),
             ctrs               => ctrs(SLRn1_quads(0)),
@@ -192,7 +193,8 @@ begin
             ipb_in             => ipb_to_slaves(N_SLV_SLRn0_MONITOR),
             ipb_out            => ipb_from_slaves(N_SLV_SLRn0_MONITOR),
             clk360             => clk_p,
-            rst360             => rst_loc(SLRn0_quads(0)),
+            rst360_r           => rst_loc(SLRn0_quads(0)),
+            rst360_l           => rst_loc(SLRn0_quads(3)), --TODO need to get rid of the hard coding
             clk40              => clk_payload(2),
             rst40              => rst_payload(2),
             ctrs               => ctrs(SLRn0_quads(0)),

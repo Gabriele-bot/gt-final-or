@@ -40,9 +40,9 @@ architecture RTL of CTRS_BX_alignment is
 
     type state_t is (idle, chasing, stop);
     signal state : state_t := idle;
-
     signal ctrs_del_arr  : ttc_stuff_array(MAX_LATENCY_360 downto 0) := (others => TTC_STUFF_NULL);
     signal counter       : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  (others => '0');
+    
     signal counter_int   : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  to_unsigned(200, log2c(MAX_LATENCY_360));
 
 begin
@@ -97,11 +97,11 @@ begin
         process(clk40)
         begin
             if rising_edge(clk40) then
-            ctrs_out <= ctrs_del_arr(to_integer(counter));
+            ctrs_out <= ctrs_del_arr(to_integer(counter_int));
             end if;
         end process;
     else generate
-        ctrs_out <= ctrs_del_arr(to_integer(counter));
+        ctrs_out <= ctrs_del_arr(to_integer(counter_int));
     end generate;
 
 
