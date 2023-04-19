@@ -467,9 +467,9 @@ begin
             stb       => ctrl_stb
         );
 
-    strobe_loop : process(clk)
+    strobe_loop : process(clk40)
     begin
-        if rising_edge(clk) then
+        if rising_edge(clk40) then
             for i  in 1 downto 0 loop
                 if ctrl_stb(i) = '1' then
                     ctrl_reg_stb(i) <= ctrl_reg(i);
@@ -487,10 +487,11 @@ begin
     
     ready <= not we;
     
-    stat_reg(0)(0) <= ready;
-    stat_reg(1)    <= lumi_sec_load_prscl_mark;
-    stat_reg(2)    <= lumi_sec_load_masks_mark;
-    stat_reg(3)    <= lumi_sec_load_veto_mark;
+    stat_reg(0)(0)           <= ready;
+    stat_reg(0)(31 downto 1) <= (others => '0');
+    stat_reg(1)              <= lumi_sec_load_prscl_mark;
+    stat_reg(2)              <= lumi_sec_load_masks_mark;
+    stat_reg(3)              <= lumi_sec_load_veto_mark;
 
 
     --xpm_cdc_new_prescale_column : xpm_cdc_single
@@ -803,7 +804,7 @@ begin
         )
         port map(
             clk    => clk40,
-            rst    => clk40,
+            rst    => rst40,
             data_i => algos_after_prescaler,
             data_o => algos_delayed,
             delay  => l1a_latency_delay
