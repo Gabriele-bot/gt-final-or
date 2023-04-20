@@ -42,8 +42,8 @@ architecture RTL of CTRS_BX_alignment is
     signal state : state_t := idle;
     signal ctrs_del_arr  : ttc_stuff_array(MAX_LATENCY_360 downto 0) := (others => TTC_STUFF_NULL);
     signal counter       : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  (others => '0');
-    
-    signal counter_int   : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  to_unsigned(200, log2c(MAX_LATENCY_360));
+    signal counter_int1  : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  to_unsigned(200, log2c(MAX_LATENCY_360));
+    signal counter_int2  : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  to_unsigned(200, log2c(MAX_LATENCY_360));
 
 begin
 
@@ -64,7 +64,7 @@ begin
         if rising_edge(clk360) then
             if rst360 = '1' then
                 counter     <= (others => '0');
-                counter_int <= to_unsigned(200, log2c(MAX_LATENCY_360));
+                counter_int1 <= to_unsigned(200, log2c(MAX_LATENCY_360));
                 state <= idle;
             else
                 case state is
@@ -76,7 +76,7 @@ begin
                     when chasing =>
                         if (unsigned(ref_bx_nr)) =  unsigned(ctrs_del_arr(to_integer(counter)).bctr)  then
                             state <= stop;
-                            counter_int <= counter;
+                            counter_int1 <= counter;
                         else
                             counter <= counter + 1;
                             state <= chasing;
@@ -91,17 +91,29 @@ begin
         end if;
     end process;
     
-    delay_val <= std_logic_vector(counter_int);
+    reg_counter_p : process(clk360)
+    begin
+        if rising_edge(clk360) then
+            if rst360 = '1' then
+                counter_int2 <= to_unsigned(200, log2c(MAX_LATENCY_360));
+            else
+                counter_int2 <= counter_int1;
+            end if;
+        end if;
+    end process reg_counter_p;
+    
+    
+    delay_val <= std_logic_vector(counter_int2);
     
     out_reg_g : if OUT_REG_40 generate
         process(clk40)
         begin
             if rising_edge(clk40) then
-            ctrs_out <= ctrs_del_arr(to_integer(counter_int));
+            ctrs_out <= ctrs_del_arr(to_integer(counter_int2));
             end if;
         end process;
     else generate
-        ctrs_out <= ctrs_del_arr(to_integer(counter_int));
+        ctrs_out <= ctrs_del_arr(to_integer(counter_int2));
     end generate;
 
 

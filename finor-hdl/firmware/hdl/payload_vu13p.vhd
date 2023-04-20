@@ -103,6 +103,8 @@ architecture rtl of emp_payload is
     attribute keep of veto_SLRn0_regs           : signal is true;
     attribute keep of valid_out_SLRn1_regs      : signal is true;
     attribute keep of valid_out_SLRn0_regs      : signal is true;
+    attribute keep of delay_out_SLRn1_regs      : signal is true;
+    attribute keep of delay_out_SLRn0_regs      : signal is true;
 
     attribute keep of algos_link_SLRn1_regs          : signal is DEBUG;
     attribute keep of algos_bxmask_link_SLRn1_regs   : signal is DEBUG;
@@ -120,6 +122,8 @@ architecture rtl of emp_payload is
     attribute shreg_extract of veto_SLRn0_regs         : signal is "no";
     attribute shreg_extract of valid_out_SLRn1_regs    : signal is "no";
     attribute shreg_extract of valid_out_SLRn0_regs    : signal is "no";
+    attribute shreg_extract of delay_out_SLRn1_regs    : signal is "no";
+    attribute shreg_extract of delay_out_SLRn0_regs    : signal is "no";
 
     attribute shreg_extract of algos_link_SLRn1_regs          : signal is "no";
     attribute shreg_extract of algos_bxmask_link_SLRn1_regs   : signal is "no";
@@ -274,7 +278,7 @@ begin
             rst360         => rst_loc(SLRn0_quads(0)),
             clk40          => clk_payload(2),
             rst40          => rst_payload(2),
-            ctrs_delay_val => delay_out_SLRn0_regs(delay_out_SLRn0_regs'low),
+            ctrs_delay_val => delay_out_SLRn0_regs(1), -- 1 for better timing
             ctrs_in        => ctrs(SLRn0_quads(0)),
             ctrs_out       => ctrs_align_SLRn0
         );
@@ -289,7 +293,7 @@ begin
             rst360         => rst_loc(SLRn1_quads(0)),
             clk40          => clk_payload(2),
             rst40          => rst_payload(2),
-            ctrs_delay_val => delay_out_SLRn1_regs(delay_out_SLRn1_regs'low),
+            ctrs_delay_val => delay_out_SLRn1_regs(1), -- 1 for better timing
             ctrs_in        => ctrs(SLRn1_quads(0)),
             ctrs_out       => ctrs_align_SLRn1
         );
