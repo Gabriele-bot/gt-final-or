@@ -36,7 +36,7 @@ entity Output_SLR is
 
         ctrs        : in  ttc_stuff_t;
         
-        delay_in    : in std_logic_vector(log2c(255) - 1 downto 0);
+        delay_in    : in std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
 
         valid_in    : in std_logic;
 
@@ -100,10 +100,10 @@ architecture RTL of Output_SLR is
     signal addr   : std_logic_vector(log2c(N_TRIGG)-1 downto 0);
     signal we     : std_logic;
     signal ready  : std_logic;
-    signal d_rate_cnt_finor, d_rate_cnt_finor_pdt       : std_logic_vector(31 downto 0);
-    signal d_rate_cnt_finor_prvw, d_rate_cnt_finor_prvw_pdt       : std_logic_vector(31 downto 0);
-    signal d_rate_cnt_finor_with_veto, d_rate_cnt_finor_with_veto_pdt       : std_logic_vector(31 downto 0);
-    signal d_rate_cnt_finor_prvw_with_veto, d_rate_cnt_finor_prvw_with_veto_pdt       : std_logic_vector(31 downto 0);
+    signal d_rate_cnt_finor, d_rate_cnt_finor_pdt                               : std_logic_vector(31 downto 0);
+    signal d_rate_cnt_finor_prvw, d_rate_cnt_finor_prvw_pdt                     : std_logic_vector(31 downto 0);
+    signal d_rate_cnt_finor_with_veto, d_rate_cnt_finor_with_veto_pdt           : std_logic_vector(31 downto 0);
+    signal d_rate_cnt_finor_prvw_with_veto, d_rate_cnt_finor_prvw_with_veto_pdt : std_logic_vector(31 downto 0);
 
     signal veto_out_s               : std_logic;
     signal veto_cnt                 : std_logic_vector(RATE_COUNTER_WIDTH-1 DOWNTO 0);
@@ -146,7 +146,7 @@ begin
     
     ctrs_align_i : entity work.CTRS_fixed_alignment
         generic map(
-            MAX_LATENCY_360 => 255,
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
             DELAY_OFFSET    => 9+9 --deserializer + SLR cross
         )
         port map(
@@ -227,37 +227,6 @@ begin
     
     stat_reg(0)(0) <= ready;
 
-    --xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF   => 3,
-    --        INIT_SYNC_FF   => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => log2c(MAX_DELAY)
-    --    )
-    --    port map (
-    --        dest_out => l1a_latency_delay,
-    --        dest_clk => clk40,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg(0)(log2c(MAX_DELAY) - 1 downto 0)
-    --    );
-    --
-    --
-    --
-    --xpm_cdc_ready : xpm_cdc_single
-    --    generic map (
-    --        DEST_SYNC_FF => 3,
-    --        INIT_SYNC_FF => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG => 1
-    --    )
-    --    port map (
-    --        dest_out => stat_reg(0)(0),
-    --        dest_clk => clk,
-    --        src_clk  => clk40,
-    --        src_in   => ready
-    --    );
-
 
     -- rate counters are updated with begin_lumi_per_del1
     process (clk40)
@@ -268,11 +237,9 @@ begin
     end process;
     
 
-    Final_OR_p : process (trgg_0, trgg_1)
-    begin
-        Final_OR           <= trgg_0 or trgg_1;
-        Final_OR_preview   <= trgg_prvw_0 or trgg_prvw_1;
-    end process;
+    
+    Final_OR           <= trgg_0 or trgg_1;
+    Final_OR_preview   <= trgg_prvw_0 or trgg_prvw_1;
 
     Final_OR_with_veto_l : for i in 0 to N_TRIGG -1 generate
         Final_OR_with_veto(i)         <= (trgg_0(i) or trgg_1(i)) and not(veto_0 or veto_1);
@@ -351,21 +318,6 @@ begin
             algo_i          => veto_out_s,
             counter_o       => veto_cnt
         );
-
-    --dxpm_cdc_veto_cnt_reg : xpm_cdc_array_single
-    --d    generic map (
-    --d        DEST_SYNC_FF   => 3,
-    --d        INIT_SYNC_FF   => 0,
-    --d        SIM_ASSERT_CHK => 0,
-    --d        SRC_INPUT_REG  => 1,
-    --d        WIDTH          => RATE_COUNTER_WIDTH
-    --d    )
-    --d    port map (
-    --d        dest_out => veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0),
-    --d        dest_clk => clk,
-    --d        src_clk  => clk40,
-    --d        src_in   => veto_cnt
-    --d    );
 
      Veto_cnt_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(

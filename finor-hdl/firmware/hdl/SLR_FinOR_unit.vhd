@@ -38,7 +38,7 @@ entity SLR_FinOR_unit is
         rst40     : in std_logic;
         ctrs      : in ttc_stuff_t;
         d         : in ldata(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);  -- data in
-        delay_out          : out std_logic_vector(log2c(255) - 1 downto 0);
+        delay_out          : out std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
         trigger_o          : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_preview_o  : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_valid_out  : out std_logic;
@@ -52,9 +52,6 @@ end entity SLR_FinOR_unit;
 
 architecture RTL of SLR_FinOR_unit is
 
-    constant LATENCY_360        : integer := 9  + 1;
-    constant MAX_CTRS_DELAY_360 : integer := 511;
-    constant CTRS_DELAY_OFFSET  : integer := 4 + 9; --4 due to link merging and 9 due to deserialization
     constant N_CTRL_REGS        : integer := 2;
     constant N_STAT_REGS        : integer := 1;
 
@@ -84,7 +81,6 @@ architecture RTL of SLR_FinOR_unit is
     signal ctrs_prev_int          : ttc_stuff_t;
     signal ctrs_del               : ttc_stuff_array(1 downto 0);
     signal ctrs_prev_del          : ttc_stuff_array(1 downto 0);
-    signal GT_algo_delay          : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0) := (others => '0');
 
     signal ctrl_reg     : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '1'));
     signal ctrl_reg_stb : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '1'));
@@ -102,7 +98,7 @@ architecture RTL of SLR_FinOR_unit is
     signal link_valid_OR : std_logic;
 
     signal bx_nr_360, bx_nr_40 : bctr_t := (others => '0');
-    signal delay_measured      : std_logic_vector(log2c(255) - 1 downto 0)  := std_logic_vector(to_unsigned(50,log2c(255)));
+    signal delay_measured      : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0)  := std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360)));
 
 begin
     
@@ -170,66 +166,8 @@ begin
     rst_align_error <= ctrl_reg(1)(0) and ctrl_stb(1);
     
     stat_reg(0)(0)                        <= align_error;
-    stat_reg(0)(log2c(255) downto 1)      <= delay_measured;
-    stat_reg(0)(31 downto log2c(255) + 1) <= (others => '0');
-
-    --xpm_cdc_linkmask : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF   => 5,
-    --        INIT_SYNC_FF   => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => NR_RIGHT_LINKS + NR_LEFT_LINKS
-    --    )
-    --    port map (
-    --        dest_out => link_mask,
-    --        dest_clk => clk360,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg_stb(0)(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0)
-    --    );
-    --
-    --xpm_cdc_rst_error : xpm_cdc_single
-    --    generic map (
-    --        DEST_SYNC_FF   => 5,
-    --        INIT_SYNC_FF   => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1
-    --    )
-    --    port map (
-    --        dest_out => rst_align_error,
-    --        dest_clk => clk360,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg(1)(0) and ctrl_stb(1)
-    --    );
-    --
-    --xpm_cdc_error_flag : xpm_cdc_single
-    --    generic map (
-    --        DEST_SYNC_FF   => 5,
-    --        INIT_SYNC_FF   => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1
-    --    )
-    --    port map (
-    --        dest_out => stat_reg(0)(0),
-    --        dest_clk => clk,
-    --        src_clk  => clk360,
-    --        src_in   => align_error
-    --    );
-    --    
-    --xpm_cdc_delay_mes : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF   => 5,
-    --        INIT_SYNC_FF   => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => log2c(255)
-    --    )
-    --    port map (
-    --        dest_out => stat_reg(0)(log2c(255) downto 1),
-    --        dest_clk => clk,
-    --        src_clk  => clk360,
-    --        src_in   => delay_measured
-    --    );
+    stat_reg(0)(log2c(MAX_CTRS_DELAY_360) downto 1)      <= delay_measured;
+    stat_reg(0)(31 downto log2c(MAX_CTRS_DELAY_360) + 1) <= (others => '0');
 
     Right_merge : entity work.Link_merger
         generic map(
@@ -296,7 +234,7 @@ begin
     
     CRTS_align_i : entity work.CTRS_BX_alignment
         generic map(
-            MAX_LATENCY_360 => 255,
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
             OUT_REG_40      => DESER_OUT_REG
         )
         port map(

@@ -14,8 +14,7 @@ use work.emp_ttc_decl.all;
 
 use work.emp_slink_types.all;
 
---use work.P2GT_monitor_pkg.all;
---use work.pre_scaler_pkg.all;
+
 use work.P2GT_finor_pkg.all;
 use work.math_pkg.all;
 
@@ -52,7 +51,7 @@ architecture rtl of emp_payload is
     signal ipb_to_slaves  : ipb_wbus_array(N_SLAVES-1 downto 0);
     signal ipb_from_slaves: ipb_rbus_array(N_SLAVES-1 downto 0);
 
-    signal begin_lumi_section : std_logic := '0'; -- TODO extract the value from ctrs
+    signal begin_lumi_section : std_logic := '0';
     signal l1a_loc            : std_logic_vector(N_REGION - 1 downto 0);
     signal bcres              : std_logic := '0';
     signal bctr_arr_SLRn0     : bctr_array (4 + SLR_CROSSING_LATENCY downto 0);
@@ -66,9 +65,9 @@ architecture rtl of emp_payload is
     signal ctrs_align_SLRn0, ctrs_internal_SLRn0 : ttc_stuff_t;
     signal ctrs_align_SLRn1, ctrs_internal_SLRn1 : ttc_stuff_t;
     
-    type SLRCross_delay_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(log2c(255) - 1 downto 0);
-    signal delay_out_SLRn1_regs : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(50,log2c(255))));
-    signal delay_out_SLRn0_regs : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(50,log2c(255))));
+    type SLRCross_delay_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
+    signal delay_out_SLRn1_regs : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360))));
+    signal delay_out_SLRn0_regs : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360))));
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
@@ -106,12 +105,12 @@ architecture rtl of emp_payload is
     attribute keep of delay_out_SLRn1_regs      : signal is true;
     attribute keep of delay_out_SLRn0_regs      : signal is true;
 
-    attribute keep of algos_link_SLRn1_regs          : signal is DEBUG;
-    attribute keep of algos_bxmask_link_SLRn1_regs   : signal is DEBUG;
-    attribute keep of algos_presc_link_SLRn1_regs    : signal is DEBUG;
-    attribute keep of algos_link_SLRn0_regs          : signal is DEBUG;
-    attribute keep of algos_bxmask_link_SLRn0_regs   : signal is DEBUG;
-    attribute keep of algos_presc_link_SLRn0_regs    : signal is DEBUG;
+    attribute keep of algos_link_SLRn1_regs          : signal is true;
+    attribute keep of algos_bxmask_link_SLRn1_regs   : signal is true;
+    attribute keep of algos_presc_link_SLRn1_regs    : signal is true;
+    attribute keep of algos_link_SLRn0_regs          : signal is true;
+    attribute keep of algos_bxmask_link_SLRn0_regs   : signal is true;
+    attribute keep of algos_presc_link_SLRn0_regs    : signal is true;
 
     attribute shreg_extract                            : string;
     attribute shreg_extract of trgg_SLRn1_regs         : signal is "no";
@@ -242,7 +241,7 @@ begin
     SLRout_FinalOR_or : entity work.Output_SLR
         generic map(
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
-            MAX_DELAY => MAX_DELAY_PDT
+            MAX_DELAY             => MAX_DELAY_PDT
         )
         port map(
             clk         => clk,
@@ -270,7 +269,7 @@ begin
     --------------------------------------------------------------------------------
     SLRn0_ctrs_align_i : entity work.CTRS_fixed_alignment
         generic map(
-            MAX_LATENCY_360 => 255,
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
             DELAY_OFFSET    => 9 --deserializer
         )
         port map(
@@ -285,7 +284,7 @@ begin
     
     SLRn1_ctrs_align_i : entity work.CTRS_fixed_alignment
         generic map(
-            MAX_LATENCY_360 => 255,
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
             DELAY_OFFSET    => 9 --deserializer
         )
         port map(

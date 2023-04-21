@@ -15,10 +15,6 @@ use work.emp_project_decl.all;
 use work.emp_device_decl.all;
 use work.emp_ttc_decl.all;
 
-
---use work.P2GT_monitor_pkg.all;
---use work.pre_scaler_pkg.all;
---use work.Finor_pkg.all;
 use work.P2GT_finor_pkg.all;
 
 use work.math_pkg.all;
@@ -493,155 +489,6 @@ begin
     stat_reg(2)              <= lumi_sec_load_masks_mark;
     stat_reg(3)              <= lumi_sec_load_veto_mark;
 
-
-    --xpm_cdc_new_prescale_column : xpm_cdc_single
-    --    generic map (
-    --        DEST_SYNC_FF => 3,
-    --        INIT_SYNC_FF => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1
-    --    )
-    --    port map (
-    --        dest_out => new_prescale_column,
-    --        dest_clk => clk40,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg_stb(0)(0)
-    --    );
-    --
-    --xpm_cdc_new_trgg_masks : xpm_cdc_single
-    --    generic map (
-    --        DEST_SYNC_FF => 3,
-    --        INIT_SYNC_FF => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1
-    --    )
-    --    port map (
-    --        dest_out => new_trgg_masks,
-    --        dest_clk => clk40,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg_stb(0)(1)
-    --    );
-    --
-    --xpm_cdc_new_veto : xpm_cdc_single
-    --    generic map (
-    --        DEST_SYNC_FF => 3,
-    --        INIT_SYNC_FF => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1
-    --    )
-    --    port map (
-    --        dest_out => new_veto,
-    --        dest_clk => clk40,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg_stb(0)(2)
-    --    );
-    --
-    --xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF => 3,
-    --        INIT_SYNC_FF => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => log2c(MAX_DELAY)
-    --    )
-    --    port map (
-    --        dest_out => l1a_latency_delay,
-    --        dest_clk => clk40,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg_stb(0)(log2c(MAX_DELAY) + 2 downto 3)
-    --    );
-    --
-    --xpm_cdc_supp_BX_low : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF => 3,
-    --        INIT_SYNC_FF => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => 12
-    --    )
-    --    port map (
-    --        dest_out => supp_cal_BX_low,
-    --        dest_clk => clk40,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg_stb(1)(11 downto 0)
-    --    );
-    --
-    --xpm_cdc_supp_BX_high : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF => 3,
-    --        INIT_SYNC_FF => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => 12
-    --    )
-    --    port map (
-    --        dest_out => supp_cal_BX_high,
-    --        dest_clk => clk40,
-    --        src_clk  => clk,
-    --        src_in   => ctrl_reg_stb(1)(23 downto 12)
-    --    );
-    --
-    --ready <= not we;
-    --
-    --xpm_cdc_ready : xpm_cdc_single
-    --    generic map (
-    --        DEST_SYNC_FF => 3,
-    --        INIT_SYNC_FF => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG => 1
-    --    )
-    --    port map (
-    --        dest_out => stat_reg(0)(0),
-    --        dest_clk => clk,
-    --        src_clk  => clk40,
-    --        src_in   => ready
-    --    );
-    --
-    --xpm_cdc_prescaler_lumi_mark : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF   => 3,
-    --        INIT_SYNC_FF   => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => 32
-    --    )
-    --    port map (
-    --        dest_out => stat_reg(1),
-    --        dest_clk => clk,
-    --        src_clk  => clk40,
-    --        src_in   => lumi_sec_load_prscl_mark
-    --    );
-    --
-    --xpm_cdc_masks_lumi_mark : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF   => 3,
-    --        INIT_SYNC_FF   => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => 32
-    --    )
-    --    port map (
-    --        dest_out => stat_reg(2),
-    --        dest_clk => clk,
-    --        src_clk  => clk40,
-    --        src_in   => lumi_sec_load_masks_mark
-    --    );
-    --
-    --xpm_cdc_veto_lumi_mark : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF   => 3,
-    --        INIT_SYNC_FF   => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => 32
-    --    )
-    --    port map (
-    --        dest_out => stat_reg(3),
-    --        dest_clk => clk,
-    --        src_clk  => clk40,
-    --        src_in   => lumi_sec_load_veto_mark
-    --    );
-
     ----------------------------------------------------------------------------------
     ---------------RESET PRE-SCALE COUTNER LOGIC--------------------------------------
     ----------------------------------------------------------------------------------
@@ -708,7 +555,7 @@ begin
             end if;
         end process;
     end generate;
-    -- TODO Make it interchangable
+    -- TODO What happens if I want to change the N_TRIGGER?? Need to change te code to support that
 
 
     ----------------------------------------------------------------------------------
@@ -757,8 +604,7 @@ begin
             end if;
         end if;
     end process;
-    -- TODO Make it interchangable
-
+    -- TODO What happens if I want to change the N_ALGOS?? Need to change te code to support that
 
     veto_update_i: entity work.update_process
         generic map(
@@ -811,7 +657,7 @@ begin
         );
 
     ----------------------------------------------------------------------------------
-    ---------------Suppress Trigger dureing Calibration-------------------------------
+    ---------------Suppress Trigger during Calibration--------------------------------
     ----------------------------------------------------------------------------------    
 
     suppress_cal_trigger_p: process (clk40)
@@ -922,20 +768,6 @@ begin
             counter_o       => veto_cnt
         );
 
-    --xpm_cdc_veto_cnt_reg : xpm_cdc_array_single
-    --    generic map (
-    --        DEST_SYNC_FF   => 3,
-    --        INIT_SYNC_FF   => 0,
-    --        SIM_ASSERT_CHK => 0,
-    --        SRC_INPUT_REG  => 1,
-    --        WIDTH          => RATE_COUNTER_WIDTH
-    --    )
-    --    port map (
-    --        dest_out => veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0),
-    --        dest_clk => clk,
-    --        src_clk  => clk40,
-    --        src_in   => veto_cnt
-    --    );
 
     Veto_cnt_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
