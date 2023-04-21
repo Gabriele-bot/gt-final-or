@@ -35,7 +35,7 @@ src --vhdl2008 Link_deserializer.vhd
 src --vhdl2008 mux.vhd
 src --vhdl2008 CTRS_fixed_alignment.vhd
 src --vhdl2008 BX_nr_producer.vhd
-src --vhdl2008 CTRS_BX_alignment.vhd
+src --vhdl2008 BX_delay_alignment.vhd
 src --vhdl2008 SLR_FinOR_unit.vhd
 src --vhdl2008 Output_SLR.vhd
 

@@ -232,10 +232,9 @@ begin
     ---------------COUNTERS ALIGN------------------------------------------------------
     -----------------------------------------------------------------------------------
     
-    CRTS_align_i : entity work.CTRS_BX_alignment
+    BX_delay_i : entity work.BX_delay_alignment
         generic map(
-            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            OUT_REG_40      => DESER_OUT_REG
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360
         )
         port map(
             clk360    => clk360,
@@ -244,10 +243,24 @@ begin
             rst40     => rst40,
             ref_bx_nr => bx_nr_360,
             ctrs_in   => ctrs,
-            ctrs_out  => ctrs_align,
             delay_val => delay_measured
         );
-
+        
+    CTRS_align_i : entity work.CTRS_fixed_alignment
+        generic map(
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
+            DELAY_OFFSET    => 0
+        )
+        port map(
+            clk360         => clk360,
+            rst360         => rst360,
+            clk40          => clk40,
+            rst40          => rst40,
+            ctrs_delay_val => delay_measured,
+            ctrs_in        => ctrs,
+            ctrs_out       => ctrs_align
+        );
+    
 
     deser_i : entity work.Link_deserializer
         generic map(
