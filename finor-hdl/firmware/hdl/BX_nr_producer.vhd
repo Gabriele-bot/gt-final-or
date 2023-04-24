@@ -47,7 +47,7 @@ begin
                             p_ctr     <= to_unsigned(1,4);
                         end if;
                     when running =>
-                        if metadata = "1101" or metadata =  "0011" then
+                        if metadata = "1101" or metadata =  "0101" then
                             p_ctr     <= to_unsigned(1,4);
                         elsif metadata =  "0011" then
                             p_ctr     <= (others => '0');
