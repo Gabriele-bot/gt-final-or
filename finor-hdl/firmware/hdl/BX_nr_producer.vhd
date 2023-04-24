@@ -24,43 +24,52 @@ end entity BX_nr_producer;
 
 architecture RTL of BX_nr_producer is
 
-    signal bx_nr_int : unsigned(11 downto 0);
-    signal p_ctr     : unsigned(3  downto 0);
-    signal metadata  : std_logic_vector(3 downto 0);
+    type state_t is (idle, running);
+    signal state : state_t := idle;
+    signal bx_nr_int  : unsigned(11 downto 0);
+    signal p_ctr      : unsigned(3  downto 0);
+    signal metadata   : std_logic_vector(3 downto 0);
 
 begin
 
     metadata <= (start_of_orbit, start, last, valid);
 
-    pctr_p : process(clk360)
+    state_p :process(clk360)
     begin
         if rising_edge(clk360) then
             if rst360 = '1' then
-                p_ctr <=  (others => '0');
+                state <= idle;
             else
-                case metadata is
-                    when "1101" =>
-                        p_ctr     <= to_unsigned(1,4);
-                    when "0101" =>
-                        p_ctr     <= to_unsigned(1,4);
-                    when "0011" =>
-                        p_ctr     <= (others => '0');
-                    when others =>
-                        if p_ctr < 8 then
-                            p_ctr     <= p_ctr + 1;
-                        else
-                            p_ctr     <= (others => '0');
+                case state is
+                    when idle =>
+                        if start_of_orbit = '1' and start = '1' then
+                            state <= running;
+                            p_ctr     <= to_unsigned(1,4);
                         end if;
+                    when running =>
+                        if metadata = "1101" or metadata =  "0011" then
+                            p_ctr     <= to_unsigned(1,4);
+                        elsif metadata =  "0011" then
+                            p_ctr     <= (others => '0');
+                        else
+                            if p_ctr < 8 then
+                                p_ctr     <= p_ctr + 1;
+                            else
+                                p_ctr     <= (others => '0');
+                            end if;
+                        end if;
+                    when others => 
+                        state <= idle;
                 end case;
             end if;
         end if;
-    end process pctr_p;
+    end process;
 
     bctr_p : process(clk360)
     begin
         if rising_edge(clk360) then
             if rst360 = '1' then
-                bx_nr_int <= to_unsigned(255,12);
+                bx_nr_int <= to_unsigned(57,12); -- set bx_nt to max_latency_360/9
             else
                 if p_ctr >= 8 then
                     if bx_nr_int < LHC_BUNCH_COUNT-1 then

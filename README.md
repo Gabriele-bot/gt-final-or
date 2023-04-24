@@ -34,7 +34,6 @@
 | Algo rate counters prescaled    | cnt_rate_after_prsc | 1152|
 | Algo rate counters prescaled (preview)    | cnt_rate_after_prsc_prvw | 1152|
 | Algo rate counters prescaled post dead-time    | cnt_rate_pdt | 1152|
-| Algo rate counters unprescaled    | cnt_rate_before_prsc | 1152|
 | SLRs Veto rate counter    | Veto_cnt | 2|
 | FinOR rate counter    | cnt_rate_finor | 8|
 | FinOR rate counter post dead-time    | cnt_rate_finor_pdt | 8|
@@ -43,7 +42,6 @@
 | FinOR rate counter (vetoed)    | cnt_rate_finor_with_veto | 8|
 | FinOR rate counter post dead-time (vetoed)    | cnt_rate_finor_with_veto_pdt | 8|
 | FinOR rate counter (vetoed, preview)    | cnt_rate_finor_preview_with_veto | 8|
-| FinOR rate counter post dead-time (vetoed, preview)    | cnt_rate_finor_preview_with_veto_pdt | 8|
 | FinOR rate counter post dead-time (vetoed, preview)    | cnt_rate_finor_preview_with_veto_pdt | 8|
 | GlobalVeto rate counter    | Veto_cnt | 1|
 

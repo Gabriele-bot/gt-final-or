@@ -27,7 +27,7 @@ end entity CTRS_fixed_alignment;
 
 architecture RTL of CTRS_fixed_alignment is
     
-    signal ctrs_del_arr : ttc_stuff_array(MAX_LATENCY_360 downto 0) := (others => TTC_STUFF_NULL);
+    signal ctrs_del_arr : ttc_stuff_array(MAX_LATENCY_360 + DELAY_OFFSET downto 0) := (others => TTC_STUFF_NULL);
     
 begin
     
