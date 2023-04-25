@@ -47,16 +47,14 @@ begin
                         if ctrs_in.bctr = std_logic_vector(to_unsigned(0,12)) and ctrs_in.pctr = "0000"  then
                             counter <= (others => '0');
                         elsif ref_bx_nr =  std_logic_vector(to_unsigned(0,12))  then
-                            counter      <= (others => '0');
                             counter_int1 <= counter;
                             state        <= stop;
                         else
                             counter <= counter + 1;
-                            state   <= chasing;
                         end if;
                     when stop =>
+                        counter <= (others => '0');
                         if rst360 = '1' then
-                            counter <= (others => '0');
                             state   <= chasing;
                         end if;
                 end case;

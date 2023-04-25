@@ -102,6 +102,7 @@ architecture rtl of emp_payload is
     attribute keep of veto_SLRn0_regs           : signal is true;
     attribute keep of valid_out_SLRn1_regs      : signal is true;
     attribute keep of valid_out_SLRn0_regs      : signal is true;
+    
     attribute keep of delay_out_SLRn1_regs      : signal is true;
     attribute keep of delay_out_SLRn0_regs      : signal is true;
 
@@ -121,6 +122,7 @@ architecture rtl of emp_payload is
     attribute shreg_extract of veto_SLRn0_regs         : signal is "no";
     attribute shreg_extract of valid_out_SLRn1_regs    : signal is "no";
     attribute shreg_extract of valid_out_SLRn0_regs    : signal is "no";
+    
     attribute shreg_extract of delay_out_SLRn1_regs    : signal is "no";
     attribute shreg_extract of delay_out_SLRn0_regs    : signal is "no";
 
@@ -270,7 +272,7 @@ begin
     SLRn0_ctrs_align_i : entity work.CTRS_fixed_alignment
         generic map(
             MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            DELAY_OFFSET    => 9 --deserializer
+            DELAY_OFFSET    => 9 + 4 -- link merge + deserializer
         )
         port map(
             clk360         => clk_p,
@@ -285,7 +287,7 @@ begin
     SLRn1_ctrs_align_i : entity work.CTRS_fixed_alignment
         generic map(
             MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            DELAY_OFFSET    => 9 --deserializer
+            DELAY_OFFSET    => 9 + 4 -- link merge + deserializer
         )
         port map(
             clk360         => clk_p,
@@ -298,7 +300,7 @@ begin
         );
         
         
-    bx_cnt_int_p : process(clk40)
+    sync_40_p : process(clk40)
     begin
         if rising_edge(clk40) then
             ctrs_internal_SLRn0 <= ctrs_align_SLRn0;

@@ -77,10 +77,7 @@ architecture RTL of SLR_FinOR_unit is
     signal trigger_out_preview    : std_logic_vector(N_TRIGG-1 downto 0);
     signal veto_out               : std_logic;
 
-    signal ctrs_int               : ttc_stuff_t;
-    signal ctrs_prev_int          : ttc_stuff_t;
-    signal ctrs_del               : ttc_stuff_array(1 downto 0);
-    signal ctrs_prev_del          : ttc_stuff_array(1 downto 0);
+    signal ctrs_first_align  : ttc_stuff_array(4 downto 0);
 
     signal ctrl_reg     : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '1'));
     signal ctrl_reg_stb : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := ((others => '0'), (others => '1'));
@@ -91,14 +88,19 @@ architecture RTL of SLR_FinOR_unit is
     signal rst_align_error : std_logic;
     signal align_error     : std_logic;
 
-    signal ctrs_align, ctrs_prev : ttc_stuff_t;
-    signal ctrs_test : ttc_stuff_t;
+    signal ctrs_complete_align : ttc_stuff_t;
 
     signal links_valids  : std_logic_vector(INPUT_LINKS_SLR - 1 downto 0);
     signal link_valid_OR : std_logic;
 
     signal bx_nr_360, bx_nr_40 : bctr_t := (others => '0');
     signal delay_measured      : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0)  := std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360)));
+    
+    attribute keep : boolean;
+    attribute keep of ctrs_first_align           : signal is true;
+    
+    attribute shreg_extract                            : string;
+    attribute shreg_extract of ctrs_first_align        : signal is "no";
 
 begin
     
@@ -165,7 +167,7 @@ begin
     link_mask       <= ctrl_reg_stb(0)(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0);
     rst_align_error <= ctrl_reg(1)(0) and ctrl_stb(1);
     
-    stat_reg(0)(0)                        <= align_error;
+    stat_reg(0)(0)                                       <= align_error;
     stat_reg(0)(log2c(MAX_CTRS_DELAY_360) downto 1)      <= delay_measured;
     stat_reg(0)(31 downto log2c(MAX_CTRS_DELAY_360) + 1) <= (others => '0');
 
@@ -213,6 +215,14 @@ begin
             d(1)      => d_left(1),
             q         => d_res
         ) ;
+        
+    ctrs_first_align(0) <= ctrs;
+    CTRS_merge_align_p : process(clk360)
+    begin
+        if rising_edge(clk360) then
+            ctrs_first_align(ctrs_first_align'high downto 1) <= ctrs_first_align(ctrs_first_align'high - 1 downto 0);
+        end if;
+    end process CTRS_merge_align_p;
 
     BX_producer_i : entity work.BX_nr_producer
         port map(
@@ -242,7 +252,7 @@ begin
             clk40     => clk40,
             rst40     => rst40,
             ref_bx_nr => bx_nr_360,
-            ctrs_in   => ctrs,
+            ctrs_in   => ctrs_first_align(ctrs_first_align'high),
             delay_val => delay_measured
         );
         
@@ -257,8 +267,8 @@ begin
             clk40          => clk40,
             rst40          => rst40,
             ctrs_delay_val => delay_measured,
-            ctrs_in        => ctrs,
-            ctrs_out       => ctrs_align
+            ctrs_in        => ctrs_first_align(ctrs_first_align'high),
+            ctrs_out       => ctrs_complete_align
         );
     
 
@@ -296,7 +306,7 @@ begin
             ipb_out                 => ipb_from_slaves(N_SLV_MONITORING_MODULE),
             clk40                   => clk40,
             rst40                   => rst40,
-            ctrs                    => ctrs_align,
+            ctrs                    => ctrs_complete_align,
             algos_in                => algos_in,
             valid_algos_in          => valid_deser_out,
             algos_after_bxmask_o    => algos_after_bxmask,
