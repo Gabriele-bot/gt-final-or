@@ -168,7 +168,7 @@ begin
             ipb_out            => ipb_from_slaves(N_SLV_SLRn1_MONITOR),
             clk360             => clk_p,
             rst360_r           => rst_loc(SLRn1_quads(0)),
-            rst360_l           => rst_loc(SLRn1_quads(3)), --TODO need to get rid of the hard coding
+            rst360_l           => rst_loc(SLRn1_quads(5)), --TODO need to get rid of the hard coding
             clk40              => clk_payload(2),
             rst40              => rst_payload(2),
             ctrs               => ctrs(SLRn1_quads(0)),
@@ -199,7 +199,7 @@ begin
             ipb_out            => ipb_from_slaves(N_SLV_SLRn0_MONITOR),
             clk360             => clk_p,
             rst360_r           => rst_loc(SLRn0_quads(0)),
-            rst360_l           => rst_loc(SLRn0_quads(3)), --TODO need to get rid of the hard coding
+            rst360_l           => rst_loc(SLRn0_quads(5)), --TODO need to get rid of the hard coding
             clk40              => clk_payload(2),
             rst40              => rst_payload(2),
             ctrs               => ctrs(SLRn0_quads(0)),
@@ -266,6 +266,9 @@ begin
             q(0)        => q(OUTPUT_channel)
         );
 
+
+    -- TODO move this on the SLR modules
+    
     --------------------------------------------------------------------------------
     ------------------------------ALGOBITS OUT--------------------------------------
     --------------------------------------------------------------------------------
@@ -397,7 +400,6 @@ begin
             algos_presc_link_SLRn0_regs(algos_presc_link_SLRn0_regs'high downto 1) <= algos_presc_link_SLRn0_regs(algos_presc_link_SLRn0_regs'high - 1 downto 0);
             algos_presc_link_SLRn1_regs(algos_presc_link_SLRn1_regs'high downto 1) <= algos_presc_link_SLRn1_regs(algos_presc_link_SLRn1_regs'high - 1 downto 0);
         end if;
-
     end process;
 
     q(OUTPUT_algo_channels(5)) <= algos_link_SLRn0_regs(algos_link_SLRn0_regs'high);
