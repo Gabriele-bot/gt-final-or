@@ -19,6 +19,7 @@ entity BX_delay_alignment is
 
         ref_bx_nr      : bctr_t;
         ctrs_in        : in  ttc_stuff_t;
+        delay_lck      : out std_logic;
         delay_val      : out std_logic_vector(log2c(MAX_LATENCY_360) - 1 downto 0)
     );
 end entity BX_delay_alignment;
@@ -26,7 +27,7 @@ end entity BX_delay_alignment;
 architecture RTL of BX_delay_alignment is
 
     type state_t is (chasing, stop);
-    signal state : state_t := chasing;
+    signal state         : state_t := chasing;
     signal delay_int     : std_logic_vector(log2c(MAX_LATENCY_360) - 1 downto 0);
     signal counter       : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  (others => '0');
     signal counter_int1  : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  to_unsigned(MAX_LATENCY_360, log2c(MAX_LATENCY_360));
@@ -38,23 +39,28 @@ begin
     begin
         if rising_edge(clk360) then
             if rst360 = '1' then
-                counter     <= (others => '0');
+                counter      <= (others => '0');
                 counter_int1 <= to_unsigned(MAX_LATENCY_360, log2c(MAX_LATENCY_360));
-                state <= chasing;
+                delay_lck <= '0';
+                state        <= chasing;
             else
                 case state is
                     when chasing =>
                         if ctrs_in.bctr = std_logic_vector(to_unsigned(0,12)) and ctrs_in.pctr = "0000"  then
+                            delay_lck <= '0';
                             counter <= (others => '0');
                         elsif ref_bx_nr =  std_logic_vector(to_unsigned(0,12))  then
                             counter_int1 <= counter;
+                            delay_lck <= '1';
                             state        <= stop;
                         else
+                            delay_lck <= '0';
                             counter <= counter + 1;
                         end if;
                     when stop =>
                         counter <= (others => '0');
                         if rst360 = '1' then
+                            delay_lck <= '0';
                             state   <= chasing;
                         end if;
                 end case;

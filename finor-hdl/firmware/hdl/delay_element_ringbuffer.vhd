@@ -15,17 +15,18 @@ entity delay_element_ringbuffer is
         RESET_WITH_NEW_DEL : boolean := TRUE
     );
     port (
-        clk     : in  std_logic;
-        rst     : in  std_logic;
-        data_i  : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
-        data_o  : out std_logic_vector(DATA_WIDTH - 1 downto 0);
-        delay   : in  std_logic_vector(log2c(MAX_DELAY)-1 downto 0) := (others => '0')
+        clk       : in  std_logic;
+        rst       : in  std_logic;
+        data_i    : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
+        data_o    : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        delay_lck : in  std_logic;
+        delay     : in  std_logic_vector(log2c(MAX_DELAY)-1 downto 0) := (others => '0')
     );
 end entity delay_element_ringbuffer;
 
 architecture RTL of delay_element_ringbuffer is
 
-    type ram_type is array (0 to MAX_DELAY - 1) of std_logic_vector(data_i'range);
+    type ram_type is array (0 to 2**log2c(MAX_DELAY) - 1) of std_logic_vector(data_i'range);
     signal ram : ram_type;
 
     subtype index_type is integer range ram_type'range;
@@ -55,7 +56,7 @@ begin
             delay_reg <= delay;
         end if;
     end process;
-    
+
     gen_reset_g : if RESET_WITH_NEW_DEL generate
         process (rst, delay_reg, delay)
         begin
@@ -108,14 +109,17 @@ begin
     begin
         if rising_edge(clk) then
             ram(head) <= data_i;
-            if unsigned(delay) = 0 then
-                data_o <= data_i;
-            elsif curr_delay >= unsigned(delay) then
-                data_o <= ram(tail);
+            if delay_lck = '1' then
+                if unsigned(delay) = 0 then
+                    data_o <= data_i;
+                elsif curr_delay >= unsigned(delay) then
+                    data_o <= ram(tail);
+                else
+                    data_o <= (others => '0');
+                end if;
             else
                 data_o <= (others => '0');
             end if;
-
         end if;
     end process;
 

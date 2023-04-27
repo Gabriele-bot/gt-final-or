@@ -38,6 +38,7 @@ entity SLR_FinOR_unit is
         rst40     : in std_logic;
         ctrs      : in ttc_stuff_t;
         d         : in ldata(NR_RIGHT_LINKS + NR_LEFT_LINKS  - 1 downto 0);  -- data in
+        delay_out_lck      : out std_logic;
         delay_out          : out std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
         trigger_o          : out std_logic_vector(N_TRIGG-1 downto 0);
         trigger_preview_o  : out std_logic_vector(N_TRIGG-1 downto 0);
@@ -95,6 +96,7 @@ architecture RTL of SLR_FinOR_unit is
 
     signal bx_nr_360, bx_nr_40 : bctr_t := (others => '0');
     signal delay_measured      : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0)  := std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360)));
+    signal delay_lck           : std_logic;
     
     attribute keep : boolean;
     attribute keep of ctrs_first_align           : signal is true;
@@ -247,13 +249,14 @@ begin
             MAX_LATENCY_360 => MAX_CTRS_DELAY_360
         )
         port map(
-            clk360    => clk360,
-            rst360    => rst360,
-            clk40     => clk40,
-            rst40     => rst40,
-            ref_bx_nr => bx_nr_360,
-            ctrs_in   => ctrs_first_align(ctrs_first_align'high),
-            delay_val => delay_measured
+            clk360       => clk360,
+            rst360       => rst360,
+            clk40        => clk40,
+            rst40        => rst40,
+            ref_bx_nr    => bx_nr_360,
+            ctrs_in      => ctrs_first_align(ctrs_first_align'high),
+            delay_lck    => delay_lck,
+            delay_val    => delay_measured
         );
         
     CTRS_align_i : entity work.CTRS_fixed_alignment
@@ -266,6 +269,7 @@ begin
             rst360         => rst360,
             clk40          => clk40,
             rst40          => rst40,
+            ctrs_delay_lck => delay_lck,
             ctrs_delay_val => delay_measured,
             ctrs_in        => ctrs_first_align(ctrs_first_align'high),
             ctrs_out       => ctrs_complete_align
@@ -317,6 +321,7 @@ begin
             veto_o                  => veto_out
         );
     
+    delay_out_lck     <= delay_lck;
     delay_out         <= delay_measured;
     algos_valid_out   <= valid_deser_out;
     trigger_o         <= trigger_out;

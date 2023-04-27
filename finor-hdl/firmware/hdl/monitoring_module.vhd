@@ -649,11 +649,12 @@ begin
             MAX_DELAY  => MAX_DELAY
         )
         port map(
-            clk    => clk40,
-            rst    => rst40,
-            data_i => algos_after_prescaler,
-            data_o => algos_delayed,
-            delay  => l1a_latency_delay
+            clk       => clk40,
+            rst       => rst40,
+            data_i    => algos_after_prescaler,
+            data_o    => algos_delayed,
+            delay_lck => '1',
+            delay     => l1a_latency_delay
         );
 
     ----------------------------------------------------------------------------------

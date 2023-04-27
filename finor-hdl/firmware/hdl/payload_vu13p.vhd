@@ -66,8 +66,10 @@ architecture rtl of emp_payload is
     signal ctrs_align_SLRn1, ctrs_internal_SLRn1 : ttc_stuff_t;
     
     type SLRCross_delay_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
-    signal delay_out_SLRn1_regs : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360))));
-    signal delay_out_SLRn0_regs : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360))));
+    signal delay_out_SLRn1_regs     : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360))));
+    signal delay_out_SLRn1_lck_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    signal delay_out_SLRn0_regs     : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360))));
+    signal delay_out_SLRn0_lck_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
@@ -174,6 +176,7 @@ begin
             ctrs               => ctrs(SLRn1_quads(0)),
             d(11 downto 0)     => d(SLRn1_channels(11) downto SLRn1_channels(0) ),
             d(23 downto 12)    => d(SLRn1_channels(23) downto SLRn1_channels(12)),
+            delay_out_lck      => delay_out_SLRn0_lck_regs(0),
             delay_out          => delay_out_SLRn1_regs(0),
             trigger_o          => trgg_SLRn1_regs(0),
             trigger_preview_o  => trgg_prvw_SLRn1_regs(0),
@@ -205,6 +208,7 @@ begin
             ctrs               => ctrs(SLRn0_quads(0)),
             d(11 downto 0)     => d(SLRn0_channels(11) downto SLRn0_channels(0) ),
             d(23 downto 12)    => d(SLRn0_channels(23) downto SLRn0_channels(12)),
+            delay_out_lck      => delay_out_SLRn1_lck_regs(0),
             delay_out          => delay_out_SLRn0_regs(0),
             trigger_o          => trgg_SLRn0_regs(0),
             trigger_preview_o  => trgg_prvw_SLRn0_regs(0),
@@ -223,6 +227,9 @@ begin
         if rising_edge(clk_p) then
             delay_out_SLRn0_regs(delay_out_SLRn0_regs'high downto 1)  <= delay_out_SLRn0_regs(delay_out_SLRn0_regs'high - 1 downto 0);
             delay_out_SLRn1_regs(delay_out_SLRn1_regs'high downto 1)  <= delay_out_SLRn1_regs(delay_out_SLRn1_regs'high - 1 downto 0); 
+            
+            delay_out_SLRn1_lck_regs(delay_out_SLRn1_lck_regs'high downto 1) <= delay_out_SLRn1_lck_regs(delay_out_SLRn1_lck_regs'high - 1 downto 0); 
+            delay_out_SLRn0_lck_regs(delay_out_SLRn0_lck_regs'high downto 1) <= delay_out_SLRn0_lck_regs(delay_out_SLRn0_lck_regs'high - 1 downto 0);
             
             valid_out_SLRn0_regs(valid_out_SLRn0_regs'high downto 1) <= valid_out_SLRn0_regs(valid_out_SLRn0_regs'high - 1 downto 0);
             valid_out_SLRn1_regs(valid_out_SLRn1_regs'high downto 1) <= valid_out_SLRn1_regs(valid_out_SLRn1_regs'high - 1 downto 0);
@@ -255,6 +262,7 @@ begin
             clk40       => clk_payload(2),
             rst40       => rst_payload(2),
             ctrs        => ctrs(OUTPUT_QUAD),
+            delay_lck   => delay_out_SLRn0_lck_regs(delay_out_SLRn0_lck_regs'high),
             delay_in    => delay_out_SLRn0_regs(delay_out_SLRn0_regs'high),
             valid_in    => valid_in,
             trgg_0      => trgg_SLRn0_regs(trgg_SLRn0_regs'high),
@@ -282,6 +290,7 @@ begin
             rst360         => rst_loc(SLRn0_quads(0)),
             clk40          => clk_payload(2),
             rst40          => rst_payload(2),
+            ctrs_delay_lck => delay_out_SLRn0_lck_regs(0),
             ctrs_delay_val => delay_out_SLRn0_regs(1), -- 1 for better timing
             ctrs_in        => ctrs(SLRn0_quads(0)),
             ctrs_out       => ctrs_align_SLRn0
@@ -297,6 +306,7 @@ begin
             rst360         => rst_loc(SLRn1_quads(0)),
             clk40          => clk_payload(2),
             rst40          => rst_payload(2),
+            ctrs_delay_lck => delay_out_SLRn1_lck_regs(1),
             ctrs_delay_val => delay_out_SLRn1_regs(1), -- 1 for better timing
             ctrs_in        => ctrs(SLRn1_quads(0)),
             ctrs_out       => ctrs_align_SLRn1
