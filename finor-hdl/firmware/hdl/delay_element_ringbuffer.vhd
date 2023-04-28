@@ -19,12 +19,14 @@ entity delay_element_ringbuffer is
         rst       : in  std_logic;
         data_i    : in  std_logic_vector(DATA_WIDTH - 1 downto 0);
         data_o    : out std_logic_vector(DATA_WIDTH - 1 downto 0);
-        delay_lck : in  std_logic;
+        delay_lkd : in  std_logic;
         delay     : in  std_logic_vector(log2c(MAX_DELAY)-1 downto 0) := (others => '0')
     );
 end entity delay_element_ringbuffer;
 
 architecture RTL of delay_element_ringbuffer is
+    
+    constant MAX_VAL_UNISGNED  : unsigned(log2c(MAX_DELAY)-1 downto 0) := (others => '1');
 
     type ram_type is array (0 to 2**log2c(MAX_DELAY) - 1) of std_logic_vector(data_i'range);
     signal ram : ram_type;
@@ -32,6 +34,9 @@ architecture RTL of delay_element_ringbuffer is
     subtype index_type is integer range ram_type'range;
     signal head : index_type;
     signal tail : index_type;
+    
+    signal head_unsigned : unsigned(log2c(MAX_DELAY)-1 downto 0);
+    signal tail_unsigned : unsigned(log2c(MAX_DELAY)-1 downto 0);
 
     signal curr_delay : unsigned(log2c(MAX_DELAY)-1 downto 0) := (others => '0');
     signal delay_reg  : std_logic_vector(log2c(MAX_DELAY)-1 downto 0) := (others => '0');
@@ -81,27 +86,26 @@ begin
             end if;
         end if;
     end process;
+    
+    head_unsigned  <= to_unsigned(head,log2c(MAX_DELAY));
 
     -- Update the tail pointer on read and pulse valid
-    PROC_TAIL : process(clk)
+    PROC_TAIL : process(rst_loc, head_unsigned, delay, delay_lkd)
     begin
-        if rising_edge(clk) then
+        --if rising_edge(clk) then
             if (rst_loc = '1') then
-                tail <= 0;
-                curr_delay <= (others => '0');
+                tail_unsigned <= (others => '0');
             else
-                if curr_delay = unsigned(delay) then
-                    incr(tail);
-                elsif curr_delay > unsigned(delay) then
-                    tail       <=  to_integer(curr_delay) - to_integer(unsigned(delay)) + 1;
-                    curr_delay <= unsigned(delay);
+                if delay_lkd = '1' then
+                    tail_unsigned  <= head_unsigned - unsigned(delay);
                 else
-                    curr_delay <= curr_delay + 1;
-                    tail <= 0;
+                    tail_unsigned <= (others => '0');
                 end if;
             end if;
-        end if;
+        --end if;
     end process;
+    
+    tail  <= to_integer(tail_unsigned);
 
 
     -- Write to and read from the RAM
@@ -109,13 +113,11 @@ begin
     begin
         if rising_edge(clk) then
             ram(head) <= data_i;
-            if delay_lck = '1' then
+            if delay_lkd = '1' then
                 if unsigned(delay) = 0 then
                     data_o <= data_i;
-                elsif curr_delay >= unsigned(delay) then
+                else 
                     data_o <= ram(tail);
-                else
-                    data_o <= (others => '0');
                 end if;
             else
                 data_o <= (others => '0');

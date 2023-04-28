@@ -653,7 +653,7 @@ begin
             rst       => rst40,
             data_i    => algos_after_prescaler,
             data_o    => algos_delayed,
-            delay_lck => '1',
+            delay_lkd => '1',
             delay     => l1a_latency_delay
         );
 

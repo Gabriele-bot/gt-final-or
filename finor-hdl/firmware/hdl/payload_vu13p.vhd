@@ -65,11 +65,13 @@ architecture rtl of emp_payload is
     signal ctrs_align_SLRn0, ctrs_internal_SLRn0 : ttc_stuff_t;
     signal ctrs_align_SLRn1, ctrs_internal_SLRn1 : ttc_stuff_t;
     
+    signal ctrs_debug ,ctrs_internal_debug : ttc_stuff_t;
+    
     type SLRCross_delay_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
     signal delay_out_SLRn1_regs     : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360))));
-    signal delay_out_SLRn1_lck_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    signal delay_out_SLRn1_lkd_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
     signal delay_out_SLRn0_regs     : SLRCross_delay_t := (others => std_logic_vector(to_unsigned(200,log2c(MAX_CTRS_DELAY_360))));
-    signal delay_out_SLRn0_lck_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    signal delay_out_SLRn0_lkd_regs : std_logic_vector(SLR_CROSSING_LATENCY downto 0);
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(7 downto 0);
@@ -107,6 +109,8 @@ architecture rtl of emp_payload is
     
     attribute keep of delay_out_SLRn1_regs      : signal is true;
     attribute keep of delay_out_SLRn0_regs      : signal is true;
+    attribute keep of delay_out_SLRn1_lkd_regs  : signal is true;
+    attribute keep of delay_out_SLRn0_lkd_regs  : signal is true;
 
     attribute keep of algos_link_SLRn1_regs          : signal is true;
     attribute keep of algos_bxmask_link_SLRn1_regs   : signal is true;
@@ -125,8 +129,10 @@ architecture rtl of emp_payload is
     attribute shreg_extract of valid_out_SLRn1_regs    : signal is "no";
     attribute shreg_extract of valid_out_SLRn0_regs    : signal is "no";
     
-    attribute shreg_extract of delay_out_SLRn1_regs    : signal is "no";
-    attribute shreg_extract of delay_out_SLRn0_regs    : signal is "no";
+    attribute shreg_extract of delay_out_SLRn1_regs     : signal is "no";
+    attribute shreg_extract of delay_out_SLRn0_regs     : signal is "no";
+    attribute shreg_extract of delay_out_SLRn1_lkd_regs : signal is "no";
+    attribute shreg_extract of delay_out_SLRn0_lkd_regs : signal is "no";
 
     attribute shreg_extract of algos_link_SLRn1_regs          : signal is "no";
     attribute shreg_extract of algos_bxmask_link_SLRn1_regs   : signal is "no";
@@ -176,7 +182,7 @@ begin
             ctrs               => ctrs(SLRn1_quads(0)),
             d(11 downto 0)     => d(SLRn1_channels(11) downto SLRn1_channels(0) ),
             d(23 downto 12)    => d(SLRn1_channels(23) downto SLRn1_channels(12)),
-            delay_out_lck      => delay_out_SLRn0_lck_regs(0),
+            delay_out_lkd      => delay_out_SLRn0_lkd_regs(0),
             delay_out          => delay_out_SLRn1_regs(0),
             trigger_o          => trgg_SLRn1_regs(0),
             trigger_preview_o  => trgg_prvw_SLRn1_regs(0),
@@ -208,7 +214,7 @@ begin
             ctrs               => ctrs(SLRn0_quads(0)),
             d(11 downto 0)     => d(SLRn0_channels(11) downto SLRn0_channels(0) ),
             d(23 downto 12)    => d(SLRn0_channels(23) downto SLRn0_channels(12)),
-            delay_out_lck      => delay_out_SLRn1_lck_regs(0),
+            delay_out_lkd      => delay_out_SLRn1_lkd_regs(0),
             delay_out          => delay_out_SLRn0_regs(0),
             trigger_o          => trgg_SLRn0_regs(0),
             trigger_preview_o  => trgg_prvw_SLRn0_regs(0),
@@ -228,8 +234,8 @@ begin
             delay_out_SLRn0_regs(delay_out_SLRn0_regs'high downto 1)  <= delay_out_SLRn0_regs(delay_out_SLRn0_regs'high - 1 downto 0);
             delay_out_SLRn1_regs(delay_out_SLRn1_regs'high downto 1)  <= delay_out_SLRn1_regs(delay_out_SLRn1_regs'high - 1 downto 0); 
             
-            delay_out_SLRn1_lck_regs(delay_out_SLRn1_lck_regs'high downto 1) <= delay_out_SLRn1_lck_regs(delay_out_SLRn1_lck_regs'high - 1 downto 0); 
-            delay_out_SLRn0_lck_regs(delay_out_SLRn0_lck_regs'high downto 1) <= delay_out_SLRn0_lck_regs(delay_out_SLRn0_lck_regs'high - 1 downto 0);
+            delay_out_SLRn1_lkd_regs(delay_out_SLRn1_lkd_regs'high downto 1) <= delay_out_SLRn1_lkd_regs(delay_out_SLRn1_lkd_regs'high - 1 downto 0); 
+            delay_out_SLRn0_lkd_regs(delay_out_SLRn0_lkd_regs'high downto 1) <= delay_out_SLRn0_lkd_regs(delay_out_SLRn0_lkd_regs'high - 1 downto 0);
             
             valid_out_SLRn0_regs(valid_out_SLRn0_regs'high downto 1) <= valid_out_SLRn0_regs(valid_out_SLRn0_regs'high - 1 downto 0);
             valid_out_SLRn1_regs(valid_out_SLRn1_regs'high downto 1) <= valid_out_SLRn1_regs(valid_out_SLRn1_regs'high - 1 downto 0);
@@ -262,7 +268,7 @@ begin
             clk40       => clk_payload(2),
             rst40       => rst_payload(2),
             ctrs        => ctrs(OUTPUT_QUAD),
-            delay_lck   => delay_out_SLRn0_lck_regs(delay_out_SLRn0_lck_regs'high),
+            delay_lkd   => delay_out_SLRn0_lkd_regs(delay_out_SLRn0_lkd_regs'high),
             delay_in    => delay_out_SLRn0_regs(delay_out_SLRn0_regs'high),
             valid_in    => valid_in,
             trgg_0      => trgg_SLRn0_regs(trgg_SLRn0_regs'high),
@@ -290,7 +296,7 @@ begin
             rst360         => rst_loc(SLRn0_quads(0)),
             clk40          => clk_payload(2),
             rst40          => rst_payload(2),
-            ctrs_delay_lck => delay_out_SLRn0_lck_regs(0),
+            ctrs_delay_lkd => delay_out_SLRn0_lkd_regs(1),
             ctrs_delay_val => delay_out_SLRn0_regs(1), -- 1 for better timing
             ctrs_in        => ctrs(SLRn0_quads(0)),
             ctrs_out       => ctrs_align_SLRn0
@@ -306,7 +312,7 @@ begin
             rst360         => rst_loc(SLRn1_quads(0)),
             clk40          => clk_payload(2),
             rst40          => rst_payload(2),
-            ctrs_delay_lck => delay_out_SLRn1_lck_regs(1),
+            ctrs_delay_lkd => delay_out_SLRn1_lkd_regs(1),
             ctrs_delay_val => delay_out_SLRn1_regs(1), -- 1 for better timing
             ctrs_in        => ctrs(SLRn1_quads(0)),
             ctrs_out       => ctrs_align_SLRn1
@@ -418,6 +424,40 @@ begin
     q(OUTPUT_algo_channels(2)) <= algos_link_SLRn1_regs(algos_link_SLRn1_regs'high);
     q(OUTPUT_algo_channels(1)) <= algos_bxmask_link_SLRn1_regs(algos_bxmask_link_SLRn1_regs'high);
     q(OUTPUT_algo_channels(0)) <= algos_presc_link_SLRn1_regs(algos_presc_link_SLRn1_regs'high);
+    
+    --========================================
+    --DEBUG
+    --========================================
+    SLRout_ctrs_align_i : entity work.CTRS_fixed_alignment
+        generic map(
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
+            DELAY_OFFSET    => 9 + 9 + 4
+        )
+        port map(
+            clk360         => clk_p,
+            rst360         => rst_loc(DEBUG_quad),
+            clk40          => clk_payload(2),
+            rst40          => rst_payload(2),
+            ctrs_delay_lkd => delay_out_SLRn0_lkd_regs(delay_out_SLRn0_lkd_regs'high),
+            ctrs_delay_val => delay_out_SLRn0_regs(delay_out_SLRn0_regs'high), -- 1 for better timing
+            ctrs_in        => ctrs(DEBUG_quad),
+            ctrs_out       => ctrs_debug
+        );
+        
+    q(DEBUG_channels(0)).data(8+1+12+4-1 downto 0) <= ctrs_debug.ttc_cmd & ctrs_debug.l1a & ctrs_debug.bctr & ctrs_debug.pctr;
+    q(DEBUG_channels(0)).data(63 downto 8+1+12+4)  <= (others => '0');
+    q(DEBUG_channels(0)).start_of_orbit  <= '1' when (ctrs_debug.bctr = std_logic_vector(to_unsigned(0,12)) and ctrs_debug.pctr = std_logic_vector(to_unsigned(0,4))) else '0';
+    q(DEBUG_channels(0)).start           <= '1' when (ctrs_debug.pctr = std_logic_vector(to_unsigned(0,4))) else '0';
+    q(DEBUG_channels(0)).last            <= '1' when (ctrs_debug.pctr = std_logic_vector(to_unsigned(8,4))) else '0';
+    q(DEBUG_channels(0)).valid           <= not (rst_loc(DEBUG_quad));   
+    
+    q(DEBUG_channels(1)).data(8+1+12+4-1 downto 0) <= ctrs(DEBUG_quad).ttc_cmd & ctrs(DEBUG_quad).l1a & ctrs(DEBUG_quad).bctr & ctrs(DEBUG_quad).pctr;
+    q(DEBUG_channels(1)).data(63 downto 8+1+12+4)  <= (others => '0');
+    q(DEBUG_channels(1)).start_of_orbit  <= '1' when (ctrs(DEBUG_quad).bctr = std_logic_vector(to_unsigned(0,12)) and ctrs(DEBUG_quad).pctr = std_logic_vector(to_unsigned(0,4))) else '0';
+    q(DEBUG_channels(1)).start           <= '1' when (ctrs(DEBUG_quad).pctr = std_logic_vector(to_unsigned(0,4))) else '0';
+    q(DEBUG_channels(1)).last            <= '1' when (ctrs(DEBUG_quad).pctr = std_logic_vector(to_unsigned(8,4))) else '0';
+    q(DEBUG_channels(1)).valid           <= not (rst_loc(DEBUG_quad)); 
+    
 
     gpio    <= (others => '0');
     gpio_en <= (others => '0');

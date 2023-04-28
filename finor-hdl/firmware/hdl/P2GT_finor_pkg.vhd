@@ -48,6 +48,8 @@ package P2GT_finor_pkg is
     
     constant OUTPUT_algo_channels : ChannelSystemMap(6 - 1 downto 0)  := (29,28,27,26,25,24);
     constant OUTPUT_algo_quads    : QuadSystemMap   (2 - 1 downto 0)  := (7,6); 
+    constant DEBUG_channels       : ChannelSystemMap(2 - 1 downto 0)  := (31,30);
+    constant DEBUG_quad           : natural                           := 7; 
 
 
     type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(64*9-1 downto 0);

@@ -36,7 +36,7 @@ entity Output_SLR is
 
         ctrs        : in  ttc_stuff_t;
         
-        delay_lck   : in std_logic;
+        delay_lkd   : in std_logic;
         delay_in    : in std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
 
         valid_in    : in std_logic;
@@ -155,7 +155,7 @@ begin
             rst360         => rst360,
             clk40          => clk40,
             rst40          => rst40,
-            ctrs_delay_lck => delay_lck,
+            ctrs_delay_lkd => delay_lkd,
             ctrs_delay_val => delay_in,
             ctrs_in        => ctrs,
             ctrs_out       => ctrs_align
@@ -258,7 +258,7 @@ begin
             rst       => rst40,
             data_i    => Final_OR,
             data_o    => Final_OR_delayed,
-            delay_lck => '1',
+            delay_lkd => '1',
             delay     => l1a_latency_delay
         );
 
@@ -272,7 +272,7 @@ begin
             rst       => rst40,
             data_i    => Final_OR_preview,
             data_o    => Final_OR_preview_delayed,
-            delay_lck => '1',
+            delay_lkd => '1',
             delay     => l1a_latency_delay
         );
 
@@ -287,7 +287,7 @@ begin
             rst       => rst40,
             data_i    => Final_OR_with_veto,
             data_o    => Final_OR_with_veto_delayed,
-            delay_lck => '1',
+            delay_lkd => '1',
             delay     => l1a_latency_delay
         );
 
@@ -301,7 +301,7 @@ begin
             rst       => rst40,
             data_i    => Final_OR_preview_with_veto,
             data_o    => Final_OR_preview_with_veto_delayed,
-            delay_lck => '1',
+            delay_lkd => '1',
             delay     => l1a_latency_delay
         );
 

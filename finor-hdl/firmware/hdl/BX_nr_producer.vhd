@@ -71,7 +71,7 @@ begin
     begin
         if rising_edge(clk360) then
             if rst360 = '1' then
-                bx_nr_int <= to_unsigned(LHC_BUNCH_COUNT + 1,12); -- set to safe value
+                bx_nr_int <= to_unsigned(LHC_BUNCH_COUNT + 1,12); -- set to a safe value
             else
                 if p_ctr >= 8 then
                     if bx_nr_int < LHC_BUNCH_COUNT-1 then
@@ -80,7 +80,7 @@ begin
                         bx_nr_int <= (others => '0');
                     end if;
                 end if;
-                if start_of_orbit = '1' then
+                if metadata = "1101" then
                     bx_nr_int <= (others => '0');
                 end if;
             end if;

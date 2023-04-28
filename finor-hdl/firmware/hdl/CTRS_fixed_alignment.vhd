@@ -18,7 +18,7 @@ entity CTRS_fixed_alignment is
         clk40      : in  std_logic;
         rst40      : in  std_logic;
         
-        ctrs_delay_lck : in  std_logic;
+        ctrs_delay_lkd : in  std_logic;
         ctrs_delay_val : in  std_logic_vector(log2c(MAX_LATENCY_360) - 1 downto 0);
 
         ctrs_in        : in  ttc_stuff_t;
@@ -65,7 +65,7 @@ begin
             rst       => rst360,
             data_i    => ctrs_in_flatten,
             data_o    => ctrs_out_flatten,
-            delay_lck => ctrs_delay_lck,
+            delay_lkd => ctrs_delay_lkd,
             delay     => delay
         );
         
