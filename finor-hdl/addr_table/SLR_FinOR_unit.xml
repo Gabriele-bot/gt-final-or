@@ -7,7 +7,7 @@
     </node>
     <node id="stat" mode="single" address="0x00002">
       <node id="align_err"    mask="0x1"/>
-      <node id="input_delay"  mask="0x1FE"/>
+      <node id="input_delay"  mask="0x3FE"/>
     </node>
   </node>  
 </node>
