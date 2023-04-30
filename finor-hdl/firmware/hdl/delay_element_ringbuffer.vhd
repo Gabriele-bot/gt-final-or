@@ -90,9 +90,9 @@ begin
     head_unsigned  <= to_unsigned(head,log2c(MAX_DELAY));
 
     -- Update the tail pointer on read and pulse valid
-    PROC_TAIL : process(rst_loc, head_unsigned, delay, delay_lkd)
+    PROC_TAIL : process(clk)
     begin
-        --if rising_edge(clk) then
+        if rising_edge(clk) then
             if (rst_loc = '1') then
                 tail_unsigned <= (others => '0');
             else
@@ -102,7 +102,7 @@ begin
                     tail_unsigned <= (others => '0');
                 end if;
             end if;
-        --end if;
+        end if;
     end process;
     
     tail  <= to_integer(tail_unsigned);
