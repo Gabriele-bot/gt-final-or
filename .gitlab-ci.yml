@@ -1,16 +1,16 @@
 include:
   - project: cms-cactus/phase2/firmware/ci-templates
-    ref: v0.1.4
+    ref: v0.1.5
     file: 
       - pipelines/workflow.yml
       - pipelines/vivado-build-emp.yml
       #- templates/xilinx/build-emp.yml
     
-.ci_templates_ref: v0.1.4
+.ci_templates_ref: v0.1.5
 
 variables:
   #QUESTASIM_VERSION: "2021.1_2"
-  VIVADO_VERSION: "2021.1"
+  VIVADO_VERSION: "2022.2"
   BUILD_DIR: "build"
   MTI_VCO_MODE: "64"
   HARDWARE_TEST_IMAGE_TAG: v0-3-39
@@ -37,8 +37,8 @@ test:serenity:
     PROJECT_NAME: p2gt_finor_serenity-vu13p
     HARDWARE_TEST_TYPE: serenity-vu13p-so2
     HARDWARE_TEST_LOCATION: b904
-    HARDWARE_TEST_INPUT_CHANNELS: 36-47,48-59,68-79,80-91
-    HARDWARE_TEST_OUTPUT_CHANNELS: 0-15,24-59,68-103,112-127
+    HARDWARE_TEST_INPUT_CHANNELS: 0-11,36-47,80-91,116-127
+    HARDWARE_TEST_OUTPUT_CHANNELS: 24-29,96
     HARDWARE_TEST_CAPTURE_LENGTH: 1024
   before_script:
     - if ! [[ "$HARDWARE_TEST_SERENITY_SITE" =~ ^(x0|x1)$ ]]; then echo "HARDWARE_TEST_SERENITY_SITE variable has invalid value, ${HARDWARE_TEST_SERENITY_SITE}!   (should be x0 or x1)."; exit 1; fi
@@ -91,6 +91,7 @@ test:serenity:
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - python3.6 RateChecker.py -p random -t prescaler -c my_connections.xml -ls 18
+    - mv data/tx_summary.txt out_prescaler_test.txt
     # Trigger masks test
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_trigg_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
@@ -106,6 +107,9 @@ test:serenity:
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - python3.6 RateChecker.py -p random -t BXmask -c my_connections.xml -ls 18
+    # Output algobits test
+    - python3.6 RateChecker.py -t algo-out
+  rules:
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual

@@ -83,31 +83,47 @@ def read_pattern_file(filename, keepInvalid=False):
     with open(filename) as f:
 
         # Crosscheck whether this has the structure of a pattern file
-        line = f.readline()  # this should be the "Board XXXX" line
-        if (line.find("Board") == -1):
+        line = f.readline()  # this should be the "ID XXXX" line
+        if (line.find("ID") == -1):
             raise NameError("Not a pattern file!")
         else:
-            print("Found board: " + line.split(" ", 1)[1].rstrip('\n'))
-        line = f.readline()  # this should be the "Quad/Chan" line
-        if (line.find("Quad/Chan") == -1): raise NameError("Not a pattern file!")
+            print("Found ID: " + line.split(" ", 1)[1].rstrip('\n'))
+        line = f.readline()  # this should be the "Metadata" line
+        if (line.find("Metadata") == -1):
+            raise NameError("Not a pattern file!")
+        line = f.readline()  # this should be empty
         line = f.readline()  # this should be the "Link" line
         if (line.find("Link") == -1):
             raise NameError("Not a pattern file!")
         else:
-            tempstring = line.split(": ", 1)[1]
-            tempstring = ' '.join(tempstring.split())
-            col_count = len(tempstring.split(" "))
+            tempstring = line.split()[1:]
+            col_count = len(tempstring)
             print("Found " + str(col_count) + " links.")
+            links = [int(element) for element in tempstring]
 
+        i = 0
         line = f.readline()  # this should be the first content line
-        linearrays = []
+        valid_arr = []
+        data_arr = []
         while line:
-            tempstring = line.split(": ", 1)[1].rstrip('\n')  # [:-1] TODO fix this, should strip final spaces as well
-            linearray = np.array(tempstring.split(" "))
-            if (np.all(find_valid_bit(linearray)) or keepInvalid):  # skipping lines with invalid bits
-                linearrays.append(remove_validity_bit(linearray))  # stripping the validity bits
+            tempstring = line.split()[2:]
+            # tempstring = line.split(": ", 1)[1].rstrip('\n')
+            linearray = np.array(tempstring)
+            data_str = linearray[1::2]  # take only odd elements
+            metadata_str = linearray[::2]  # take only even elements
+            metadata = [int(element.replace('U','0'), 2) for element in metadata_str]
+            temp_valid_arr = np.bitwise_and([1], np.array(metadata))
+            valid_arr = np.append(valid_arr, temp_valid_arr)
+            temp_data_arr = np.uint64([int(element, 16) for element in data_str])
+            data_arr.append(temp_data_arr)
             line = f.readline()
-    return np.array(linearrays)
+            i += 1
+
+        data_arr = np.array(data_arr)
+        valid_arr = np.array(np.reshape(valid_arr, (i, len(links))), dtype=np.uint64)
+        data_arr  = np.array(np.reshape(data_arr, (i, len(links))), dtype=np.uint64)
+
+    return valid_arr.T,  data_arr.T, np.array(links)
 
 
 def find_valid_bit(strings):

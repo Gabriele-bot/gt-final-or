@@ -18,27 +18,44 @@ use work.emp_ttc_decl.all;
 package P2GT_finor_pkg is
     
     
-    constant DEBUG                  : boolean := TRUE;
     -- =======================================================================================================
     -- GT Final-OR definitions
     -- =======================================================================================================
     constant N_BOARD                : integer := 12;
     constant N_SLR                  : integer := 4;
-    constant INPUT_LINKS            : integer := 24;
-    constant MON_REG                : integer := 6;
+    constant INPUT_R_LINKS_SLR      : integer := 12;
+    constant INPUT_L_LINKS_SLR      : integer := 12;
+    constant INPUT_LINKS_SLR        : integer := INPUT_R_LINKS_SLR + INPUT_L_LINKS_SLR;
+    constant INPUT_QUADS            : integer := 3 + 3;
     constant N_TRIGG                : integer := 8;
     constant BEGIN_LUMI_SEC_BIT     : integer := 18;
     constant BEGIN_LUMI_SEC_BIT_SIM : integer := 3;
-    constant MAX_DELAY_PDT          : integer := 255;
+    constant MAX_DELAY_PDT          : integer := 511;
+    constant MAX_CTRS_DELAY_360     : integer := 511;
     constant SLR_CROSSING_LATENCY   : integer := 9;
     constant FINOR_LATENCY          : integer := 3;
     constant DESER_OUT_REG          : boolean := FALSE;
+
+    type ChannelSystemMap is array (natural range <>) of natural;
+    type QuadSystemMap    is array (natural range <>) of natural;
+    constant SLRn0_channels : ChannelSystemMap(INPUT_LINKS_SLR - 1 downto 0)   := (127,126,125,124,123,122,121,120,119,118,117,116,11,10,9,8,7,6,5,4,3,2,1,0);
+    constant SLRn1_channels : ChannelSystemMap(INPUT_LINKS_SLR - 1 downto 0)   := (91,90,89,88,87,86,85,84,83,82,81,80,47,46,45,44,43,42,41,40,39,38,37,36);
+    constant SLRn0_quads    : ChannelSystemMap(INPUT_LINKS_SLR/4 - 1 downto 0) := (31,30,29,2,1,0  );
+    constant SLRn1_quads    : ChannelSystemMap(INPUT_LINKS_SLR/4 - 1 downto 0) := (22,21,20,11,10,9);
     
-    type data_arr is array (INPUT_LINKS - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
-    type mask_arr is array (N_TRIGG     - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
+    constant OUTPUT_channel : natural := 96;
+    constant OUTPUT_quad    : natural := 24;
+    
+    constant OUTPUT_algo_channels : ChannelSystemMap(6 - 1 downto 0)  := (29,28,27,26,25,24);
+    constant OUTPUT_algo_quads    : QuadSystemMap   (2 - 1 downto 0)  := (7,6); 
+    constant DEBUG_channels       : ChannelSystemMap(2 - 1 downto 0)  := (31,30);
+    constant DEBUG_quad           : natural                           := 7; 
+
+
+    type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
+    type mask_arr is array (N_TRIGG         - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
     
     type bctr_array is array (natural range <>) of bctr_t;
-    
 
     -- ================= PRE-SCALERS =========================================================================
     -- Definitions for prescalers (P2GT FinalOR)
@@ -59,14 +76,14 @@ package P2GT_finor_pkg is
     -- Prescaler increment (1*10**fraction_digits)
     constant PRESCALER_INCR : unsigned(31 downto 0) := to_unsigned(10**PRESCALE_FACTOR_FRACTION_DIGITS, 32);
 
-    type prescale_factor_array is array (9*64-1 downto 0) of std_logic_vector(PRESCALE_FACTOR_WIDTH-1 downto 0);
+    type prescale_factor_array is array (natural range <>) of std_logic_vector(PRESCALE_FACTOR_WIDTH-1 downto 0);
 
     -- ================= RATE COUNTERS ========================================================================
     -- Definitions for rate counters (P2GT FinalOR)
 
     constant RATE_COUNTER_WIDTH         : natural := 32;
 
-    type rate_counter_array is array (9*64-1 downto 0) of std_logic_vector(RATE_COUNTER_WIDTH-1 downto 0);
+    type rate_counter_array is array (natural range <>) of std_logic_vector(RATE_COUNTER_WIDTH-1 downto 0);
 
 
 end package;

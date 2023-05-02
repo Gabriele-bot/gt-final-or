@@ -1,27 +1,31 @@
--- GB 29-07-2022: new version, deserializer synchronized with link_valid.
+--=================================================================
+--Data Link Deserializer
+--Transalte 64 bit@360 MHz data stream into 576 bit @ 40MHz data stream
+--Alignemnt check is perfrometd at the very last comparing the metadata against the expected values
+--=================================================================
 library ieee;
 use ieee.std_logic_1164.all;
-library unisim;
-use unisim.VComponents.all;
 
 use work.emp_data_types.all;
 use work.emp_ttc_decl.all;
-entity In_deser is
+entity Link_deserializer is
     generic(
         OUT_REG : boolean := TRUE
     );
     port(
         clk360             : in std_logic;
-        lhc_clk            : in std_logic;
-        lhc_rst            : in std_logic;
+        rst360             : in std_logic;
+        clk40              : in std_logic;
+        rst40              : in std_logic;
         lane_data_in       : in lword;
         rst_err            : in std_logic;
         align_err_o        : out std_logic;
-        demux_data_o       : out std_logic_vector(9*64-1 downto 0)
+        demux_data_o       : out std_logic_vector(9*64-1 downto 0);
+        valid_out          : out std_logic
     );
-end In_deser;
+end Link_deserializer;
 
-architecture rtl of In_deser is
+architecture rtl of Link_deserializer is
 
     signal data_deserialized      : std_logic_vector(9*64 - 1 downto 0);
     signal data_deserialized_temp : std_logic_vector(8*64 - 1 downto 0);
@@ -30,7 +34,6 @@ architecture rtl of In_deser is
 
     signal frame_cntr,  frame_cntr_temp: integer range 0 to 8;
 
-    signal metadata  : std_logic_vector(3 downto 0);
     signal align_err : std_logic := '0';
 
 begin
@@ -85,51 +88,53 @@ begin
 
 
     out_reg_g : if OUT_REG generate
-        data_40mhz_p: process(lhc_clk)
+        data_40mhz_p: process(clk40)
         begin
-            if rising_edge(lhc_clk) then
-                demux_data_o <= data_deserialized;
+            if rising_edge(clk40) then
+                if rst40 ='1' then
+                    demux_data_o <= (others => '0');
+                    valid_out    <= '0';
+                else
+                    demux_data_o <= data_deserialized;
+                    valid_out    <= data_in_valid_del_arr(9);
+                end if;
             end if;
         end process;
     else generate
         demux_data_o <= data_deserialized;
+        valid_out    <= data_in_valid_del_arr(9);
     end generate;
-    
-    
-    metadata <= lane_data_in.start_of_orbit & lane_data_in.start & lane_data_in.last & lane_data_in.valid;
+
 
     align_check_p : process(clk360)
     begin
         if rising_edge(clk360) then
             if align_err = '1' then
-                if rst_err = '1' then
+                if rst_err = '1' or rst360 = '1' then
                     align_err <= '0';
                 end if;
             else
                 case frame_cntr is
                     when 0 =>
-                        if metadata = "-0-1" or metadata = "--11" then
+                        if lane_data_in.valid = '1' and  (lane_data_in.start = '0' or lane_data_in.last = '1') then -- (valid and no start) or (valid and last)
                             align_err <=  '1';
-                        else
-                            align_err <=  '0';
+                        end if;
+                        if data_in_valid_del_arr(1 downto 0) = "01" and  lane_data_in.start_of_orbit = '0' then -- (valid and no start of orbit) when valid rising edge
+                            align_err <=  '1';
                         end if;
                     when 8 =>
-                        if metadata = "--01" or metadata = "-1-1" then
+                        if lane_data_in.valid = '1' and  (lane_data_in.start = '1' or lane_data_in.last = '0') then -- (valid and no last) or (valid and start)
                             align_err <=  '1';
-                        else
-                            align_err <=  '0';
                         end if;
                     when others =>
-                        if metadata = "--11" or metadata = "-1-1" then
+                        if lane_data_in.valid = '1' and  (lane_data_in.start = '1' or lane_data_in.last = '1') then -- valid and (start or last)
                             align_err <=  '1';
-                        else
-                            align_err <=  '0';
                         end if;
                 end case;
             end if;
         end if;
     end process align_check_p;
-    
+
     align_err_o <= align_err;
 
 end architecture rtl;

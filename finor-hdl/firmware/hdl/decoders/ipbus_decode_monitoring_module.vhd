@@ -11,13 +11,13 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use ieee.numeric_std.all;
 
-package ipbus_decode_m_module is
+package ipbus_decode_monitoring_module is
 
   constant IPBUS_SEL_WIDTH: positive := 4;
   subtype ipbus_sel_t is std_logic_vector(IPBUS_SEL_WIDTH - 1 downto 0);
-  function ipbus_sel_m_module(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
+  function ipbus_sel_monitoring_module(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
 
--- START automatically generated VHDL (Wed Jan 11 12:35:52 2023)
+-- START automatically generated VHDL (Mon Apr 17 13:35:50 2023)
   constant N_SLV_PRESCALE_FACTOR: integer := 0;
   constant N_SLV_PRESCALE_FACTOR_PRVW: integer := 1;
   constant N_SLV_CNT_RATE_BEFORE_PRSC: integer := 2;
@@ -33,15 +33,15 @@ package ipbus_decode_m_module is
 -- END automatically generated VHDL
 
     
-end ipbus_decode_m_module;
+end ipbus_decode_monitoring_module;
 
-package body ipbus_decode_m_module is
+package body ipbus_decode_monitoring_module is
 
-  function ipbus_sel_m_module(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t is
+  function ipbus_sel_monitoring_module(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t is
     variable sel: ipbus_sel_t;
   begin
 
--- START automatically generated VHDL (Wed Jan 11 12:35:52 2023)
+-- START automatically generated VHDL (Mon Apr 17 13:35:50 2023)
     if    std_match(addr, "--------------0-0000------------") then
       sel := ipbus_sel_t(to_unsigned(N_SLV_PRESCALE_FACTOR, IPBUS_SEL_WIDTH)); -- prescale_factor / base 0x00000000 / mask 0x0002f000
     elsif std_match(addr, "--------------0-0001------------") then
@@ -72,7 +72,7 @@ package body ipbus_decode_m_module is
 
     return sel;
 
-  end function ipbus_sel_m_module;
+  end function ipbus_sel_monitoring_module;
 
-end ipbus_decode_m_module;
+end ipbus_decode_monitoring_module;
 

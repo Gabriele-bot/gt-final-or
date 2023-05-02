@@ -1,4 +1,50 @@
 # FinalOR GT VHDL files
+
+# Overview
+
+<center>
+    <img src="./docs/Images/Finor_overview.png" alt="Drawing" style="width: 500px"/>
+</center>
+
+| Link | Quad | Direction | Description | Target |
+| ---      | ---      | --- | --- | --- | 
+| 0-11 | 0-2 | IN | Links 0-11 low algos| Algo boards 0-11 |
+| 116-127 | 29-31 | IN | Links 12-23 low algos| Algo boards 0-11 |
+| 36-47 | 9-11 | IN | Links 0-11 high algos| Algo boards 0-11 |
+| 80-91 |20-22 | IN | Links 12-23 high algos| Algo boards 0-11 |
+| 24-26 |6 | OUT | Low algobits| DAQ, Scouting |
+| 27-29 |6-7 | OUT | High algos bits| DAQ, Scouting |
+| 96 |24 | OUT | Finor out bits| TCDS-2 | 
+
+# Output FinOR bits
+
+| Bits | Name | With veto? | 
+| ---      | ---      | --- |
+| 0-7    | FinOR trigger bits| No| 
+| 8-15   | FinOR preview trigger bits| No | 
+| 23-16  | FinOR trigger bits| Yes | 
+| 31-24  | FinOR preview trigger bits| Yes | 
+| 575-32 | Reserved| X | 
+
+# Available rate counters
+
+| Register | IPBus name | Width | 
+| ---      | ---      | --- |
+| Algo rate counters unprescaled    | cnt_rate_before_prsc | 1152|
+| Algo rate counters prescaled    | cnt_rate_after_prsc | 1152|
+| Algo rate counters prescaled (preview)    | cnt_rate_after_prsc_prvw | 1152|
+| Algo rate counters prescaled post dead-time    | cnt_rate_pdt | 1152|
+| SLRs Veto rate counter    | Veto_cnt | 2|
+| FinOR rate counter    | cnt_rate_finor | 8|
+| FinOR rate counter post dead-time    | cnt_rate_finor_pdt | 8|
+| FinOR rate counter (preview)    | cnt_rate_finor_preview | 8|
+| FinOR rate counter post dead-time (preview)    | cnt_rate_finor_preview_pdt | 8|
+| FinOR rate counter (vetoed)    | cnt_rate_finor_with_veto | 8|
+| FinOR rate counter post dead-time (vetoed)    | cnt_rate_finor_with_veto_pdt | 8|
+| FinOR rate counter (vetoed, preview)    | cnt_rate_finor_preview_with_veto | 8|
+| FinOR rate counter post dead-time (vetoed, preview)    | cnt_rate_finor_preview_with_veto_pdt | 8|
+| GlobalVeto rate counter    | Veto_cnt | 1|
+
 # Supported boards
 
 | Board | FPGA | Depfile name | 
@@ -25,7 +71,7 @@ source ipbb-dev-2021j/env.sh
 
 ipbb init gt-finor-work
 cd gt-finor-work
-ipbb add git https://:@gitlab.cern.ch:8443/p2-xware/firmware/emp-fwk.git -b v0.7.3
+ipbb add git https://:@gitlab.cern.ch:8443/p2-xware/firmware/emp-fwk.git -b v0.7.6
 ipbb add git https://github.com/ipbus/ipbus-firmware -b v1.9
 ipbb add git https://:@gitlab.cern.ch:8443/cms-tcds/cms-tcds2-firmware.git -b v0_1_1
 ipbb add git https://gitlab.cern.ch/HPTD/tclink.git -r fda0bcf
@@ -113,6 +159,11 @@ vsim work.top work.glbl -Gsourcefile=scripts/Pattern_files/Finor_input_pattern_v
 vsim work.top work.glbl -Gsourcefile=scripts/Pattern_files/Finor_input_pattern_BXmask_test.txt -Gsinkfile=out_BXmask_test.txt
 ```
 
+If you want to simulate the GT-algo board latency add the following argument at the end of the simulation command (change the value if needed)
+```
+-Gplayoffset=131
+```
+
 ### Interact with the simulation with IPbus
 
 Open a new shell in the project folder and go to the `scripts` directory
@@ -126,4 +177,7 @@ python RateChecker.py -t trigger_mask -p random -ls 3 -c my_connections.xml -S
 python RateChecker.py -t veto_mask -p random -ls 3 -c my_connections.xml -S
 python RateChecker.py -t BXmask -p random -ls 3 -c my_connections.xml -S
 ```
-
+Check output unprescaled algobits, this requires that the prescale test is run beforehand.
+```
+python RateChecker.py -t algo-out
+```

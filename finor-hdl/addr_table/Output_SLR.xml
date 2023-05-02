@@ -7,9 +7,9 @@
   <node id="cnt_rate_finor_with_veto_pdt"         mode="block" address="0x50" size="8" fwinfo="endpoint;width=4"/>
   <node id="cnt_rate_finor_preview_with_veto"     mode="block" address="0x60" size="8" fwinfo="endpoint;width=4"/>
   <node id="cnt_rate_finor_preview_with_veto_pdt" mode="block" address="0x70" size="8" fwinfo="endpoint;width=4"/>
-  <node id="CSR" address="0x80" fwinfo="endpoint;width=1">
+  <node id="CSR" address="0x80" fwinfo="endpoint;width=2">
     <node id="ctrl" address="0x0000">
-      <node id="l1_latency_delay"     mask="0xFFF" />
+      <node id="l1_latency_delay"                   mask="0xFFF" />
     </node>
     <node id="stat" mode="single" address="0x0001">
       <node id="ready"  mask="0x0001"/>

@@ -11,6 +11,8 @@ entity mux is
     port(
         clk360      : in std_logic;
         rst360      : in std_logic;
+        clk40       : in std_logic;
+        rst40       : in std_logic;
         bctr        : in  bctr_t;
         -- input
         input_40MHz : in std_logic_vector(64*9-1 downto 0);
@@ -22,23 +24,42 @@ end mux;
 
 architecture arch of mux is
 
-    signal reset_del : std_logic;
-    signal valid_del : std_logic;
+    signal reset_d  : std_logic := '0';
+    signal reset_dd : std_logic := '0';
+    signal valid_d  : std_logic := '0';
+    signal valid_dd : std_logic := '0';
 
     signal s_out            : std_logic_vector(63 downto 0);
 
-    signal frame_cntr, frame_cntr_del  : integer range 0 to 8;
-
-    signal input_reg       : std_logic_vector(64*9-1 downto 0);
+    signal frame_cntr     : integer range 0 to 8 := 0;
+    signal frame_cntr_d   : integer range 0 to 8 := 0;
+    signal frame_cntr_dd  : integer range 0 to 8 := 0;
+    
+    signal input_40MHz_reg   : std_logic_vector(64*9-1 downto 0);
+    signal valid_40MHz_reg      : std_logic;
+    
+    signal input_360_reg     : std_logic_vector(64*9-1 downto 0);
+    signal valid_360_reg     : std_logic;
+    signal input_reg_2       : std_logic_vector(64*9-1 downto 0);
     signal output_link_reg : lword;
 
 begin
     
+    in_reg : process (clk40)
+    begin
+        if rising_edge(clk40) then
+            input_40MHz_reg <= input_40MHz;
+            valid_40MHz_reg <= valid_in; 
+        end if;
+    end process in_reg;
+    
     del_p : process (clk360)
     begin
-        if rising_edge(clk360) then -- rising clock edge
-            reset_del <= rst360;
-            valid_del <= valid_in;
+        if rising_edge(clk360) then
+            reset_d  <= rst360;
+            reset_dd <= reset_d;
+            valid_d  <= valid_in;
+            valid_dd <= valid_d;
         end if;
     end process del_p;
 
@@ -46,43 +67,44 @@ begin
     -- frame counter
     frame_counter_p : process (clk360)
     begin
-        if rising_edge(clk360) then -- rising clock edge
-            if valid_in = '0' then
+        if rising_edge(clk360) then
+            if valid_40MHz_reg = '0' then
                 frame_cntr <= 0;
             elsif frame_cntr < 8 then
                 frame_cntr <= frame_cntr + 1;
             else
                 frame_cntr <= 0;
             end if;
-            frame_cntr_del <= frame_cntr;
         end if;
     end process frame_counter_p;
 
     reg_input_p : process (clk360)
     begin
         if rising_edge(clk360) then
-            if frame_cntr = 0 and valid_in = '1' then
-                input_reg <= input_40MHz;
+            if frame_cntr = 0 and valid_40MHz_reg = '1' then
+                input_360_reg <= input_40MHz_reg;
             end if;
+            valid_360_reg <= valid_40MHz_reg;
+            frame_cntr_d  <= frame_cntr; 
         end if;
     end process reg_input_p;
 
 
-    process(frame_cntr_del,input_reg)
+    process(frame_cntr_d, input_360_reg)
     begin
-        s_out        <=  input_reg(64*(frame_cntr_del+1)-1  downto 64*(frame_cntr_del));
+        s_out        <=  input_360_reg(64*(frame_cntr_d+1)-1  downto 64*(frame_cntr_d));
     end process;
 
-    output_link_reg.valid          <= valid_del;
-    output_link_reg.start          <= '1'   when frame_cntr_del = 0 and valid_del = '1' else '0';
-    output_link_reg.last           <= '1'   when frame_cntr_del = 8 and valid_del = '1' else '0';
-    output_link_reg.start_of_orbit <= '1'   when frame_cntr_del = 0 and valid_del = '1' and (bctr = std_logic_vector(to_unsigned(0,12))) else '0';
-    output_link_reg.data           <= s_out when valid_del = '1' else (others => '0');
+    output_link_reg.valid          <= valid_360_reg;
+    output_link_reg.start          <= '1'   when frame_cntr_d = 0 and valid_360_reg = '1' else '0';
+    output_link_reg.last           <= '1'   when frame_cntr_d = 8 and valid_360_reg = '1' else '0';
+    output_link_reg.start_of_orbit <= '1'   when frame_cntr_d = 0 and valid_360_reg = '1' and (bctr = std_logic_vector(to_unsigned(0,12))) else '0';
+    output_link_reg.data           <= s_out when valid_360_reg = '1' else (others => '0');
 
     sync : process(clk360)
     begin
         if rising_edge(clk360) then
-            if (reset_del = '1')then
+            if (reset_dd = '1')then
                 output_data.data           <= (others => '0');
                 output_data.valid          <= '0';
                 output_data.start_of_orbit <= '0';

@@ -7,7 +7,7 @@ use xpm.vcomponents.all;
 
 use work.ipbus.all;
 use work.ipbus_reg_types.all;
-use work.ipbus_decode_m_module.all;
+use work.ipbus_decode_monitoring_module.all;
 
 use work.emp_data_types.all;
 use work.emp_project_decl.all;
@@ -15,22 +15,18 @@ use work.emp_project_decl.all;
 use work.emp_device_decl.all;
 use work.emp_ttc_decl.all;
 
-
---use work.P2GT_monitor_pkg.all;
---use work.pre_scaler_pkg.all;
---use work.Finor_pkg.all;
 use work.P2GT_finor_pkg.all;
 
 use work.math_pkg.all;
 
 
 
-entity m_module is
+entity monitoring_module is
     generic(
         NR_ALGOS              : natural;
         PRESCALE_FACTOR_INIT  : std_logic_vector(31 DOWNTO 0) := X"00000064"; --1.00
         BEGIN_LUMI_TOGGLE_BIT : natural := 18;
-        MAX_DELAY             : natural := 127
+        MAX_DELAY             : natural := 255
     );
     port(
         -- =========================IPbus================================================
@@ -39,23 +35,25 @@ entity m_module is
         ipb_in              : in  ipb_wbus;
         ipb_out             : out ipb_rbus;
         -- ==============================================================================
-        lhc_clk                  : in  std_logic;
-        lhc_rst                  : in  std_logic;
+        clk40                    : in  std_logic;
+        rst40                    : in  std_logic;
 
         ctrs                     : in  ttc_stuff_t;
-
+    
         algos_in                 : in  std_logic_vector(NR_ALGOS-1 downto 0);
+        valid_algos_in           : in  std_logic;
         algos_after_bxmask_o     : out std_logic_vector(NR_ALGOS-1 downto 0);
         algos_after_prescaler_o  : out std_logic_vector(NR_ALGOS-1 downto 0);
         trigger_o                : out std_logic_vector(N_TRIGG-1  downto 0);
         trigger_preview_o        : out std_logic_vector(N_TRIGG-1  downto 0);
+        valid_trigger_o          : out std_logic;
         veto_o                   : out std_logic
 
     );
-end m_module;
+end monitoring_module;
 
 
-architecture rtl of m_module is
+architecture rtl of monitoring_module is
 
     constant NULL_VETO_MASK    : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
@@ -155,10 +153,9 @@ begin
     ----------------------------------------------------------------------------------
     ---------------COUNTERS INTERNAL---------------------------------------------------
     ----------------------------------------------------------------------------------
-    --TODO Where to stat counting, need some latency? How much?
-    bx_cnt_int_p : process(lhc_clk)
+    sync_ctrs_p : process(clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             ctrs_internal <= ctrs;
         end if;
     end process;
@@ -172,8 +169,8 @@ begin
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map (
-            lhc_clk        => lhc_clk,
-            lhc_rst        => lhc_rst,
+            clk40          => clk40,
+            rst40          => rst40,
             ctrs_in        => ctrs_internal,
             bc0            => bc0,
             ec0            => ec0,
@@ -189,12 +186,10 @@ begin
 
 
 
-    -- TODO check delay
-
-    -- rate counters are updated with begin_lumi_per_del1
-    process (lhc_clk)
+    -- rate counter registers update starts with begin_lumi_per_del1
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             begin_lumi_per_del1 <= begin_lumi_per;
         end if;
     end process;
@@ -204,8 +199,8 @@ begin
             RAM_DEPTH => NR_ALGOS
         )
         port map(
-            clk        => lhc_clk,
-            rst        => lhc_rst,
+            clk        => clk40,
+            rst        => rst40,
             write_flag => begin_lumi_per_del1,
             addr_o     => addr,
             addr_w_o   => open,
@@ -221,8 +216,8 @@ begin
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
-            clk                => lhc_clk,
-            rst                => lhc_rst,
+            clk                => clk40,
+            rst                => rst40,
             load_flag          => new_prescale_column,
             orbit_nr           => orbit_nr,
             lumi_sec_nr        => lumi_sec_nr,
@@ -240,8 +235,8 @@ begin
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
-            clk                => lhc_clk,
-            rst                => lhc_rst,
+            clk                => clk40,
+            rst                => rst40,
             load_flag          => new_trgg_masks,
             orbit_nr           => orbit_nr,
             lumi_sec_nr        => lumi_sec_nr,
@@ -252,9 +247,9 @@ begin
             ready_o            => ready_mask
         ) ;
 
-    process(lhc_clk)
+    process(clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             ready_mask_1 <= ready_mask;
         end if;
     end process;
@@ -265,8 +260,8 @@ begin
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
-            clk                => lhc_clk,
-            rst                => lhc_rst,
+            clk                => clk40,
+            rst                => rst40,
             load_flag          => new_veto,
             orbit_nr           => orbit_nr,
             lumi_sec_nr        => lumi_sec_nr,
@@ -277,9 +272,9 @@ begin
             ready_o            => ready_veto
         ) ;
 
-    process(lhc_clk)
+    process(clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             ready_veto_1 <= ready_veto;
         end if;
     end process;
@@ -293,7 +288,7 @@ begin
         port map(
             ipb_in          => ipb_in,
             ipb_out         => ipb_out,
-            sel             => ipbus_sel_m_module(ipb_in.ipb_addr),
+            sel             => ipbus_sel_monitoring_module(ipb_in.ipb_addr),
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );
@@ -313,7 +308,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_PRESCALE_FACTOR),
             ipb_out => ipb_from_slaves(N_SLV_PRESCALE_FACTOR),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => '0',
             d       => (others => '0'),
             q       => q_prscl_fct,
@@ -335,7 +330,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_PRESCALE_FACTOR_PRVW),
             ipb_out => ipb_from_slaves(N_SLV_PRESCALE_FACTOR_PRVW),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => '0',
             d       => (others => '0'),
             q       => q_prscl_fct_prvw,
@@ -343,9 +338,9 @@ begin
         );
 
     -- process to read from ipbus-RAMs
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             -----------Prescalers----------------------------
             prscl_fct(to_integer     (unsigned(addr_prscl_w)))  <= q_prscl_fct;
             prscl_fct_prvw(to_integer(unsigned(addr_prscl_w)))  <= q_prscl_fct_prvw;
@@ -367,7 +362,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_BEFORE_PRSC),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_BEFORE_PRSC),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_before_prescaler,
             q       => open,
@@ -389,7 +384,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_AFTER_PRSC),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_AFTER_PRSC),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_after_prescaler,
             q       => open,
@@ -411,7 +406,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_AFTER_PRSC_PRVW),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_after_prescaler_preview,
             q       => open,
@@ -433,7 +428,7 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_CNT_RATE_PDT),
             ipb_out => ipb_from_slaves(N_SLV_CNT_RATE_PDT),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => we,
             d       => d_rate_cnt_post_dead_time,
             q       => open,
@@ -447,25 +442,30 @@ begin
     d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time         (to_integer(unsigned(addr)));
 
 
-    CSR_regs : entity work.ipbus_ctrlreg_v
+    CSR_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
-            N_CTRL     => 2,
-            N_STAT     => 4
+            N_CTRL         => 2,
+            N_STAT         => 4,
+            DEST_SYNC_FF   => 3,
+            INIT_SYNC_FF   => 0,
+            SIM_ASSERT_CHK => 0,
+            SRC_INPUT_REG  => 1
         )
         port map(
             clk       => clk,
-            reset     => rst,
-            ipbus_in  => ipb_to_slaves(N_SLV_CSR),
-            ipbus_out => ipb_from_slaves(N_SLV_CSR),
+            rst       => rst,
+            ipb_in    => ipb_to_slaves(N_SLV_CSR),
+            ipb_out   => ipb_from_slaves(N_SLV_CSR),
+            slv_clk   => clk40,
             d         => stat_reg,
             q         => ctrl_reg,
             qmask     => open,
             stb       => ctrl_stb
         );
 
-    strobe_loop : process(clk)
+    strobe_loop : process(clk40)
     begin
-        if rising_edge(clk) then
+        if rising_edge(clk40) then
             for i  in 1 downto 0 loop
                 if ctrl_stb(i) = '1' then
                     ctrl_reg_stb(i) <= ctrl_reg(i);
@@ -473,168 +473,29 @@ begin
             end loop;
         end if;
     end process;
-
-
-    xpm_cdc_new_prescale_column : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
-        )
-        port map (
-            dest_out => new_prescale_column,
-            dest_clk => lhc_clk,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(0)
-        );
-
-    xpm_cdc_new_trgg_masks : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
-        )
-        port map (
-            dest_out => new_trgg_masks,
-            dest_clk => lhc_clk,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(1)
-        );
-
-    xpm_cdc_new_veto : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
-        )
-        port map (
-            dest_out => new_veto,
-            dest_clk => lhc_clk,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(2)
-        );
-
-    xpm_cdc_l1a_latency_delay : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => log2c(MAX_DELAY)
-        )
-        port map (
-            dest_out => l1a_latency_delay,
-            dest_clk => lhc_clk,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(0)(log2c(MAX_DELAY) + 2 downto 3)
-        );
-
-    xpm_cdc_supp_BX_low : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 12
-        )
-        port map (
-            dest_out => supp_cal_BX_low,
-            dest_clk => lhc_clk,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(1)(11 downto 0)
-        );
-
-    xpm_cdc_supp_BX_high : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 12
-        )
-        port map (
-            dest_out => supp_cal_BX_high,
-            dest_clk => lhc_clk,
-            src_clk  => clk,
-            src_in   => ctrl_reg_stb(1)(23 downto 12)
-        );
-
+    
+    new_prescale_column <= ctrl_reg(0)(0) and ctrl_stb(0);
+    new_trgg_masks      <= ctrl_reg(0)(1) and ctrl_stb(0);
+    new_veto            <= ctrl_reg(0)(2) and ctrl_stb(0);
+    l1a_latency_delay   <= ctrl_reg_stb(0)(log2c(MAX_DELAY) + 2 downto 3);
+    supp_cal_BX_low     <= ctrl_reg_stb(1)(11 downto 0);
+    supp_cal_BX_high    <= ctrl_reg_stb(1)(23 downto 12);
+    
     ready <= not we;
-
-    xpm_cdc_ready : xpm_cdc_single
-        generic map (
-            DEST_SYNC_FF => 3,
-            INIT_SYNC_FF => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG => 1
-        )
-        port map (
-            dest_out => stat_reg(0)(0),
-            dest_clk => clk,
-            src_clk  => lhc_clk,
-            src_in   => ready
-        );
-
-    xpm_cdc_prescaler_lumi_mark : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 32
-        )
-        port map (
-            dest_out => stat_reg(1),
-            dest_clk => clk,
-            src_clk  => lhc_clk,
-            src_in   => lumi_sec_load_prscl_mark
-        );
-
-    xpm_cdc_masks_lumi_mark : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 32
-        )
-        port map (
-            dest_out => stat_reg(2),
-            dest_clk => clk,
-            src_clk  => lhc_clk,
-            src_in   => lumi_sec_load_masks_mark
-        );
-
-    xpm_cdc_veto_lumi_mark : xpm_cdc_array_single
-        generic map (
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => 32
-        )
-        port map (
-            dest_out => stat_reg(3),
-            dest_clk => clk,
-            src_clk  => lhc_clk,
-            src_in   => lumi_sec_load_veto_mark
-        );
-
-    --begin_lumi_per        <= ctrl_reg(0)(0);
-    --request_factor_update <= ctrl_reg(0)(1);
-    --l1a_latency_delay     <= ctrl_reg(0)(log2c(MAX_DELAY) + 1 downto 2);
-    --stat_reg(0)(0)        <= ready;
+    
+    stat_reg(0)(0)           <= ready;
+    stat_reg(0)(31 downto 1) <= (others => '0');
+    stat_reg(1)              <= lumi_sec_load_prscl_mark;
+    stat_reg(2)              <= lumi_sec_load_masks_mark;
+    stat_reg(3)              <= lumi_sec_load_veto_mark;
 
     ----------------------------------------------------------------------------------
     ---------------RESET PRE-SCALE COUTNER LOGIC--------------------------------------
     ----------------------------------------------------------------------------------
 
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             if request_factor_update = '1' then
                 change_prescale_column_occurred <= '1';
             elsif begin_lumi_per_del1 = '1' then
@@ -661,25 +522,25 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_TRGG_MASK),
             ipb_out => ipb_from_slaves(N_SLV_TRGG_MASK),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => '0',
             d       => (others => '0'),
             q       => q_mask,
             addr    => std_logic_vector(addr_mask)
         );
 
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             -----------Trigger masks---------------------------------
             masks_ipbus_regs(to_integer(unsigned(addr_mask_w))) <= q_mask;
         end if;
     end process;
 
     mask_l : for i in N_TRIGG - 1 downto 0 generate
-        process(lhc_clk)
+        process(clk40)
         begin
-            if rising_edge(lhc_clk) then
+            if rising_edge(clk40) then
                 if (ready_mask = '1' and ready_mask_1 = '0') then --rising edge
                     masks(i) <= (masks_ipbus_regs(i*18+17), masks_ipbus_regs(i*18+16),
                                  masks_ipbus_regs(i*18+15), masks_ipbus_regs(i*18+14),
@@ -694,7 +555,7 @@ begin
             end if;
         end process;
     end generate;
-    -- TODO Make it interchangable
+    -- TODO What happens if I want to change the N_TRIGGER?? Need to change te code to support that
 
 
     ----------------------------------------------------------------------------------
@@ -712,24 +573,24 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_VETO_MASK),
             ipb_out => ipb_from_slaves(N_SLV_VETO_MASK),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => '0',
             d       => (others => '0'),
             q       => q_veto,
             addr    => std_logic_vector(addr_veto)
         );
 
-    process (lhc_clk)
+    process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             -----------Veto masks------------------------------------
             veto_ipbus_regs(to_integer(unsigned(addr_veto_w)))  <= q_veto;
         end if;
     end process;
 
-    process(lhc_clk)
+    process(clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             if (ready_veto = '1' and ready_veto_1 = '0') then --rising edge
                 veto_mask  <= (veto_ipbus_regs(17), veto_ipbus_regs(16),
                               veto_ipbus_regs(15), veto_ipbus_regs(14),
@@ -743,8 +604,7 @@ begin
             end if;
         end if;
     end process;
-    -- TODO Make it interchangable
-
+    -- TODO What happens if I want to change the N_ALGOS?? Need to change te code to support that
 
     veto_update_i: entity work.update_process
         generic map(
@@ -752,7 +612,7 @@ begin
             INIT_VALUE => NULL_VETO_MASK
         )
         port map(
-            clk                  => lhc_clk,
+            clk                  => clk40,
             request_update_pulse => request_veto_update,
             update_pulse         => end_lumi_per,
             data_i               => veto_mask,
@@ -774,11 +634,12 @@ begin
             rst     => rst,
             ipb_in  => ipb_to_slaves  (N_SLV_ALGO_BX_MASKS),
             ipb_out => ipb_from_slaves(N_SLV_ALGO_BX_MASKS),
-            rclk    => lhc_clk,
+            rclk    => clk40,
             we      => '0',
             d       => (others => '1'),
             q       => algo_bx_mask_mem_out,
             addr    => ctrs.bctr -- note that this one is not delayed
+            
         ) ;
 
 
@@ -788,20 +649,21 @@ begin
             MAX_DELAY  => MAX_DELAY
         )
         port map(
-            clk    => lhc_clk,
-            rst    => lhc_rst,
-            data_i => algos_in,
-            data_o => algos_delayed,
-            delay  => l1a_latency_delay
+            clk       => clk40,
+            rst       => rst40,
+            data_i    => algos_after_prescaler,
+            data_o    => algos_delayed,
+            delay_lkd => '1',
+            delay     => l1a_latency_delay
         );
 
     ----------------------------------------------------------------------------------
-    ---------------Suppress Trigger dureing Calibration-------------------------------
+    ---------------Suppress Trigger during Calibration--------------------------------
     ----------------------------------------------------------------------------------    
 
-    suppress_cal_trigger_p: process (lhc_clk)
+    suppress_cal_trigger_p: process (clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             if (test_en = '1' and (unsigned(ctrs_internal.bctr) >= (unsigned(supp_cal_BX_low)-1)) and (unsigned(ctrs_internal.bctr) < unsigned(supp_cal_BX_high))) then -- minus 1 to get correct length of gap (see simulation with test_bgo_test_enable_logic_tb.vhd)
                 suppress_cal_trigger <= '1'; -- pos. active signal: '1' = suppression of algos caused by calibration trigger during gap !!!
             else
@@ -823,20 +685,18 @@ begin
                 PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT
             )
             port map(
-                sys_clk                          => clk,
-                lhc_clk                          => lhc_clk,
-                lhc_rst                          => lhc_rst,
+                clk40                            => clk40,
+                rst40                            => rst40,
                 sres_algo_rate_counter           => '0',
                 sres_algo_pre_scaler             => rst_prescale_counters,
                 sres_algo_post_dead_time_counter => '0',
                 suppress_cal_trigger             => suppress_cal_trigger,
                 l1a                              => ctrs_internal.l1a, --TODO modify this
                 request_update_factor_pulse      => request_factor_update,
-                request_update_veto_pulse        => request_veto_update,
                 begin_lumi_per                   => begin_lumi_per,
                 end_lumi_per                     => end_lumi_per,
                 algo_i                           => algos_in(i),
-                algo_del_i                       => algos_delayed(i),
+                algo_after_prscl_del_i           => algos_delayed(i),
                 prescale_factor                  => prscl_fct(i)(PRESCALE_FACTOR_WIDTH-1 downto 0),
                 prescale_factor_preview          => prscl_fct_prvw(i)(PRESCALE_FACTOR_WIDTH-1 downto 0),
                 algo_bx_mask                     => algo_bx_mask_mem_out(i),
@@ -865,12 +725,14 @@ begin
             OUT_REG  => TRUE
         )
         port map(
-            clk                             => lhc_clk,
+            clk                             => clk40,
             algos_in                        => algos_after_prescaler,
+            valid_in                        => valid_algos_in,
             masks                           => masks,
             request_masks_update_pulse      => request_masks_update,
             update_pulse                    => end_lumi_per,
-            trigger_out                     => trigger_out
+            trigger_out                     => trigger_out,
+            valid_out                       => valid_trigger_o
         );
 
     Mask_previev_i : entity work.Mask
@@ -879,12 +741,14 @@ begin
             OUT_REG  => TRUE
         )
         port map(
-            clk                             => lhc_clk,
+            clk                             => clk40,
             algos_in                        => algos_after_prescaler_preview,
+            valid_in                        => valid_algos_in,
             masks                           => masks,
             request_masks_update_pulse      => request_masks_update,
             update_pulse                    => end_lumi_per,
-            trigger_out                     => trigger_out_preview
+            trigger_out                     => trigger_out_preview,
+            valid_out                       => open
         );
 
 
@@ -897,48 +761,41 @@ begin
             COUNTER_WIDTH => RATE_COUNTER_WIDTH
         )
         port map(
-            sys_clk         => clk,
-            clk             => lhc_clk,
+            clk40           => clk40,
+            rst40           => rst40,
             sres_counter    => '0',
             store_cnt_value => begin_lumi_per_del1,
             algo_i          => veto_out_s,
             counter_o       => veto_cnt
         );
 
-    xpm_cdc_veto_cnt_reg : xpm_cdc_array_single
-        generic map (
+
+    Veto_cnt_regs : entity work.ipbus_ctrlreg_cdc_v
+        generic map(
+            N_CTRL         => 0,
+            N_STAT         => 1,
             DEST_SYNC_FF   => 3,
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1,
-            WIDTH          => RATE_COUNTER_WIDTH
-        )
-        port map (
-            dest_out => veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0),
-            dest_clk => clk,
-            src_clk  => lhc_clk,
-            src_in   => veto_cnt
-        );
-
-    Veto_cnt_regs : entity work.ipbus_ctrlreg_v
-        generic map(
-            N_CTRL     => 0,
-            N_STAT     => 1
+            SRC_INPUT_REG  => 1
         )
         port map(
             clk       => clk,
-            reset     => rst,
-            ipbus_in  => ipb_to_slaves(N_SLV_VETO_REG),
-            ipbus_out => ipb_from_slaves(N_SLV_VETO_REG),
+            rst       => rst,
+            ipb_in    => ipb_to_slaves(N_SLV_VETO_REG),
+            ipb_out   => ipb_from_slaves(N_SLV_VETO_REG),
+            slv_clk   => clk40,
             d         => veto_stat_reg,
             q         => open,
             qmask     => open,
             stb       => open
         );
+        
+    veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0) <= veto_cnt;
 
-    veto_reg_p : process(lhc_clk)
+    veto_reg_p : process(clk40)
     begin
-        if rising_edge(lhc_clk) then
+        if rising_edge(clk40) then
             veto_out_s <= or veto;
         end if;
     end process;
