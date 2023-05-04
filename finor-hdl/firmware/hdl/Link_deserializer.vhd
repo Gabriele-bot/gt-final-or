@@ -1,13 +1,14 @@
 --=================================================================
 --Data Link Deserializer
 --Transalte 64 bit@360 MHz data stream into 576 bit @ 40MHz data stream
---Alignemnt check is perfrometd at the very last comparing the metadata against the expected values
+--Alignemnt check is performed at the very last comparing the metadata against the expected values
 --=================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 
 use work.emp_data_types.all;
 use work.emp_ttc_decl.all;
+
 entity Link_deserializer is
     generic(
         OUT_REG : boolean := TRUE
@@ -20,15 +21,15 @@ entity Link_deserializer is
         lane_data_in       : in lword;
         rst_err            : in std_logic;
         align_err_o        : out std_logic;
-        demux_data_o       : out std_logic_vector(9*64-1 downto 0);
+        demux_data_o       : out std_logic_vector(9*LWORD_WIDTH-1 downto 0);
         valid_out          : out std_logic
     );
 end Link_deserializer;
 
 architecture rtl of Link_deserializer is
 
-    signal data_deserialized      : std_logic_vector(9*64 - 1 downto 0);
-    signal data_deserialized_temp : std_logic_vector(8*64 - 1 downto 0);
+    signal data_deserialized      : std_logic_vector(9*LWORD_WIDTH - 1 downto 0);
+    signal data_deserialized_temp : std_logic_vector(8*LWORD_WIDTH - 1 downto 0);
 
     signal data_in_valid_del_arr  : std_logic_vector(9 downto 0);
 
@@ -54,7 +55,7 @@ begin
                 frame_cntr <= 0;
             elsif frame_cntr < 8 then
                 frame_cntr <= frame_cntr + 1;
-                data_deserialized_temp(frame_cntr * 64 + 63 downto frame_cntr * 64) <= lane_data_in.data;
+                data_deserialized_temp(frame_cntr * LWORD_WIDTH + LWORD_WIDTH-1 downto frame_cntr * LWORD_WIDTH) <= lane_data_in.data;
             else
                 frame_cntr <= 0;
             end if;
@@ -80,8 +81,8 @@ begin
             if frame_cntr_temp = 8 and frame_cntr /= 8 then
                 data_deserialized <= (others => '0');
             elsif frame_cntr = 8 then
-                data_deserialized(frame_cntr * 64 + 63 downto frame_cntr * 64) <= lane_data_in.data;
-                data_deserialized((frame_cntr-1) * 64 + 63 downto 0) <= data_deserialized_temp((frame_cntr-1) * 64 + 63 downto 0);
+                data_deserialized(frame_cntr * LWORD_WIDTH + LWORD_WIDTH-1 downto frame_cntr * 64) <= lane_data_in.data;
+                data_deserialized((frame_cntr-1) * LWORD_WIDTH + LWORD_WIDTH-1 downto 0) <= data_deserialized_temp((frame_cntr-1) * LWORD_WIDTH + LWORD_WIDTH-1 downto 0);
             end if;
         end if;
     end process load_data_p;

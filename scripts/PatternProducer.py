@@ -175,11 +175,6 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False
     fname = indir + "/" + file_name
     write_pattern_file(metadata_bitstring, data_bitstring_padded, outputfile=fname, links=links.flatten())
 
-    if for_sim:
-        indir = "../simulation/firmware/hdl/"
-        fname = indir + "/inputPattern.mem"
-        write_pattern_file(metadata_bitstring, data_bitstring_padded, outputfile=fname, links=links.flatten())
-
     if debug:
         for row in range(3,12):
             f = open(fname, 'r')

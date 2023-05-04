@@ -7,34 +7,32 @@ use work.emp_ttc_decl.all;
 use work.P2GT_finor_pkg.all;
 use work.math_pkg.all;
 
-entity BX_delay_alignment is
+entity CTRS_delay_producer is
     generic(
         MAX_LATENCY_360 : integer := 255
     );
     port(
-        clk360     : in  std_logic;
-        rst360     : in  std_logic;
-        clk40      : in  std_logic;
-        rst40      : in  std_logic;
-
-        ref_bx_nr      : bctr_t;
-        ctrs_in        : in  ttc_stuff_t;
-        delay_lkd      : out std_logic;
-        delay_val      : out std_logic_vector(log2c(MAX_LATENCY_360) - 1 downto 0)
+        clk360    : in  std_logic;
+        rst360    : in  std_logic;
+        clk40     : in  std_logic;
+        rst40     : in  std_logic;
+        ref_bx_nr :     bctr_t;
+        ctrs_in   : in  ttc_stuff_t;
+        delay_lkd : out std_logic;
+        delay_val : out std_logic_vector(log2c(MAX_LATENCY_360) - 1 downto 0)
     );
-end entity BX_delay_alignment;
+end entity CTRS_delay_producer;
 
-architecture RTL of BX_delay_alignment is
+architecture RTL of CTRS_delay_producer is
 
     type state_t is (chasing, stop);
-    signal state         : state_t := chasing;
-    signal delay_int     : std_logic_vector(log2c(MAX_LATENCY_360) - 1 downto 0);
-    signal counter       : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  (others => '0');
-    signal counter_int1  : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  to_unsigned(MAX_LATENCY_360, log2c(MAX_LATENCY_360));
-    signal counter_int2  : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) :=  to_unsigned(MAX_LATENCY_360, log2c(MAX_LATENCY_360));
-    
-    signal locked_int1   : std_logic;
-    signal locked_int2   : std_logic;
+    signal state        : state_t                                       := chasing;
+    signal counter      : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) := (others => '0');
+    signal counter_int1 : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) := to_unsigned(MAX_LATENCY_360, log2c(MAX_LATENCY_360));
+    signal counter_int2 : unsigned(log2c(MAX_LATENCY_360) - 1 downto 0) := to_unsigned(MAX_LATENCY_360, log2c(MAX_LATENCY_360));
+
+    signal locked_int1 : std_logic;
+    signal locked_int2 : std_logic;
 
 begin
     -- TODO improve FSM
@@ -44,27 +42,27 @@ begin
             if rst360 = '1' then
                 counter      <= (others => '0');
                 counter_int1 <= to_unsigned(MAX_LATENCY_360, log2c(MAX_LATENCY_360));
-                locked_int1 <= '0';
+                locked_int1  <= '0';
                 state        <= chasing;
             else
                 case state is
                     when chasing =>
-                        if ctrs_in.bctr = std_logic_vector(to_unsigned(0,12)) and ctrs_in.pctr = "0000"  then
+                        if ctrs_in.bctr = std_logic_vector(to_unsigned(0, 12)) and ctrs_in.pctr = "0000" then
                             locked_int1 <= '0';
-                            counter <= (others => '0');
-                        elsif ref_bx_nr =  std_logic_vector(to_unsigned(0,12))  then
+                            counter     <= (others => '0');
+                        elsif ref_bx_nr = std_logic_vector(to_unsigned(0, 12)) then
                             counter_int1 <= counter;
-                            locked_int1 <= '1';
+                            locked_int1  <= '1';
                             state        <= stop;
                         else
                             locked_int1 <= '0';
-                            counter <= counter + 1;
+                            counter     <= counter + 1;
                         end if;
                     when stop =>
                         counter <= (others => '0');
                         if rst360 = '1' then
                             locked_int1 <= '0';
-                            state   <= chasing;
+                            state       <= chasing;
                         end if;
                 end case;
             end if;
@@ -86,6 +84,5 @@ begin
 
     delay_lkd <= locked_int2;
     delay_val <= std_logic_vector(counter_int2);
-
 
 end architecture RTL;

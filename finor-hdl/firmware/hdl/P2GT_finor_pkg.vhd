@@ -4,10 +4,6 @@
 -- Created by Gabriele Bortolato 14-03-2022
 -- Code based on the MP7 GT firmware (https://github.com/cms-l1-globaltrigger/mp7_ugt_legacy/tree/master/firmware) 
 
--- Version-history:
--- GB : make some modification on the conversion
--- GB : 20-07-2022 merge various packages
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -22,7 +18,8 @@ package P2GT_finor_pkg is
     -- GT Final-OR definitions
     -- =======================================================================================================
     constant N_BOARD                : integer := 12;
-    constant N_SLR                  : integer := 4;
+    constant N_SLR_PER_BOARD        : integer := 4;
+    constant N_MONITOR_SLR          : integer := 2;
     constant INPUT_R_LINKS_SLR      : integer := 12;
     constant INPUT_L_LINKS_SLR      : integer := 12;
     constant INPUT_LINKS_SLR        : integer := INPUT_R_LINKS_SLR + INPUT_L_LINKS_SLR;
@@ -30,10 +27,12 @@ package P2GT_finor_pkg is
     constant N_TRIGG                : integer := 8;
     constant BEGIN_LUMI_SEC_BIT     : integer := 18;
     constant BEGIN_LUMI_SEC_BIT_SIM : integer := 3;
-    constant MAX_DELAY_PDT          : integer := 511;
-    constant MAX_CTRS_DELAY_360     : integer := 511;
+    constant MAX_DELAY_PDT          : integer := 511; -- corresponding to ~12.78 us  (40  MHz domain)
+    constant MAX_CTRS_DELAY_360     : integer := 511; -- corresponding to ~1.42  us  (360 MHz domain)
     constant SLR_CROSSING_LATENCY   : integer := 9;
     constant FINOR_LATENCY          : integer := 3;
+    constant N_SLR_ALGOS            : integer := 576;
+    constant N_ALGOS                : integer := N_SLR_ALGOS * N_MONITOR_SLR;
     constant DESER_OUT_REG          : boolean := FALSE;
 
     type ChannelSystemMap is array (natural range <>) of natural;
@@ -52,10 +51,17 @@ package P2GT_finor_pkg is
     constant DEBUG_quad           : natural                           := 7; 
 
 
-    type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
-    type mask_arr is array (N_TRIGG         - 1 downto 0) of std_logic_vector(64*9-1 downto 0);
+    type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(LWORD_WIDTH*9 - 1 downto 0);
+    type mask_arr is array (N_TRIGG         - 1 downto 0) of std_logic_vector(N_SLR_ALGOS   - 1 downto 0);
+    
+    -- ================= COUTER TYPES ========================================================================
     
     type bctr_array is array (natural range <>) of bctr_t;
+    
+    subtype p2gt_ectr_t  is std_logic_vector(47 downto 0);
+    subtype p2gt_octr_t  is std_logic_vector(47 downto 0);
+    subtype p2gt_bctr_t  is std_logic_vector(11 downto 0);
+    subtype p2gt_lsctr_t is std_logic_vector(31 downto 0);
 
     -- ================= PRE-SCALERS =========================================================================
     -- Definitions for prescalers (P2GT FinalOR)

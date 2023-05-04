@@ -19,6 +19,7 @@ src --vhdl2008 ipbus/ipbus_initialized_dpram.vhd
 src --vhdl2008 ipbus/ipbus_dpram_4096x576.vhd
 src --vhdl2008 ipbus/ipbus_ctrlreg_cdc_v.vhd
 
+src --vhdl2008 BGO_sync.vhd
 src --vhdl2008 Counter_module.vhd
 src --vhdl2008 update_process.vhd
 src --vhdl2008 algo_pre_scaler.vhd
@@ -34,10 +35,10 @@ src --vhdl2008 Link_merger.vhd
 src --vhdl2008 Link_deserializer.vhd
 src --vhdl2008 mux.vhd
 src --vhdl2008 CTRS_fixed_alignment.vhd
-src --vhdl2008 BX_nr_producer.vhd
-src --vhdl2008 BX_delay_alignment.vhd
-src --vhdl2008 SLR_FinOR_unit.vhd
-src --vhdl2008 Output_SLR.vhd
+src --vhdl2008 CTRS_BX_nr_producer.vhd
+src --vhdl2008 CTRS_delay_producer.vhd
+src --vhdl2008 SLR_Monitoring_unit.vhd
+src --vhdl2008 SLR_Output.vhd
 
 addrtab -c gt-final-or:finor-hdl emp_payload.xml
 addrtab -c gt-final-or:finor-hdl SLR_FinOR_unit.xml
