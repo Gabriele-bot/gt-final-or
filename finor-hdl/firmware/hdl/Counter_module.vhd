@@ -8,21 +8,20 @@ use work.P2GT_finor_pkg.all;
 
 entity Counter_module is
     generic(
-        BEGIN_LUMI_BIT : integer := 18;
-        SYNC_CTRS_OUT  : boolean := FALSE
+        BEGIN_LUMI_BIT : integer := 18
     );
     port(
         clk40          : in  std_logic;
         rst40          : in  std_logic;
-        ctrs_in        : in  ttc_stuff_t;
-        ctrs_out       : out ttc_stuff_t;
         bc0_i          : in  std_logic;
         ec0_i          : in  std_logic;
         oc0_i          : in  std_logic;
         test_en_i      : in  std_logic;
-        bx_nr          : out p2gt_bctr_t;
-        event_nr       : out p2gt_ectr_t;
-        orbit_nr       : out p2gt_octr_t;
+        l1a_i          : in  std_logic;
+        bx_nr_i        : in  p2gt_bctr_t;
+        bx_nr_o        : out p2gt_bctr_t;
+        event_nr_o     : out p2gt_ectr_t;
+        orbit_nr_o     : out p2gt_octr_t;
         lumi_sec_nr    : out p2gt_lsctr_t;
         begin_lumi_sec : out std_logic;
         end_lumi_sec   : out std_logic;
@@ -45,24 +44,15 @@ architecture RTL of Counter_module is
 
 begin
 
-    process(clk40)
-    begin
-        if rising_edge(clk40) then
-            l1a    <= ctrs_in.l1a;
-            bx_ctr <= ctrs_in.bctr;     --TODO check clk cross here (the signals is 360 synchronous, yet I'm using it at 40...)
-        end if;
-    end process;
-
-    sync_g : if SYNC_CTRS_OUT generate
-        process(clk40)
-        begin
-            if rising_edge(clk40) then
-                ctrs_out <= ctrs_in;
-            end if;
-        end process;
-    else generate
-        ctrs_out <= ctrs_in;
-    end generate;
+    --process(clk40)
+    --begin
+    --    if rising_edge(clk40) then
+    --        l1a    <= ctrs_in.l1a;
+    --        bx_ctr <= ctrs_in.bctr;     --TODO check clk cross here (the signals is 360 synchronous, yet I'm using it at 40...)
+    --    end if;
+    --end process;
+    l1a    <= l1a_i;
+    bx_ctr <= bx_nr_i;
 
     octr_p : process(clk40)
     begin
@@ -125,9 +115,9 @@ begin
         end if;
     end process;
 
-    bx_nr       <= bx_ctr;
-    event_nr    <= e_ctr;
-    orbit_nr    <= o_ctr;
+    bx_nr_o     <= bx_ctr;
+    event_nr_o  <= e_ctr;
+    orbit_nr_o  <= o_ctr;
     lumi_sec_nr <= ls_ctr;
 
     begin_lumi_sec <= begin_lumi_sec_int;

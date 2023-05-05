@@ -71,13 +71,16 @@ architecture RTL of SLR_Output is
     signal ttc_bc0, ttc_oc0, ttc_ec0 : std_logic := '0';
     signal ttc_resync, ttc_start     : std_logic;
     signal ttc_test_en               : std_logic;
+    signal bc0_reg, oc0_reg, ec0_reg : std_logic := '0';
     signal bc0_40, oc0_40, ec0_40    : std_logic := '0';
+    signal resync_reg, start_reg     : std_logic;
     signal resync_40, start_40       : std_logic;
     signal begin_lumi_per            : std_logic;
     signal begin_lumi_per_del1       : std_logic;
     signal end_lumi_per              : std_logic;
     signal l1a_latency_delay         : std_logic_vector(log2c(MAX_DELAY) - 1 downto 0);
-
+    
+    signal ctrs_reg      : ttc_stuff_t;
     signal ctrs_internal : ttc_stuff_t;
     signal ctrs_align    : ttc_stuff_t;
 
@@ -177,18 +180,39 @@ begin
             test_en_o         => ttc_test_en
         );
 
+    deser_reg_out_g : if DESER_OUT_REG generate
+        process(clk40)
+        begin
+            if rising_edge(clk40) then
+                ctrs_reg   <= ctrs_align;
+                bc0_reg    <= ttc_bc0;
+                oc0_reg    <= ttc_oc0;
+                ec0_reg    <= ttc_ec0;
+                start_reg  <= ttc_start;
+                resync_reg <= ttc_resync;
+            end if;
+        end process;
+    else generate
+        ctrs_reg   <= ctrs;
+        bc0_reg    <= ttc_bc0;
+        oc0_reg    <= ttc_oc0;
+        ec0_reg    <= ttc_ec0;
+        start_reg  <= ttc_start;
+        resync_reg <= ttc_resync;
+    end generate;
+
     ----------------------------------------------------------------------------------
     ---------------TTC signal sync 40-------------------------------------------------
     ----------------------------------------------------------------------------------
     sync_ctrs_p : process(clk40)
     begin
         if rising_edge(clk40) then
-            ctrs_internal <= ctrs_align;
-            bc0_40        <= ttc_bc0;
-            oc0_40        <= ttc_oc0;
-            ec0_40        <= ttc_ec0;
-            start_40      <= ttc_start;
-            resync_40     <= ttc_resync;
+            ctrs_internal <= ctrs_reg;
+            bc0_40        <= bc0_reg;
+            oc0_40        <= oc0_reg;
+            ec0_40        <= ec0_reg;
+            start_40      <= start_reg;
+            resync_40     <= resync_reg;
         end if;
     end process;
 
@@ -203,14 +227,15 @@ begin
         port map(
             clk40          => clk40,
             rst40          => rst40,
-            ctrs_in        => ctrs_internal,
             bc0_i          => bc0_40,
             ec0_i          => ec0_40,
             oc0_i          => oc0_40,
             test_en_i      => ttc_test_en,
-            bx_nr          => open,
-            event_nr       => open,
-            orbit_nr       => open,
+            l1a_i          => ctrs_internal.l1a,
+            bx_nr_i        => ctrs_internal.bctr,
+            bx_nr_o        => open,
+            event_nr_o     => open,
+            orbit_nr_o     => open,
             lumi_sec_nr    => open,
             begin_lumi_sec => begin_lumi_per,
             end_lumi_sec   => end_lumi_per,
@@ -481,13 +506,13 @@ begin
             );
     end generate;
 
-    d_rate_cnt_finor                    <= rate_cnt_finor                   (to_integer(unsigned(addr)));
-    d_rate_cnt_finor_pdt                <= rate_cnt_finor_pdt               (to_integer(unsigned(addr)));
-    d_rate_cnt_finor_prvw               <= rate_cnt_finor_prvw              (to_integer(unsigned(addr)));
-    d_rate_cnt_finor_prvw_pdt           <= rate_cnt_finor_prvw_pdt          (to_integer(unsigned(addr)));
-    d_rate_cnt_finor_with_veto          <= rate_cnt_finor_with_veto         (to_integer(unsigned(addr)));
-    d_rate_cnt_finor_with_veto_pdt      <= rate_cnt_finor_with_veto_pdt     (to_integer(unsigned(addr)));
-    d_rate_cnt_finor_prvw_with_veto     <= rate_cnt_finor_prvw_with_veto    (to_integer(unsigned(addr)));
+    d_rate_cnt_finor                    <= rate_cnt_finor(to_integer(unsigned(addr)));
+    d_rate_cnt_finor_pdt                <= rate_cnt_finor_pdt(to_integer(unsigned(addr)));
+    d_rate_cnt_finor_prvw               <= rate_cnt_finor_prvw(to_integer(unsigned(addr)));
+    d_rate_cnt_finor_prvw_pdt           <= rate_cnt_finor_prvw_pdt(to_integer(unsigned(addr)));
+    d_rate_cnt_finor_with_veto          <= rate_cnt_finor_with_veto(to_integer(unsigned(addr)));
+    d_rate_cnt_finor_with_veto_pdt      <= rate_cnt_finor_with_veto_pdt(to_integer(unsigned(addr)));
+    d_rate_cnt_finor_prvw_with_veto     <= rate_cnt_finor_prvw_with_veto(to_integer(unsigned(addr)));
     d_rate_cnt_finor_prvw_with_veto_pdt <= rate_cnt_finor_prvw_with_veto_pdt(to_integer(unsigned(addr)));
 
     --==================================================================================================--
@@ -637,9 +662,9 @@ begin
             addr    => addr
         );
 
-    link_out.data(N_TRIGG - 1 downto 0)               <= Final_OR                   when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(N_TRIGG * 2 - 1 downto N_TRIGG)     <= Final_OR_preview           when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(N_TRIGG * 3 - 1 downto 2 * N_TRIGG) <= Final_OR_with_veto         when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    link_out.data(N_TRIGG - 1 downto 0)               <= Final_OR when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    link_out.data(N_TRIGG * 2 - 1 downto N_TRIGG)     <= Final_OR_preview when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    link_out.data(N_TRIGG * 3 - 1 downto 2 * N_TRIGG) <= Final_OR_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
     link_out.data(N_TRIGG * 4 - 1 downto 3 * N_TRIGG) <= Final_OR_preview_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
 
     link_out.valid          <= valid_in;

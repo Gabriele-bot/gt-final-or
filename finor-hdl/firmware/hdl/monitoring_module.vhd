@@ -97,13 +97,16 @@ architecture rtl of monitoring_module is
     signal ttc_bc0, ttc_oc0, ttc_ec0 : std_logic := '0';
     signal ttc_resync, ttc_start     : std_logic;
     signal ttc_test_en               : std_logic;
+    signal bc0_reg, oc0_reg, ec0_reg : std_logic := '0';
     signal bc0_40, oc0_40, ec0_40    : std_logic := '0';
+    signal resync_reg, start_reg     : std_logic;
     signal resync_40, start_40       : std_logic;
     signal begin_lumi_per            : std_logic;
     signal begin_lumi_per_del1       : std_logic;
     signal end_lumi_per              : std_logic;
     signal l1a_latency_delay         : std_logic_vector(log2c(MAX_DELAY) - 1 downto 0);
 
+    signal ctrs_reg      : ttc_stuff_t;
     signal ctrs_internal : ttc_stuff_t;
 
     type state_t is (idle, start, increment);
@@ -168,18 +171,39 @@ begin
             test_en_o         => ttc_test_en
         );
 
+    deser_reg_out_g : if DESER_OUT_REG generate
+        process(clk40)
+        begin
+            if rising_edge(clk40) then
+                ctrs_reg   <= ctrs;
+                bc0_reg    <= ttc_bc0;
+                oc0_reg    <= ttc_oc0;
+                ec0_reg    <= ttc_ec0;
+                start_reg  <= ttc_start;
+                resync_reg <= ttc_resync;
+            end if;
+        end process;
+    else generate
+        ctrs_reg   <= ctrs;
+        bc0_reg    <= ttc_bc0;
+        oc0_reg    <= ttc_oc0;
+        ec0_reg    <= ttc_ec0;
+        start_reg  <= ttc_start;
+        resync_reg <= ttc_resync;
+    end generate;
+
     ----------------------------------------------------------------------------------
     ---------------TTC signal sync 40-------------------------------------------------
     ----------------------------------------------------------------------------------
     sync_ctrs_p : process(clk40)
     begin
         if rising_edge(clk40) then
-            ctrs_internal <= ctrs;
-            bc0_40        <= ttc_bc0;
-            oc0_40        <= ttc_oc0;
-            ec0_40        <= ttc_ec0;
-            start_40      <= ttc_start;
-            resync_40     <= ttc_resync;
+            ctrs_internal <= ctrs_reg;
+            bc0_40        <= bc0_reg;
+            oc0_40        <= oc0_reg;
+            ec0_40        <= ec0_reg;
+            start_40      <= start_reg;
+            resync_40     <= resync_reg;
         end if;
     end process;
 
@@ -194,14 +218,15 @@ begin
         port map(
             clk40          => clk40,
             rst40          => rst40,
-            ctrs_in        => ctrs_internal,
             bc0_i          => bc0_40,
             ec0_i          => ec0_40,
             oc0_i          => oc0_40,
             test_en_i      => ttc_test_en,
-            bx_nr          => open,
-            event_nr       => open,
-            orbit_nr       => orbit_nr,
+            l1a_i          => ctrs_internal.l1a,
+            bx_nr_i        => ctrs_internal.bctr,
+            bx_nr_o        => open,
+            event_nr_o     => open,
+            orbit_nr_o     => orbit_nr,
             lumi_sec_nr    => lumi_sec_nr,
             begin_lumi_sec => begin_lumi_per,
             end_lumi_sec   => end_lumi_per,
@@ -452,10 +477,10 @@ begin
             addr    => std_logic_vector(addr)
         );
 
-    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler       (to_integer(unsigned(addr)));
-    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler        (to_integer(unsigned(addr)));
+    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler(to_integer(unsigned(addr)));
+    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler(to_integer(unsigned(addr)));
     d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(unsigned(addr)));
-    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time         (to_integer(unsigned(addr)));
+    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(to_integer(unsigned(addr)));
 
     CSR_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
@@ -560,11 +585,11 @@ begin
                                  masks_ipbus_regs(i * 18 + 15), masks_ipbus_regs(i * 18 + 14),
                                  masks_ipbus_regs(i * 18 + 13), masks_ipbus_regs(i * 18 + 12),
                                  masks_ipbus_regs(i * 18 + 11), masks_ipbus_regs(i * 18 + 10),
-                                 masks_ipbus_regs(i * 18 + 9) , masks_ipbus_regs(i * 18 + 8 ),
-                                 masks_ipbus_regs(i * 18 + 7) , masks_ipbus_regs(i * 18 + 6 ),
-                                 masks_ipbus_regs(i * 18 + 5) , masks_ipbus_regs(i * 18 + 4 ),
-                                 masks_ipbus_regs(i * 18 + 3) , masks_ipbus_regs(i * 18 + 2 ),
-                                 masks_ipbus_regs(i * 18 + 1) , masks_ipbus_regs(i * 18 + 0 ));
+                                 masks_ipbus_regs(i * 18 + 9), masks_ipbus_regs(i * 18 + 8),
+                                 masks_ipbus_regs(i * 18 + 7), masks_ipbus_regs(i * 18 + 6),
+                                 masks_ipbus_regs(i * 18 + 5), masks_ipbus_regs(i * 18 + 4),
+                                 masks_ipbus_regs(i * 18 + 3), masks_ipbus_regs(i * 18 + 2),
+                                 masks_ipbus_regs(i * 18 + 1), masks_ipbus_regs(i * 18 + 0));
                 end if;
             end if;
         end process;
@@ -609,11 +634,11 @@ begin
                               veto_ipbus_regs(15), veto_ipbus_regs(14),
                               veto_ipbus_regs(13), veto_ipbus_regs(12),
                               veto_ipbus_regs(11), veto_ipbus_regs(10),
-                              veto_ipbus_regs(9) , veto_ipbus_regs(8 ),
-                              veto_ipbus_regs(7) , veto_ipbus_regs(6 ),
-                              veto_ipbus_regs(5) , veto_ipbus_regs(4 ),
-                              veto_ipbus_regs(3) , veto_ipbus_regs(2 ),
-                              veto_ipbus_regs(1) , veto_ipbus_regs(0 ));
+                              veto_ipbus_regs(9), veto_ipbus_regs(8),
+                              veto_ipbus_regs(7), veto_ipbus_regs(6),
+                              veto_ipbus_regs(5), veto_ipbus_regs(4),
+                              veto_ipbus_regs(3), veto_ipbus_regs(2),
+                              veto_ipbus_regs(1), veto_ipbus_regs(0));
             end if;
         end if;
     end process;
@@ -650,7 +675,7 @@ begin
             we      => '0',
             d       => (others => '1'),
             q       => algo_bx_mask_mem_out,
-            addr    => ctrs.bctr        -- note that this one is not delayed
+            addr    => ctrs_reg.bctr        -- note that this one is not delayed
 
         );
 

@@ -33,7 +33,7 @@ package P2GT_finor_pkg is
     constant FINOR_LATENCY          : integer := 3;
     constant N_SLR_ALGOS            : integer := 576;
     constant N_ALGOS                : integer := N_SLR_ALGOS * N_MONITOR_SLR;
-    constant DESER_OUT_REG          : boolean := FALSE;
+    constant DESER_OUT_REG          : boolean := TRUE;
 
     type ChannelSystemMap is array (natural range <>) of natural;
     type QuadSystemMap    is array (natural range <>) of natural;

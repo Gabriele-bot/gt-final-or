@@ -19,7 +19,7 @@ use work.math_pkg.all;
 
 entity emp_payload is
     generic(
-        BEGIN_LUMI_TOGGLE_BIT : integer := BEGIN_LUMI_SEC_BIT
+        BEGIN_LUMI_TOGGLE_BIT : integer := BEGIN_LUMI_SEC_BIT_SIM
     );
     port(
         clk          : in  std_logic;   -- ipbus signals
@@ -63,9 +63,6 @@ architecture rtl of emp_payload is
 
     signal ctrs_align_SLRn0, ctrs_internal_SLRn0 : ttc_stuff_t;
     signal ctrs_align_SLRn1, ctrs_internal_SLRn1 : ttc_stuff_t;
-    
-    signal ctrs_reg_SLRn0 : ttc_stuff_array(1 downto 0);
-    signal ctrs_reg_SLRn1 : ttc_stuff_array(1 downto 0);
 
     signal ctrs_debug, ctrs_internal_debug : ttc_stuff_t;
 
@@ -318,22 +315,10 @@ begin
     sync_40_p : process(clk40)
     begin
         if rising_edge(clk40) then
-            ctrs_reg_SLRn0(0) <= ctrs_align_SLRn0;
-            ctrs_reg_SLRn0(1) <= ctrs_reg_SLRn0(0);
-            ctrs_reg_SLRn1(0) <= ctrs_align_SLRn1;
-            ctrs_reg_SLRn1(1) <= ctrs_reg_SLRn1(0);
+            ctrs_internal_SLRn0 <= ctrs_align_SLRn0;
+            ctrs_internal_SLRn1 <= ctrs_align_SLRn1;
         end if;
     end process;
-    
-    deser_reg_out_g : if DESER_OUT_REG generate
-        ctrs_internal_SLRn0 <= ctrs_reg_SLRn0(1);
-        ctrs_internal_SLRn1 <= ctrs_reg_SLRn1(1);
-    end generate;
-    deser_reg_out_not_g : if not DESER_OUT_REG generate
-        ctrs_internal_SLRn0 <= ctrs_reg_SLRn0(0);
-        ctrs_internal_SLRn1 <= ctrs_reg_SLRn1(0);
-    end generate;
-    
 
     SLRn0_mux_lower_algos_out : entity work.mux
         port map(

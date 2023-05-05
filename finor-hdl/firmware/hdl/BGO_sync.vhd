@@ -51,12 +51,12 @@ architecture RTL of bgo_sync is
 
 begin
                                                         
-    bc0_in     <= '1' when ttc_i = TTC_BCMD_BC0         else '0';
-    ec0_in     <= '1' when ttc_i = TTC_BCMD_EC0         else '0';
-    oc0_in     <= '1' when ttc_i = TTC_BCMD_OC0         else '0';
-    resync_in  <= '1' when ttc_i = TTC_BCMD_RESYNC      else '0';
-    start_in   <= '1' when ttc_i = TTC_BCMD_START       else '0';
-    test_en_in <= '1' when ttc_i = TTC_BCMD_TEST_ENABLE else '0';
+    bc0_in     <= '1' when ttc_i = TTC_BCMD_BC0         else '0'; -- expected at BX 3540
+    ec0_in     <= '1' when ttc_i = TTC_BCMD_EC0         else '0'; -- expected at BX 2000
+    oc0_in     <= '1' when ttc_i = TTC_BCMD_OC0         else '0'; -- expected at BX 2000
+    resync_in  <= '1' when ttc_i = TTC_BCMD_RESYNC      else '0'; -- expected at BX 2000
+    start_in   <= '1' when ttc_i = TTC_BCMD_START       else '0'; -- expected at BX 2000
+    test_en_in <= '1' when ttc_i = TTC_BCMD_TEST_ENABLE else '0'; -- expected at BX 3283
 
     sync_bgos_p : process(clk360)
     begin
@@ -99,36 +99,36 @@ begin
         end if;
     end process;
 
-    resync_rqst_p : process(rst360, resync_int, bc0_int1)
+    resync_rqst_p : process(rst360, resync_int, bc0_int1, bc0_int)
     begin
-        if (bc0_int1 = '1' and resync_int = '0') or rst360 = '1' then
+        if (bc0_int1 = '1' and bc0_int = '0' and resync_int = '0') or rst360 = '1' then
             resync_rqst <= '0';
         elsif (resync_int = '1') then
             resync_rqst <= '1';
         end if;
     end process;
 
-    oc0_rqst_p : process(rst360, oc0_int, bc0_int1)
+    oc0_rqst_p : process(rst360, oc0_int, bc0_int1, bc0_int)
     begin
-        if (bc0_int1 = '1' and oc0_int = '0') or rst360 = '1' then
+        if (bc0_int1 = '1' and bc0_int = '0' and oc0_int = '0') or rst360 = '1' then
             oc0_rqst <= '0';
         elsif (oc0_int = '1') then
             oc0_rqst <= '1';
         end if;
     end process;
 
-    start_rqst_p : process(rst360, start_int, bc0_int1)
+    start_rqst_p : process(rst360, start_int, bc0_int1, bc0_int)
     begin
-        if (bc0_int1 = '1' and start_int = '0') or rst360 = '1' then -- bc0 delayd to put start_rqst to '0'
+        if (bc0_int1 = '1' and bc0_int = '0' and start_int = '0') or rst360 = '1' then -- bc0 delayd to put start_rqst to '0'
             start_rqst <= '0';
         elsif (start_int = '1') then
             start_rqst <= '1';
         end if;
     end process;
 
-    ec0_rqst_p : process(rst360, ec0_int, bc0_int1)
+    ec0_rqst_p : process(rst360, ec0_int, bc0_int1, bc0_int)
     begin
-        if (bc0_int1 = '1' and ec0_int = '0') or rst360 = '1' then
+        if (bc0_int1 = '1' and bc0_int = '0' and ec0_int = '0') or rst360 = '1' then
             ec0_rqst <= '0';
         elsif (ec0_int = '1') then
             ec0_rqst <= '1';
