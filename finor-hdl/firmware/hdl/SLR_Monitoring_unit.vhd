@@ -26,28 +26,27 @@ entity SLR_Monitoring_unit is
         MAX_DELAY             : natural := MAX_DELAY_PDT
     );
     port(
-        clk                  : in  std_logic;
-        rst                  : in  std_logic;
-        ipb_in               : in  ipb_wbus;
-        ipb_out              : out ipb_rbus;
+        clk                    : in  std_logic;
+        rst                    : in  std_logic;
+        ipb_in                 : in  ipb_wbus;
+        ipb_out                : out ipb_rbus;
         --====================================================================--
-        clk360               : in  std_logic;
-        rst360_r             : in  std_logic;
-        rst360_l             : in  std_logic;
-        clk40                : in  std_logic;
-        rst40                : in  std_logic;
-        ctrs                 : in  ttc_stuff_t;
-        d                    : in  ldata(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0); -- data in
-        delay_lkd_o          : out std_logic;
-        delay_o              : out std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
-        trigger_o            : out std_logic_vector(N_TRIGG - 1 downto 0);
-        trigger_preview_o    : out std_logic_vector(N_TRIGG - 1 downto 0);
-        trigger_valid_o      : out std_logic;
-        veto_o               : out std_logic;
-        algos_o              : out std_logic_vector(N_SLR_ALGOS - 1 downto 0);
-        algos_after_bxmask_o : out std_logic_vector(N_SLR_ALGOS - 1 downto 0);
-        algos_prescaled_o    : out std_logic_vector(N_SLR_ALGOS - 1 downto 0);
-        algos_valid_o        : out std_logic
+        clk360                 : in  std_logic;
+        rst360_r               : in  std_logic;
+        rst360_l               : in  std_logic;
+        clk40                  : in  std_logic;
+        rst40                  : in  std_logic;
+        ctrs                   : in  ttc_stuff_t;
+        d                      : in  ldata(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0); -- data in
+        delay_lkd_o            : out std_logic;
+        delay_o                : out std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
+        trigger_o              : out std_logic_vector(N_TRIGG - 1 downto 0);
+        trigger_preview_o      : out std_logic_vector(N_TRIGG - 1 downto 0);
+        trigger_valid_o        : out std_logic;
+        veto_o                 : out std_logic;
+        q_algos_o              : out lword;
+        q_algos_after_bxmask_o : out lword;
+        q_algos_after_prscl_o  : out lword
     );
 end entity SLR_Monitoring_unit;
 
@@ -73,8 +72,10 @@ architecture RTL of SLR_Monitoring_unit is
     signal d_left_reg, d_right_reg : ldata(1 downto 0);
     signal d_res                   : lword;
 
-    signal algos_in              : std_logic_vector(N_SLR_ALGOS - 1 downto 0);
-    signal algos_after_prescaler : std_logic_vector(N_SLR_ALGOS - 1 downto 0);
+    signal algos_int                  : std_logic_vector(N_SLR_ALGOS - 1 downto 0);
+    signal algos_after_bxmask_int     : std_logic_vector(N_SLR_ALGOS - 1 downto 0);
+    signal algos_after_prscl_int      : std_logic_vector(N_SLR_ALGOS - 1 downto 0);
+    signal algos_after_prscl_prvw_int : std_logic_vector(N_SLR_ALGOS - 1 downto 0);
 
     signal trigger_out         : std_logic_vector(N_TRIGG - 1 downto 0);
     signal trigger_out_preview : std_logic_vector(N_TRIGG - 1 downto 0);
@@ -86,7 +87,9 @@ architecture RTL of SLR_Monitoring_unit is
     signal rst_align_error : std_logic;
     signal align_error     : std_logic;
 
-    signal ctrs_complete_align : ttc_stuff_t;
+    signal ctrs_complete_align  : ttc_stuff_t;
+    signal ctrs_align_output    : ttc_stuff_t;
+    signal ctrs_internal_output : ttc_stuff_t;
 
     signal links_valids  : std_logic_vector(INPUT_LINKS_SLR - 1 downto 0);
     signal link_valid_OR : std_logic;
@@ -227,7 +230,7 @@ begin
             lane_data_in => d_res,
             rst_err      => rst_align_error,
             align_err_o  => align_error,
-            demux_data_o => algos_in,
+            demux_data_o => algos_int,
             valid_out    => valid_deser_out
         );
 
@@ -288,7 +291,21 @@ begin
             ctrs_out       => ctrs_complete_align
         );
 
-    algos_o <= algos_in;
+    CTRS_align_output_i : entity work.CTRS_fixed_alignment
+        generic map(
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
+            DELAY_OFFSET    => 9        -- deserializer
+        )
+        port map(
+            clk360         => clk360,
+            rst360         => rst360,
+            clk40          => clk40,
+            rst40          => rst40,
+            ctrs_delay_lkd => delay_lkd,
+            ctrs_delay_val => delay_measured,
+            ctrs_in        => ctrs_first_align(ctrs_first_align'high),
+            ctrs_out       => ctrs_align_output
+        );
 
     monitoring_module : entity work.monitoring_module
         generic map(
@@ -307,19 +324,45 @@ begin
             clk40                   => clk40,
             rst40                   => rst40,
             ctrs                    => ctrs_complete_align,
-            algos_in                => algos_in,
+            algos_in                => algos_int,
             valid_algos_in          => valid_deser_out,
-            algos_after_bxmask_o    => algos_after_bxmask_o,
-            algos_after_prescaler_o => algos_prescaled_o,
+            algos_after_bxmask_o    => algos_after_bxmask_int,
+            algos_after_prescaler_o => algos_after_prscl_int,
             trigger_o               => trigger_out,
             trigger_preview_o       => trigger_out_preview,
             valid_trigger_o         => trigger_valid_o,
             veto_o                  => veto_out
         );
+        
+    deser_reg_out_g : if DESER_OUT_REG generate
+        process(clk40)
+        begin
+            if rising_edge(clk40) then
+                ctrs_internal_output   <= ctrs_align_output;
+            end if;
+        end process;
+    else generate
+        ctrs_internal_output   <= ctrs_align_output;
+    end generate;
+
+    output_links_data_i : entity work.algobits_out
+        port map(
+            clk360               => clk360,
+            rst360               => rst360,
+            clk40                => clk40,
+            rst40                => rst40,
+            ctrs                 => ctrs_internal_output,
+            algos_in             => algos_int,
+            algos_after_bxmask   => algos_after_bxmask_int,
+            algos_after_prscl    => algos_after_prscl_int,
+            algos_valid          => valid_deser_out,
+            q_algos              => q_algos_o,
+            q_algos_after_bxmask => q_algos_after_bxmask_o,
+            q_algos_after_prscl  => q_algos_after_prscl_o
+        );
 
     delay_lkd_o       <= delay_lkd;
     delay_o           <= delay_measured;
-    algos_valid_o     <= valid_deser_out;
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;
     veto_o            <= veto_out;

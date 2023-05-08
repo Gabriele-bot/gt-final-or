@@ -39,7 +39,7 @@ package P2GT_finor_pkg is
     type QuadSystemMap    is array (natural range <>) of natural;
     constant SLRn0_channels : ChannelSystemMap(INPUT_LINKS_SLR - 1 downto 0)   := (127,126,125,124,123,122,121,120,119,118,117,116,11,10,9,8,7,6,5,4,3,2,1,0);
     constant SLRn1_channels : ChannelSystemMap(INPUT_LINKS_SLR - 1 downto 0)   := (91,90,89,88,87,86,85,84,83,82,81,80,47,46,45,44,43,42,41,40,39,38,37,36);
-    constant SLRn0_quads    : ChannelSystemMap(INPUT_LINKS_SLR/4 - 1 downto 0) := (31,30,29,2,1,0  );
+    constant SLRn0_quads    : ChannelSystemMap(INPUT_LINKS_SLR/4 - 1 downto 0) := (31,30,29,2 ,1 ,0);
     constant SLRn1_quads    : ChannelSystemMap(INPUT_LINKS_SLR/4 - 1 downto 0) := (22,21,20,11,10,9);
     
     constant OUTPUT_channel : natural := 96;

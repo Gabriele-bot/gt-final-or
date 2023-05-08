@@ -27,7 +27,7 @@ entity monitoring_module is
         MAX_DELAY             : natural                       := 255
     );
     port(
-        -- =========================IPbus================================================
+        -- =========================IPBus================================================
         clk                     : in  std_logic;
         rst                     : in  std_logic;
         ipb_in                  : in  ipb_wbus;
@@ -159,7 +159,7 @@ begin
             clk360            => clk360,
             rst360            => rst360,
             ttc_i             => ctrs.ttc_cmd,
-            bc0_o             => open,
+            bc0_o             => ttc_bc0,
             ec0_o             => open,
             ec0_sync_bc0_o    => ttc_ec0,
             oc0_o             => open,

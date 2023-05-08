@@ -16,7 +16,7 @@ entity Counter_module is
         bc0_i          : in  std_logic;
         ec0_i          : in  std_logic;
         oc0_i          : in  std_logic;
-        test_en_i      : in  std_logic;
+        test_en_i      : in  std_logic; --up for 1 clk40 cycle (expected at BX 3284)
         l1a_i          : in  std_logic;
         bx_nr_i        : in  p2gt_bctr_t;
         bx_nr_o        : out p2gt_bctr_t;
@@ -25,7 +25,7 @@ entity Counter_module is
         lumi_sec_nr    : out p2gt_lsctr_t;
         begin_lumi_sec : out std_logic;
         end_lumi_sec   : out std_logic;
-        test_en_o      : out std_logic
+        test_en_o      : out std_logic --up from BX 3285 to BX 3563
     );
 end entity Counter_module;
 
@@ -81,7 +81,11 @@ begin
     process(clk40)
     begin
         if rising_edge(clk40) then
-            o_ctrbls_temp <= o_ctrbls;
+            if rst40 = '1' then
+                o_ctrbls_temp <= '0';
+            else
+                o_ctrbls_temp <= o_ctrbls;
+            end if;
         end if;
     end process;
 
@@ -93,12 +97,23 @@ begin
 
     begin_lumi_sec_int <= '1' when o_ctrbls_temp /= o_ctrbls else '0';
 
-    process(o_ctr, bx_ctr)
+    --process(o_ctr, bx_ctr)
+    --begin
+    --    if (and o_ctr(BEGIN_LUMI_BIT - 1 downto 0) = '1') and (unsigned(bx_ctr) = LHC_BUNCH_COUNT - 1) then
+    --        end_lumi_sec_int <= '1';
+    --    else
+    --        end_lumi_sec_int <= '0';
+    --    end if;
+    --end process;
+
+    process(clk40)
     begin
-        if (and o_ctr(BEGIN_LUMI_BIT - 1 downto 0) = '1') and (unsigned(bx_ctr) = LHC_BUNCH_COUNT - 1) then
-            end_lumi_sec_int <= '1';
-        else
-            end_lumi_sec_int <= '0';
+        if rising_edge(clk40) then
+            if (and o_ctr(BEGIN_LUMI_BIT - 1 downto 0) = '1') and (unsigned(bx_ctr) = LHC_BUNCH_COUNT - 2) then
+                end_lumi_sec_int <= '1';
+            else
+                end_lumi_sec_int <= '0';
+            end if;
         end if;
     end process;
 

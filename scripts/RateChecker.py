@@ -67,12 +67,11 @@ if args.test == 'prescaler':
     HWtest.hw.dispatch()
     print("Current orbit counter = %d" % np.array(o_ctr))
 
-    # Set the bxmasks
-    bxmask = np.empty((2, 18, 4096), dtype=np.uint32)
-    bxmask[0] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
-    bxmask[1] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+    # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
+    bxmask = np.zeros((2, 18, 4096), dtype=np.uint32)
+    bxmask[0:2, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
 
-    # HWtest.load_BXmask_arr(bxmask)
+    HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
     trigger_mask = np.ones((2, 144), dtype=np.uint32) * 2 ** 32 - 1
@@ -216,7 +215,7 @@ if args.test == 'prescaler':
 
     # sys.stdout.flush()
 
-    if error_cnt != 0:
+    if error_cnt:
         raise Exception("Error found! Check the counters!")
     else:
         print("No mismatch found!")
@@ -230,11 +229,12 @@ elif args.test == 'trigger_mask':
     trigg_index = np.loadtxt('Pattern_files/metadata/Trigg_mask_test/trigg_index.txt')
     trigg_rep = np.loadtxt('Pattern_files/metadata/Trigg_mask_test/trigg_rep.txt')
 
-    bxmask = np.empty((2, 18, 4096), dtype=np.uint32)
-    bxmask[0] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
-    bxmask[1] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+    # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
+    bxmask = np.zeros((2, 18, 4096), dtype=np.uint32)
+    bxmask[0:2, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
 
-    # HWtest.load_BXmask_arr(bxmask)
+    HWtest.load_BXmask_arr(bxmask)
+
     # Set the masks to match trigg_index
     trigger_mask = np.zeros((2, 144), dtype=np.uint32)
     for mask_i, indeces in enumerate(trigg_index):
@@ -353,7 +353,7 @@ elif args.test == 'trigger_mask':
 
     # sys.stdout.flush()
 
-    if error_cnt != 0:
+    if error_cnt:
         raise Exception("Error found! Check the counters!")
     else:
         print("No mismatch found!")
@@ -371,15 +371,14 @@ elif args.test == 'veto_mask':
 
     veto_indeces = np.loadtxt('Pattern_files/metadata/Veto_test/veto_indeces.txt')
 
-    # bxmask = np.empty((2, 18, 4096), dtype=np.uint32)
-    # bxmask[0] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
-    # bxmask[1] = (2 ** 32 - 1) * np.ones((18, 4096), dtype=np.uint32)
+    # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
+    bxmask = np.zeros((2, 18, 4096), dtype=np.uint32)
+    bxmask[0:2, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
 
-    # HWtest.load_BXmask_arr(bxmask)
+    HWtest.load_BXmask_arr(bxmask)
+
     # Set the masks to match trigg_index
     trigger_mask = np.ones((2, 144), dtype=np.uint32) * 2 ** 32 - 1
-
-
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -510,7 +509,7 @@ elif args.test == 'veto_mask':
 
     # sys.stdout.flush()
 
-    if error_cnt != 0:
+    if error_cnt:
         raise Exception("Error found! Check the counters!")
     else:
         print("No mismatch found!")
@@ -700,7 +699,7 @@ elif args.test == 'algo-out':
     if np.array_equal(output_link_data, temp_or[:len(output_link_data)]):
         print("Higher output algobit pattern match the input data ORing (unprescaled)")
     else:
-        print('Mismatch was found, check your pattern files and/or the registers')
+        raise Exception('Mismatch was found, check your pattern files and/or the registers')
 
 
 else:

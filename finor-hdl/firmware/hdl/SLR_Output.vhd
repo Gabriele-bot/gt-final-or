@@ -115,7 +115,7 @@ begin
 
     frame_counter_p : process(clk360)
     begin
-        if rising_edge(clk360) then     -- rising clock edge
+        if rising_edge(clk360) then
             valid_in_del <= valid_in;
             if valid_in = '0' then
                 frame_cntr <= 0;

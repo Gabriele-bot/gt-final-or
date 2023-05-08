@@ -37,6 +37,7 @@ src --vhdl2008 mux.vhd
 src --vhdl2008 CTRS_fixed_alignment.vhd
 src --vhdl2008 CTRS_BX_nr_producer.vhd
 src --vhdl2008 CTRS_delay_producer.vhd
+src --vhdl2008 algobits_out.vhd
 src --vhdl2008 SLR_Monitoring_unit.vhd
 src --vhdl2008 SLR_Output.vhd
 
