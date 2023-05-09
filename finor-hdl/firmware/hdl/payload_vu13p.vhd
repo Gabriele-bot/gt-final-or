@@ -19,7 +19,7 @@ use work.math_pkg.all;
 
 entity emp_payload is
     generic(
-        BEGIN_LUMI_TOGGLE_BIT : integer := BEGIN_LUMI_SEC_BIT_SIM
+        BEGIN_LUMI_TOGGLE_BIT : integer := BEGIN_LUMI_SEC_BIT
     );
     port(
         clk          : in  std_logic;   -- ipbus signals
