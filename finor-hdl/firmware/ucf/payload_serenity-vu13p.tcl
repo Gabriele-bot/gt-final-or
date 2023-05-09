@@ -18,7 +18,3 @@ resize_pblock [get_pblocks payload] -add {CLOCKREGION_X6Y0}
 set_property USER_SLR_ASSIGNMENT $SLR_n0  [get_cells -hierarchical -filter {NAME =~ *payload/SLRn0*}]
 set_property USER_SLR_ASSIGNMENT $SLR_out [get_cells -hierarchical -filter {NAME =~ *payload/SLRout*}]
 set_property USER_SLR_ASSIGNMENT $SLR_n1  [get_cells -hierarchical -filter {NAME =~ *payload/SLRn1*}]
-
-#MUX
-set_property USER_SLR_ASSIGNMENT $SLR_n0 [get_cells -hierarchical -filter {NAME =~ *SLRn0_mux*}]
-set_property USER_SLR_ASSIGNMENT $SLR_n1 [get_cells -hierarchical -filter {NAME =~ *SLRn1_mux*}]
