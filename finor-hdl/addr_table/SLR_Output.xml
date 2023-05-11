@@ -1,4 +1,4 @@
-<node id="Output_SLR" fwinfo="endpoint;width=8">
+<node id="SLR_Output" fwinfo="endpoint;width=8">
   <node id="cnt_rate_finor"                       mode="block" address="0x00" size="8" fwinfo="endpoint;width=4"/>
   <node id="cnt_rate_finor_pdt"                   mode="block" address="0x10" size="8" fwinfo="endpoint;width=4"/>
   <node id="cnt_rate_finor_preview"               mode="block" address="0x20" size="8" fwinfo="endpoint;width=4"/>
@@ -7,13 +7,18 @@
   <node id="cnt_rate_finor_with_veto_pdt"         mode="block" address="0x50" size="8" fwinfo="endpoint;width=4"/>
   <node id="cnt_rate_finor_preview_with_veto"     mode="block" address="0x60" size="8" fwinfo="endpoint;width=4"/>
   <node id="cnt_rate_finor_preview_with_veto_pdt" mode="block" address="0x70" size="8" fwinfo="endpoint;width=4"/>
-  <node id="CSR" address="0x80" fwinfo="endpoint;width=1">
+  <node id="CSR" address="0x80" fwinfo="endpoint;width=2">
     <node id="ctrl" address="0x0000">
-      <node id="l1_latency_delay"     mask="0xFFF" />
+      <node id="l1_latency_delay"                   mask="0xFFF" />
     </node>
     <node id="stat" mode="single" address="0x0001">
       <node id="ready"  mask="0x0001"/>
     </node>
    </node>
+  <node id="Veto_reg" address="0x90" fwinfo="endpoint;width=1">
+    <node id="stat">
+      <node id="Veto_cnt"/>
+    </node>
+  </node>  
 </node>
 

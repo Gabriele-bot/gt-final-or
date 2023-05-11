@@ -1,4 +1,3 @@
-
 -- Desription:
 -- Rate counter for algorithms in in P2GT FinalOR
 -- Output synchronized with sys_clk, to prevent wrong counter values when reading via PCIe.
@@ -6,8 +5,6 @@
 -- Created by Gabriele Bortolato 14-03-2022
 -- Code based on the MP7 GT firmware (https://github.com/cms-l1-globaltrigger/mp7_ugt_legacy/tree/master/firmware)
 
--- Version-history:
--- GB : make some modifications
 
 
 library ieee;
@@ -18,9 +15,9 @@ entity algo_rate_counter is
     generic(
         COUNTER_WIDTH : integer := 32
     );
-    port(
-        sys_clk          : in     std_logic; 
-        clk              : in     std_logic;
+    port( 
+        clk40            : in     std_logic;
+        rst40            : in     std_logic;
         sres_counter     : in     std_logic;
         store_cnt_value  : in     std_logic;
         algo_i           : in     std_logic;
@@ -36,9 +33,9 @@ architecture rtl of algo_rate_counter is
     signal limit         : std_logic := '0';
 
 begin
-    counter_p: process (clk)
+    counter_p: process (clk40)
     begin
-        if rising_edge(clk) then
+        if rising_edge(clk40) then
             if sres_counter = '1' or store_cnt_value = '1' then
                 if (limit = '0' and algo_i = '1') then
                     counter <= to_unsigned(1, counter'length); -- this (re)sets the counter value to 1 if there occurs a trigger just in the 'store_cnt_value' clk cycle
@@ -62,9 +59,9 @@ begin
         end if;
     end process compare_p;
 
-    store_int_p: process (clk)
+    store_int_p: process (clk40)
     begin
-        if rising_edge(clk) then
+        if rising_edge(clk40) then
             if store_cnt_value = '1' then
                 counter_int <= counter; -- "store" counter value internally for read access with store_cnt_value (which is begin of lumi section)
             end if;
@@ -74,5 +71,3 @@ begin
     counter_o <= std_logic_vector(counter_int);
 
 end architecture rtl;
-
--- TODO ask which clk to use

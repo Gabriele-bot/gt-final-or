@@ -72,7 +72,7 @@ src -c emp-fwk:components/framework emp_device_types.vhd
 src -c emp-fwk:components/framework emp_framework_decl.vhd
 
 include -c gt-final-or:finor-hdl top.d3
-src --vhdl2008  payload_vu13p.vhd
+src --vhdl2008  payload_vu13p_sim.vhd
 
 src --vhdl2008 -c emp-fwk:boards/sim sim_udp_top.vhd 
 

@@ -17,7 +17,7 @@ package ipbus_decode_emp_payload is
   subtype ipbus_sel_t is std_logic_vector(IPBUS_SEL_WIDTH - 1 downto 0);
   function ipbus_sel_emp_payload(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
 
--- START automatically generated VHDL (Thu Dec 15 14:54:03 2022)
+-- START automatically generated VHDL (Thu May 11 15:34:15 2023)
   constant N_SLV_SLRN1_MONITOR: integer := 0;
   constant N_SLV_SLRN0_MONITOR: integer := 1;
   constant N_SLV_SLR_FINOR: integer := 2;
@@ -33,13 +33,13 @@ package body ipbus_decode_emp_payload is
     variable sel: ipbus_sel_t;
   begin
 
--- START automatically generated VHDL (Thu Dec 15 14:54:03 2022)
-    if    std_match(addr, "--00----------------------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN1_MONITOR, IPBUS_SEL_WIDTH)); -- SLR3_monitor / base 0x00000000 / mask 0x30000000
-    elsif std_match(addr, "--01----------------------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN0_MONITOR, IPBUS_SEL_WIDTH)); -- SLR2_monitor / base 0x10000000 / mask 0x30000000
-    elsif std_match(addr, "--10----------------------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_SLR_FINOR, IPBUS_SEL_WIDTH)); -- SLR2_FINOR / base 0x20000000 / mask 0x30000000
+-- START automatically generated VHDL (Thu May 11 15:34:15 2023)
+    if    std_match(addr, "-----------00-------------------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN1_MONITOR, IPBUS_SEL_WIDTH)); -- SLRn1_monitor / base 0x00000000 / mask 0x00180000
+    elsif std_match(addr, "-----------01-------------------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN0_MONITOR, IPBUS_SEL_WIDTH)); -- SLRn0_monitor / base 0x00080000 / mask 0x00180000
+    elsif std_match(addr, "-----------10-------------------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_SLR_FINOR, IPBUS_SEL_WIDTH)); -- SLR_FINOR / base 0x00100000 / mask 0x00180000
 -- END automatically generated VHDL
 
     else

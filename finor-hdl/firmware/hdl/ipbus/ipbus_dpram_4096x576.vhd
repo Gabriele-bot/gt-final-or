@@ -63,7 +63,8 @@ begin
             generic map(
                 INIT_VALUE => INIT_VALUE(32*(i+1)-1 downto 32*i),
                 ADDR_WIDTH => 12,
-                DATA_WIDTH => 32
+                DATA_WIDTH => 32,
+                STYLE      => "auto"
             )
             port map(
                 clk     => clk,

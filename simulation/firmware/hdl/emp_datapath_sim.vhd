@@ -31,7 +31,6 @@ use work.emp_device_decl.all;
 --! Using Testbench declaration
 use work.tb_decl;
 
-
 entity emp_datapath_sim is
     generic(
         sourcefile : string  := tb_decl.SOURCE_FILE;
@@ -47,25 +46,25 @@ entity emp_datapath_sim is
         debug      : boolean := false
     );
     port(
-        clk         : in  std_logic;        -- ipbus clock, rst, bus
-        rst         : in  std_logic;
-        ipb_in      : in  ipb_wbus;
-        ipb_out     : out ipb_rbus;
-        clk125      : in  std_logic;
-        clk40       : in  std_logic;
-        clk_p       : in  std_logic;        -- parallel data clock & rst
-        rst_p       : in  std_logic;
-        ttc_cmd     : in  ttc_cmd_t;        -- TTC command (clk40 domain)
-        ttc_l1a     : in  std_logic;        -- TTC L1A (clk40 domain)
-        lock        : out std_logic;  -- lock flag for distributed bunch counters
-        ctrs_out    : out ttc_stuff_array(N_REGION - 1 downto 0);  -- TTC counters for local logic
-        rst_out     : out std_logic_vector(N_REGION - 1 downto 0);  -- Resets for local logic;
-        clken_out   : out std_logic_vector(N_REGION - 1 downto 0);  -- Clock enables for local logic;
-        refclkp     : in  std_logic_vector(N_REFCLK - 1 downto 0);  -- MGT refclks & IO
-        refclkn     : in  std_logic_vector(N_REFCLK - 1 downto 0);
-        clkmon      : out std_logic_vector(3 downto 0);  -- clock frequency monitoring outputs
-        d           : in  ldata(N_REGION * 4 - 1 downto 0);  -- parallel data from payload
-        q           : out ldata(N_REGION * 4 - 1 downto 0)   -- parallel data to payload
+        clk       : in  std_logic;      -- ipbus clock, rst, bus
+        rst       : in  std_logic;
+        ipb_in    : in  ipb_wbus;
+        ipb_out   : out ipb_rbus;
+        clk125    : in  std_logic;
+        clk40     : in  std_logic;
+        clk_p     : in  std_logic;      -- parallel data clock & rst
+        rst_p     : in  std_logic;
+        ttc_cmd   : in  ttc_cmd_t;      -- TTC command (clk40 domain)
+        ttc_l1a   : in  std_logic;      -- TTC L1A (clk40 domain)
+        lock      : out std_logic;      -- lock flag for distributed bunch counters
+        ctrs_out  : out ttc_stuff_array(N_REGION - 1 downto 0); -- TTC counters for local logic
+        rst_out   : out std_logic_vector(N_REGION - 1 downto 0); -- Resets for local logic;
+        clken_out : out std_logic_vector(N_REGION - 1 downto 0); -- Clock enables for local logic;
+        refclkp   : in  std_logic_vector(N_REFCLK - 1 downto 0); -- MGT refclks & IO
+        refclkn   : in  std_logic_vector(N_REFCLK - 1 downto 0);
+        clkmon    : out std_logic_vector(3 downto 0); -- clock frequency monitoring outputs
+        d         : in  ldata(N_REGION * 4 - 1 downto 0); -- parallel data from payload
+        q         : out ldata(N_REGION * 4 - 1 downto 0) -- parallel data to payload
     );
 
 end entity emp_datapath_sim;
@@ -79,9 +78,8 @@ architecture RTL of emp_datapath_sim is
     --signal ctrl, ctrl_rx_enable : ipb_reg_v(0 downto 0);
 
     signal ttc_cmd_i, ttc_cmd_i2 : ttc_cmd_t;
-    attribute keep : string;
+    attribute keep               : string;
     attribute keep of ttc_cmd_i : signal is "true";
-
 
     signal rst_chain_a, lock_chain_a, rx_enable_chain_a : std_logic_vector(N_REGION downto 0);
     signal ttc_chain_a                                  : ttc_cmd_array(N_REGION downto 0);
@@ -101,49 +99,46 @@ architecture RTL of emp_datapath_sim is
 
     signal refclk, refclk_odiv, refclk_buf : std_logic_vector(N_REFCLK - 1 downto 0);
     signal refclk_mon, refclk_mon_d        : std_logic_vector(N_REFCLK - 1 downto 0);
-    signal rxclk_mon, txclk_mon            : std_logic_vector(31 downto 0);  -- Match range of integer sel
+    signal rxclk_mon, txclk_mon            : std_logic_vector(31 downto 0); -- Match range of integer sel
     signal sel                             : integer range 0 to 31;
     --signal ctrs                            : ttc_stuff_array(N_REGION - 1 downto 0);
     signal rx_enable                       : std_logic;
 
-    signal ctrs_int  : ttc_stuff_array(N_REGION - 1 downto 0);  -- TTC counters for local logic
-    signal rst_int   : std_logic_vector(N_REGION - 1 downto 0);  -- Resets for local logic;
-    signal clken_int : std_logic_vector(N_REGION - 1 downto 0);  -- Clock enables for local logic;
+    signal ctrs_int  : ttc_stuff_array(N_REGION - 1 downto 0); -- TTC counters for local logic
+    signal rst_int   : std_logic_vector(N_REGION - 1 downto 0); -- Resets for local logic;
+    signal clken_int : std_logic_vector(N_REGION - 1 downto 0); -- Clock enables for local logic;
 
     signal lock_i : std_logic;
 
-
-
     -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     -- LINK SIGNALS
-    signal d_int     : ldata(N_REGION * 4 - 1 downto 0) := (others => LWORD_NULL); -- parallel data from payload
-    signal q_int     : ldata(N_REGION * 4 - 1 downto 0) := (others => LWORD_NULL); -- parallel data to payload
+    signal d_int : ldata(N_REGION * 4 - 1 downto 0) := (others => LWORD_NULL); -- parallel data from payload
+    signal q_int : ldata(N_REGION * 4 - 1 downto 0) := (others => LWORD_NULL); -- parallel data to payload
     -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     --signal tmt_sync_i, tmt_sync                                                : tmt_sync_t;
     signal rst_i, bctr_lock, bc0, oc0, go, bmax : std_logic;
-    signal rst_p_d, rst_p_dd                    : std_logic := '0';        
-    signal clr                                  : std_logic;   
+    signal rst_p_d, rst_p_dd                    : std_logic := '0';
+    signal clr                                  : std_logic;
     --signal cap_bus_i, cap_bus                                                : daq_cap_bus;
-    signal pctr                                                                : pctr_t;
-    signal bctr                                                                : bctr_t;
-    signal octr                                                                : octr_t;
-
-
-
+    signal pctr                                 : pctr_t;
+    signal bctr                                 : bctr_t;
+    signal octr                                 : octr_t;
 
 begin
 
-    ipb_out  <= IPB_RBUS_NULL;
-    
+    ipb_out.ipb_rdata <= (others => '0');
+    ipb_out.ipb_ack   <= ipb_in.ipb_strobe;
+    ipb_out.ipb_err   <= '0';
+
     process(clk_p)
     begin
         if rising_edge(clk_p) then
-            rst_p_d <= rst_p;
+            rst_p_d  <= rst_p;
             rst_p_dd <= rst_p_d;
         end if;
     end process;
-    
+
     clr <= rst_p_dd or rst_p;
 
     ------------------------------------------
@@ -175,11 +170,10 @@ begin
 
     ------------------------------------------
     -- BGOs
-    bc0      <= '1' when ttc_cmd = TTC_BCMD_BC0       else '0';
-    oc0      <= '1' when ttc_cmd = TTC_BCMD_OC0       else '0';
+    bc0 <= '1' when ttc_cmd = TTC_BCMD_BC0 else '0';
+    oc0 <= '1' when ttc_cmd = TTC_BCMD_OC0 else '0';
     --resync_i <= '1' when ttc_cmd = TTC_BCMD_RESYNC    else '0';
     --go       <= '1' when ttc_cmd = TTC_BCMD_TEST_SYNC else '0';
-
 
     source : entity work.EMPCaptureFileReader
         generic map(
@@ -217,19 +211,17 @@ begin
     sgen : for i in 0 to N_REGION - 1 generate
     begin
         -- Outputs to local logic 
-        rst_out(i) <= rst_p;
+        rst_out(i)          <= rst_p;
         ctrs_out(i).ttc_cmd <= ttc_cmd;
-        ctrs_out(i).l1a     <= ttc_l1a;              --l1a;
+        ctrs_out(i).l1a     <= ttc_l1a; --l1a;
         ctrs_out(i).bctr    <= bctr;
         ctrs_out(i).pctr    <= pctr;
     end generate;
 
-    lock      <= bctr_lock; --TODO check
+    lock      <= bctr_lock;             --TODO check
     clken_out <= (others => '1');
     clkmon    <= (others => '0');
     d_int     <= d;
     q         <= q_int;
-
-
 
 end architecture RTL;

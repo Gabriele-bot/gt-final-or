@@ -1,6 +1,6 @@
 <node description="Payload address table" fwinfo="endpoint;width=31">
-	<node id="SLR3_monitor" module="file://m_module.xml"   address="0x00000000" fwinfo="endpoint;width=28"/>
-	<node id="SLR2_monitor" module="file://m_module.xml"   address="0x10000000" fwinfo="endpoint;width=28"/>
-	<node id="SLR2_FINOR"   module="file://Output_SLR.xml" address="0x20000000" fwinfo="endpoint;width=28"/>
+	<node id="SLRn1_monitor" module="file://SLR_Monitoring_unit.xml"   address="0x00000000" fwinfo="endpoint;width=19"/>
+	<node id="SLRn0_monitor" module="file://SLR_Monitoring_unit.xml"   address="0x00080000" fwinfo="endpoint;width=19"/>
+	<node id="SLR_FINOR"     module="file://SLR_Output.xml"            address="0x00100000" fwinfo="endpoint;width=20"/>
 </node>
 
