@@ -257,7 +257,7 @@ elif args.test == 'trigger_mask':
     bxmask = np.zeros((2, 18, 4096), dtype=np.uint32)
     bxmask[0:2, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
 
-    HWtest.load_BXmask_arr(bxmask)
+    #HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks to match trigg_index
     trigger_mask = np.zeros((2, 144), dtype=np.uint32)
@@ -276,7 +276,7 @@ elif args.test == 'trigger_mask':
                         1 << np.uint32((index - 576) - 32 * np.floor((index - 576) / 32)))
         # print(hex(trigger_mask[1][np.uint16(reg_index)]))
 
-    #HWtest.load_mask_arr(trigger_mask)
+    HWtest.load_mask_arr(trigger_mask)
 
     ls_trigg_mark_before = HWtest.read_lumi_sec_trigger_mask_mark()
 
