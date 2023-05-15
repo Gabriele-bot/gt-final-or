@@ -48,7 +48,7 @@ begin
             else
                 case state is
                     when chasing =>
-                        if ctrs_in.bctr = std_logic_vector(to_unsigned(0, 12)) and ctrs_in.pctr = "0000" then
+                        if ctrs_in.bctr = std_logic_vector(to_unsigned(LHC_BUNCH_COUNT - 1, 12)) and ctrs_in.pctr = "1000" then
                             locked_int1 <= '0';
                             counter     <= (others => '0');
                         elsif ref_bx_nr = std_logic_vector(to_unsigned(0, 12)) then
@@ -70,7 +70,7 @@ begin
                         end if;
                     when resync =>
                         if ctrs_in.bctr = std_logic_vector(to_unsigned(3540, 12)) and ctrs_in.pctr = "0000" then
-                            state       <= chasing;
+                            state <= chasing;
                         else
                             state <= resync;
                         end if;

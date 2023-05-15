@@ -95,7 +95,10 @@ if args.test == 'prescaler':
     bxmask = np.zeros((2, 18, 4096), dtype=np.uint32)
     bxmask[0:2, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
 
-    #HWtest.load_BXmask_arr(bxmask)
+    if args.simulation:
+        print("Using default BXmask")
+    else:
+        HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
     trigger_mask = np.ones((2, 144), dtype=np.uint32) * 2 ** 32 - 1
@@ -257,7 +260,10 @@ elif args.test == 'trigger_mask':
     bxmask = np.zeros((2, 18, 4096), dtype=np.uint32)
     bxmask[0:2, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
 
-    #HWtest.load_BXmask_arr(bxmask)
+    if args.simulation:
+        print("Using default BXmask")
+    else:
+        HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks to match trigg_index
     trigger_mask = np.zeros((2, 144), dtype=np.uint32)
@@ -399,7 +405,10 @@ elif args.test == 'veto_mask':
     bxmask = np.zeros((2, 18, 4096), dtype=np.uint32)
     bxmask[0:2, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
 
-    #HWtest.load_BXmask_arr(bxmask)
+    if args.simulation:
+        print("Using default BXmask")
+    else:
+        HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks to match trigg_index
     trigger_mask = np.ones((2, 144), dtype=np.uint32) * 2 ** 32 - 1
@@ -683,7 +692,6 @@ elif args.test == 'algo-out':
     except:
         raise ("Did you run the prescale test beforehand?")
 
-    # TODO maybe put this in a config file?
     input_links = np.vstack((parse_index_list_string(args.LowLinks), parse_index_list_string(args.HighLinks)))
 
     temp_or = np.zeros(np.shape(in_data)[1], dtype=np.uint64)
@@ -704,11 +712,11 @@ elif args.test == 'algo-out':
     if np.array_equal(output_link_data, temp_or[:len(output_link_data)]):
         print("Lower output algobit pattern match the input data ORing (unprescaled)")
     else:
-        print('Mismatch was found, check your pattern files and/or the registers')
+        raise Exception('Mismatch was found, check your pattern files and/or the registers')
 
     temp_or = np.zeros(np.shape(in_data)[1], dtype=np.uint64)
-    temp_data_in = in_valid[len(input_links[0]):(len(input_links[0] + len(input_links[1])))] * \
-                   in_data[len(input_links[0]):(len(input_links[0] + len(input_links[1])))]
+    temp_data_in = in_valid[len(input_links[0]):(len(input_links[0]) + len(input_links[1]))] * \
+                   in_data[len(input_links[0]):(len(input_links[0]) + len(input_links[1]))]
 
     for i in range(np.shape(input_links)[1]):
         temp_or = np.bitwise_or(temp_or, temp_data_in[i, :])

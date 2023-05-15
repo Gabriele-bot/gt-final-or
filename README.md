@@ -124,6 +124,7 @@ ipbb sim fli-udp
 ipbb sim addrtab
 ipbb sim generate-project
 touch design.txt
+cp ../../src/gt-final-or/finor-hdl/firmware/hdl/bxmask_113bx_window.mem .
 ```
 
 Copy the generated pattern files and scripts in the project directory.

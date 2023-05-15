@@ -24,7 +24,8 @@ entity monitoring_module is
         NR_ALGOS              : natural;
         PRESCALE_FACTOR_INIT  : std_logic_vector(31 DOWNTO 0) := X"00000064"; --1.00
         BEGIN_LUMI_TOGGLE_BIT : natural                       := 18;
-        MAX_DELAY             : natural                       := 255
+        MAX_DELAY             : natural                       := 255;
+        SIM                   : boolean                       := FALSE
     );
     port(
         -- =========================IPBus================================================
@@ -52,7 +53,7 @@ end monitoring_module;
 
 architecture rtl of monitoring_module is
 
-    constant NULL_VETO_MASK : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    constant NULL_VETO_MASK   : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
     -- fabric signals        
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
@@ -664,8 +665,9 @@ begin
 
     algo_bx_mask_mem_i : entity work.ipbus_dpram_4096x576
         generic map(
-            INIT_VALUE => (others => '1'),
-            DATA_WIDTH => NR_ALGOS
+            DATA_FILE_32b => "bxmask_113bx_window.mem",
+            DEFAULT_VALUE => (others => '1'),
+            DATA_WIDTH    => NR_ALGOS
         )
         port map(
             clk     => clk,
@@ -676,7 +678,7 @@ begin
             we      => '0',
             d       => (others => '1'),
             q       => algo_bx_mask_mem_out,
-            addr    => ctrs_reg.bctr        -- note that this one is not delayed
+            addr    => ctrs_reg.bctr    -- note that this one is not delayed
 
         );
 

@@ -87,7 +87,7 @@ begin
         end if;
     end process bctr_p;
 
-    bx_nr_360  <= std_logic_vector(bx_nr_int);
+    bx_nr_360  <= std_logic_vector(to_unsigned(0,12)) when metadata = "1101" else std_logic_vector(bx_nr_int);
 
     process(clk40)
     begin
