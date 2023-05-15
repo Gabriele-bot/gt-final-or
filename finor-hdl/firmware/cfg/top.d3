@@ -20,7 +20,7 @@ src --vhdl2008 ipbus/ipbus_file_init_dpram.vhd
 src --vhdl2008 ipbus/ipbus_dpram_4096x576.vhd
 src --vhdl2008 ipbus/ipbus_ctrlreg_cdc_v.vhd
 
-src RAM_init_files/bxmask_113bx_window.mem
+src RAM_init_files/bxmask_113bx_window.mif
 
 src --vhdl2008 BGO_sync.vhd
 src --vhdl2008 Counter_module.vhd

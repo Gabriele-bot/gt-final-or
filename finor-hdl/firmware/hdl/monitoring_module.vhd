@@ -665,7 +665,7 @@ begin
 
     algo_bx_mask_mem_i : entity work.ipbus_dpram_4096x576
         generic map(
-            DATA_FILE_32b => "bxmask_113bx_window.mem",
+            DATA_FILE_32b => "bxmask_113bx_window.mif",
             DEFAULT_VALUE => (others => '1'),
             DATA_WIDTH    => NR_ALGOS
         )
