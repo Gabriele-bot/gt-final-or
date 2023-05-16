@@ -71,7 +71,7 @@ begin
             rst360      => rst360,
             clk40       => clk40,
             rst40       => rst40,
-            bctr        => ctrs_internal.bctr,
+            bctr        => ctrs.bctr,
             input_40MHz => algos_in_padded,
             valid_in    => algos_valid,
             output_data => q_algos
@@ -83,7 +83,7 @@ begin
             rst360      => rst360,
             clk40       => clk40,
             rst40       => rst40,
-            bctr        => ctrs_internal.bctr,
+            bctr        => ctrs.bctr,
             input_40MHz => algos_after_bxmask_padded,
             valid_in    => algos_valid,
             output_data => q_algos_after_bxmask
@@ -95,7 +95,7 @@ begin
             rst360      => rst360,
             clk40       => clk40,
             rst40       => rst40,
-            bctr        => ctrs_internal.bctr,
+            bctr        => ctrs.bctr,
             input_40MHz => algos_after_prscl_padded,
             valid_in    => algos_valid,
             output_data => q_algos_after_prscl

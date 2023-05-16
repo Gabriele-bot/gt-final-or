@@ -39,10 +39,13 @@ entity SLR_Output is
         valid_in    : in  std_logic;
         trgg_0      : in  std_logic_vector(N_TRIGG - 1 downto 0);
         trgg_1      : in  std_logic_vector(N_TRIGG - 1 downto 0);
+        trgg_2      : in  std_logic_vector(N_TRIGG - 1 downto 0);
         trgg_prvw_0 : in  std_logic_vector(N_TRIGG - 1 downto 0);
         trgg_prvw_1 : in  std_logic_vector(N_TRIGG - 1 downto 0);
+        trgg_prvw_2 : in  std_logic_vector(N_TRIGG - 1 downto 0);
         veto_0      : in  std_logic;
         veto_1      : in  std_logic;
+        veto_2      : in  std_logic;
         q           : out ldata(0 downto 0) -- data out
     );
 end entity SLR_Output;
@@ -290,12 +293,12 @@ begin
         end if;
     end process;
 
-    Final_OR         <= trgg_0 or trgg_1;
-    Final_OR_preview <= trgg_prvw_0 or trgg_prvw_1;
+    Final_OR         <= trgg_0 or trgg_1 or trgg_2;
+    Final_OR_preview <= trgg_prvw_0 or trgg_prvw_1 or trgg_prvw_2;
 
     Final_OR_with_veto_l : for i in 0 to N_TRIGG - 1 generate
-        Final_OR_with_veto(i)         <= (trgg_0(i) or trgg_1(i)) and not (veto_0 or veto_1);
-        Final_OR_preview_with_veto(i) <= (trgg_prvw_0(i) or trgg_prvw_1(i)) and not (veto_0 or veto_1);
+        Final_OR_with_veto(i)         <= (trgg_0(i) or trgg_1(i) or trgg_2(i)) and not (veto_0 or veto_1 or veto_2);
+        Final_OR_preview_with_veto(i) <= (trgg_prvw_0(i) or trgg_prvw_1(i) or trgg_prvw_2(i)) and not (veto_0 or veto_1 or veto_2);
     end generate;
 
     delay_element_i : entity work.delay_element_ringbuffer
@@ -354,7 +357,7 @@ begin
             delay     => l1a_latency_delay
         );
 
-    veto_out_s <= veto_0 or veto_1;
+    veto_out_s <= veto_0 or veto_1 or veto_2;
 
     ----------------------------------------------------------------------------------
     -----------------------------Veto Rate Counter------------------------------------

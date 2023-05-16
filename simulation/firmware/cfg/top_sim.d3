@@ -1,0 +1,97 @@
+include -c emp-fwk:boards/serenity/dc_vu13p device.dep
+include -c ipbus-firmware:components/ipbus_core
+include -c ipbus-firmware:components/ipbus_slaves ipbus_ctrlreg_v.dep
+src -c emp-fwk:components/framework emp_framework_decl.vhd
+src -c emp-fwk:components/datapath emp_data_types.vhd
+src -c emp-fwk:boards/serenity/dc_vu13p emp_device_decl_a2577_sym.vhd
+
+
+src -c emp-fwk:components/ttc emp_ttc_decl.vhd
+
+src -c emp-fwk:components/framework emp_device_types.vhd
+
+src -c emp-fwk:components/links/slink emp_slink_types.vhd
+
+src -c gt-final-or:finor-hdl top_serenity_vu13p-so2_decl.vhd
+
+src -c emp-fwk:boards/sim ipbus_decode_sim.vhd
+
+include -c ipbus-firmware:components/modelsim_fli/transport_udp
+src -c ipbus-firmware:components/ipbus_util ../sim_hdl/clock_sim.vhd
+
+src -c ipbus-firmware:components/ipbus_core ipbus_fabric_sel.vhd ipbus_dc_fabric_sel.vhd ipbus_dc_node.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_reg_types.vhd
+
+addrtab -c emp-fwk:boards/sim sim.xml
+
+addrtab -c emp-fwk:components/links/slink emp_slink.xml
+addrtab -c emp-fwk:components/links/slink emp_slink_quad.xml
+addrtab -c emp-fwk:components/links/slink emp_slink_channel.xml
+addrtab -c emp-fwk:components/links/slink emp_slink_generator.xml
+
+addrtab -c emp-fwk:components/datapath emp_datapath.xml
+addrtab -c emp-fwk:components/datapath emp_region_info.xml
+addrtab -c emp-fwk:components/datapath emp_align_mon.xml
+addrtab -c emp-fwk:components/datapath emp_region.xml
+addrtab -c emp-fwk:components/datapath emp_chan_buffer.xml
+addrtab -c emp-fwk:components/datapath emp_formatter.xml
+include -c emp-fwk:components/datapath drp_addrtab.dep
+include -c emp-fwk:components/links/fe_mgt/interface addr.dep
+include -c emp-fwk:components/links/be_mgt/interface addr.dep
+#include -c emp-fwk:components/datapath datapath.dep
+src -c emp-fwk:boards/sim sim_udp_infra.vhd
+#src -c emp-fwk:boards/sim sim_udp_top.vhd 
+
+
+
+include -c ipbus-firmware:components/modelsim_fli/transport_udp
+include -c ipbus-firmware:components/ipbus_util ipbus_ctrl.dep
+
+include -c emp-fwk:components/info
+include -c emp-fwk:components/ctrl
+include -c emp-fwk:components/ttc ttc_sim.dep
+#include -c emp-fwk:components/datapath datapath_sim.dep
+# Commented out, waiting for someone to write an mgt sim block
+#include -c emp-fwk:components/links/be_mgt/interface interface_sim.dep
+#include -c emp-fwk:components/links/fe_mgt/interface interface_sim.dep
+
+#include -c emp-fwk:components/testbench
+
+
+include -c emp-fwk:components/testbench vhdl-extras.dep
+src -c emp-fwk:components/testbench emp_testbench_helpers.vhd
+src -c emp-fwk:components/testbench emp_data_textio.vhd
+src -c emp-fwk:components/testbench emp_capture_tools.vhd
+
+
+src EMPCaptureFileWriter.vhd
+src EMPCaptureFileReader.vhd
+
+
+src -c emp-fwk:components/datapath emp_data_types.vhd
+
+
+
+
+
+src tb_decl.vhd
+
+
+src emp_datapath_sim.vhd
+
+src -c emp-fwk:components/framework emp_device_types.vhd 
+#src emp_device_decl.vhd 
+#src -c emp-fwk:components/framework emp_framework_decl.vhd 
+
+
+src -c ipbus-firmware:components/ipbus_core ipbus_package.vhd
+
+include -c gt-final-or:finor-hdl top.d3
+src --vhdl2008 -c gt-final-or:finor-hdl payload_vu13p.vhd
+
+
+
+src payload_tb.vhd
+
+include top.d3
+

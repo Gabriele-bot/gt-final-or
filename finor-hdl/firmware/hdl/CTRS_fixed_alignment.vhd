@@ -51,8 +51,7 @@ begin
 
     ctrs_in_flatten <= (ctrs_in.ttc_cmd, ctrs_in.l1a, ctrs_in.bctr, ctrs_in.pctr);
 
-    delay <= std_logic_vector(resize(unsigned(ctrs_delay_val), log2c(MAX_LATENCY_360 + DELAY_OFFSET)) + to_unsigned(DELAY_OFFSET, log2c(MAX_LATENCY_360 + DELAY_OFFSET)) - 1);
-    -- minus 1 is due to the ring buffer delay element that will register the output resulting in an increased delay value
+    delay <= std_logic_vector(resize(unsigned(ctrs_delay_val), log2c(MAX_LATENCY_360 + DELAY_OFFSET)) + to_unsigned(DELAY_OFFSET, log2c(MAX_LATENCY_360 + DELAY_OFFSET)));
 
     delay_line_i : entity work.delay_element_ringbuffer
         generic map(

@@ -30,7 +30,7 @@ architecture RTL of delay_element_ringbuffer is
     constant MAX_VAL_UNISGNED : unsigned(log2c(MAX_DELAY) - 1 downto 0) := (others => '1');
 
     type ram_type is array (0 to 2 ** log2c(MAX_DELAY) - 1) of std_logic_vector(data_i'range);
-    signal ram : ram_type;
+    signal ram : ram_type := (others => (others => '0'));
 
     subtype index_type is integer range ram_type'range;
     signal head : index_type;
@@ -43,7 +43,9 @@ architecture RTL of delay_element_ringbuffer is
     signal delay_reg  : std_logic_vector(log2c(MAX_DELAY) - 1 downto 0) := (others => '0');
 
     signal rst_loc : std_logic;
-    
+
+    signal data_out_s : std_logic_vector(DATA_WIDTH - 1 downto 0);
+
     attribute ram_style : string;
     attribute ram_style of ram : signal is STYLE;
 
@@ -100,7 +102,7 @@ begin
                 tail_unsigned <= (others => '0');
             else
                 if delay_lkd = '1' then
-                    tail_unsigned <= head_unsigned - unsigned(delay);
+                    tail_unsigned <= head_unsigned - unsigned(delay) + 2; -- plus 2 takes into account the two register steps
                 else
                     tail_unsigned <= (others => '0');
                 end if;
@@ -115,15 +117,24 @@ begin
     begin
         if rising_edge(clk) then
             ram(head) <= data_i;
-            if delay_lkd = '1' then
-                if unsigned(delay) = 0 then
-                    data_o <= data_i;
-                else
-                    data_o <= ram(tail);
-                end if;
+            if unsigned(delay) = 1 then
+                data_out_s <= data_i;
             else
-                data_o <= (others => '0');
+                data_out_s <= ram(tail);
             end if;
+        end if;
+    end process;
+
+    PROC_OUT : process(delay, data_out_s, delay_lkd, data_i)
+    begin
+        if delay_lkd = '1' then
+            if unsigned(delay) = 0 then
+                data_o <= data_i;
+            else
+                data_o <= data_out_s;
+            end if;
+        else
+            data_o <= (others => '0');
         end if;
     end process;
 
