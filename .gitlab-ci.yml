@@ -37,10 +37,11 @@ test:serenity:
     PROJECT_NAME: p2gt_finor_serenity-vu13p
     HARDWARE_TEST_TYPE: serenity-vu13p-so2
     HARDWARE_TEST_LOCATION: b904
-    HARDWARE_TEST_INPUT_CHANNELS: 0-11,36-47,80-91,116-127
+    HARDWARE_TEST_INPUT_CHANNELS: 0-11,36-47,48-59,68-79,80-91,116-127
     HARDWARE_TEST_INPUT_LOW_CHANNELS: 0-11,116-127
-    HARDWARE_TEST_INPUT_HIGH_CHANNELS: 36-47,80-91
-    HARDWARE_TEST_OUTPUT_CHANNELS: 24-31,96
+    HARDWARE_TEST_INPUT_MID_CHANNELS: 36-47,80-91
+    HARDWARE_TEST_INPUT_HIGH_CHANNELS: 48-59,68-79
+    HARDWARE_TEST_OUTPUT_CHANNELS: 24-31,100-102,96
     HARDWARE_TEST_CAPTURE_LENGTH: 1024
   before_script:
     - if ! [[ "$HARDWARE_TEST_SERENITY_SITE" =~ ^(x0|x1)$ ]]; then echo "HARDWARE_TEST_SERENITY_SITE variable has invalid value, ${HARDWARE_TEST_SERENITY_SITE}!   (should be x0 or x1)."; exit 1; fi
@@ -59,7 +60,7 @@ test:serenity:
     - python3 -m pip install --upgrade click==8.0.4 click_didyoumean==0.3.0 pytest==7.0.1 python-dateutil==2.8.2 pyyaml==5.1.2 colorama==0.4.5
     - cd ${CI_PROJECT_DIR}/scripts
     # Generate pattern files
-    - python3 PatternProducer.py -i 1100 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS}  -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
+    - python3 PatternProducer.py -i 1650 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS} -ml ${HARDWARE_TEST_INPUT_MID_CHANNELS}   -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
     - cd ${CI_PROJECT_DIR}
     # Extract bitfile & address tables
     - ls
@@ -92,25 +93,25 @@ test:serenity:
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_prescaler_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3.6 RateChecker.py -p random -t prescaler -c my_connections.xml -ls 18 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS}  -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
+    - python3.6 RateChecker.py -p random -t prescaler -c my_connections.xml -ls 18 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS} -ml ${HARDWARE_TEST_INPUT_MID_CHANNELS}   -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
     - mv data/tx_summary.txt out_prescaler_test.txt
     # Trigger masks test
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_trigg_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3.6 RateChecker.py -p random -t trigger_mask -c my_connections.xml -ls 18 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS}  -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
+    - python3.6 RateChecker.py -p random -t trigger_mask -c my_connections.xml -ls 18 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS} -ml ${HARDWARE_TEST_INPUT_MID_CHANNELS}   -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS}  
     # Veto masks test
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_veto_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3.6 RateChecker.py -p random -t veto_mask -c my_connections.xml -ls 18 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS}  -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
+    - python3.6 RateChecker.py -p random -t veto_mask -c my_connections.xml -ls 18 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS} -ml ${HARDWARE_TEST_INPUT_MID_CHANNELS}   -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS}  
     # BX mask test
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers rx PlayOnce -c ${HARDWARE_TEST_INPUT_CHANNELS} --inject file://${CI_PROJECT_DIR}/scripts/Pattern_files/Finor_input_pattern_BXmask_test.txt
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} buffers tx Capture -c ${HARDWARE_TEST_OUTPUT_CHANNELS}
     - empbutler -c my_connections.xml do ${HARDWARE_TEST_SERENITY_SITE} capture --rx ${HARDWARE_TEST_INPUT_CHANNELS} --tx ${HARDWARE_TEST_OUTPUT_CHANNELS}
-    - python3.6 RateChecker.py -p random -t BXmask -c my_connections.xml -ls 18 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS}  -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
+    - python3.6 RateChecker.py -p random -t BXmask -c my_connections.xml -ls 18 -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS} -ml ${HARDWARE_TEST_INPUT_MID_CHANNELS}   -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
     # Output algobits test
-    - python3.6 RateChecker.py -t algo-out -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS}  -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
+    - python3.6 RateChecker.py -t algo-out -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS} -ml ${HARDWARE_TEST_INPUT_MID_CHANNELS}   -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
   rules:
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'

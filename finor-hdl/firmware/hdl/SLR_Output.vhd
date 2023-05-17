@@ -150,7 +150,7 @@ begin
     ctrs_align_i : entity work.CTRS_fixed_alignment
         generic map(
             MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            DELAY_OFFSET    => 9 + 9 + 4 --deserializer + SLR cross
+            DELAY_OFFSET    => SLR_CROSSING_LATENCY + 9 + 4 --deserializer + SLR cross
         )
         port map(
             clk360         => clk360,

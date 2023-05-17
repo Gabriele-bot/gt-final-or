@@ -14,7 +14,8 @@ parser = argparse.ArgumentParser(description='GT-Final OR board Pattern producer
 parser.add_argument('-i', '--indexes', metavar='N', type=int, default=1,
                     help='Number of algos to send')
 parser.add_argument('-ll', '--LowLinks', type=str, default="0-11")
-parser.add_argument('-hl', '--HighLinks', type=str, default="36-47")
+parser.add_argument('-ml', '--MidLinks', type=str, default="36-47")
+parser.add_argument('-hl', '--HighLinks', type=str, default="48-59")
 
 args = parser.parse_args()
 
@@ -100,14 +101,15 @@ def extract_random_indexes(n_algo_bits, max_algos=1152, max_rep=113, low_rep=Tru
 
 def get_Available_links(arguments):
     Available_links = np.vstack(
-        (parse_index_list_string(arguments.LowLinks), parse_index_list_string(arguments.HighLinks)))
+        (parse_index_list_string(arguments.LowLinks), parse_index_list_string(arguments.MidLinks), parse_index_list_string(arguments.HighLinks)))
 
     return Available_links
 
 
 def pattern_data_producer(indeces, positions, file_name, Links, debug):
     X_input_low = np.zeros((1017, len(Links[0])), dtype=np.uint64)
-    X_input_high = np.zeros((1017, len(Links[1])), dtype=np.uint64)
+    X_input_mid = np.zeros((1017, len(Links[1])), dtype=np.uint64)
+    X_input_high = np.zeros((1017, len(Links[2])), dtype=np.uint64)
 
     for i in range(len(indeces)):
         if indeces[i] < 576:
@@ -115,17 +117,23 @@ def pattern_data_producer(indeces, positions, file_name, Links, debug):
             random_link = random.sample(range(len(Links[0])), 1)
             X_input_low[positions[i] * 9 + offset, random_link] = \
                 X_input_low[positions[i] * 9 + offset, random_link] | np.uint64((1 << (indeces[i] - offset * 64)))
-        else:
+        elif 576 <= indeces[i] < 1152:
             offset = int((indeces[i] - 576) / 64)
             random_link = random.sample(range(len(Links[1])), 1)
+            X_input_mid[positions[i] * 9 + offset, random_link] = \
+                X_input_mid[positions[i] * 9 + offset, random_link] | np.uint64(
+                    (1 << ((indeces[i] - 576) - offset * 64)))
+        else:
+            offset = int((indeces[i] - 1152) / 64)
+            random_link = random.sample(range(len(Links[2])), 1)
             X_input_high[positions[i] * 9 + offset, random_link] = \
                 X_input_high[positions[i] * 9 + offset, random_link] | np.uint64(
-                    (1 << ((indeces[i] - 576) - offset * 64)))
+                    (1 << ((indeces[i] - 1152) - offset * 64)))
 
-    X_test_chunk = np.hstack((X_input_low, X_input_high))
+    X_test_chunk = np.hstack((X_input_low, X_input_mid, X_input_high))
     data_bitstring_padded = prep_bitstring_data(X_test_chunk)
 
-    links = np.vstack((Links[0], Links[1]))
+    links = np.vstack((Links[0], Links[1], Links[2]))
     # write out fname
     indir = "Pattern_files"
     fname = indir + "/" + file_name
@@ -138,11 +146,12 @@ def pattern_data_producer(indeces, positions, file_name, Links, debug):
 
 
 def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False):
-    X_input_low = np.zeros((1024, len(Links[0])), dtype=np.uint64)
-    X_input_high = np.zeros((1024, len(Links[1])), dtype=np.uint64)
+    X_input_low = np.zeros((1017, len(Links[0])), dtype=np.uint64)
+    X_input_mid = np.zeros((1017, len(Links[1])), dtype=np.uint64)
+    X_input_high = np.zeros((1017, len(Links[2])), dtype=np.uint64)
 
     Possibile_rep = np.array(range(int(1024 / 9)))
-    Possibile_indeces = np.array(range(1152))
+    Possibile_indeces = np.array(range(576*3))
     index_mask = np.logical_or.reduce(algo_matrix, 1).astype(bool)
     indeces = Possibile_indeces[index_mask]
 
@@ -154,13 +163,18 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False
             random_link = random.sample(range(len(Links[0])), 1)
             X_input_low[positions * 9 + offset, random_link] = \
                 X_input_low[positions * 9 + offset, random_link] | np.uint64((1 << (indeces[i] - offset * 64)))
-        else:
+        elif 576 <= indeces[i] < 1152:
             offset = int((indeces[i] - 576) / 64)
             random_link = random.sample(range(len(Links[1])), 1)
+            X_input_mid[positions * 9 + offset, random_link] = \
+                X_input_mid[positions * 9 + offset, random_link] | np.uint64((1 << ((indeces[i] - 576) - offset * 64)))
+        else:
+            offset = int((indeces[i] - 1152) / 64)
+            random_link = random.sample(range(len(Links[2])), 1)
             X_input_high[positions * 9 + offset, random_link] = \
-                X_input_high[positions * 9 + offset, random_link] | np.uint64((1 << ((indeces[i] - 576) - offset * 64)))
+                X_input_high[positions * 9 + offset, random_link] | np.uint64((1 << ((indeces[i] - 1152) - offset * 64)))
 
-    X_test_chunk = np.hstack((X_input_low, X_input_high))
+    X_test_chunk = np.hstack((X_input_low, X_input_mid, X_input_high))
     data_bitstring_padded = prep_bitstring_data(X_test_chunk)
 
     metadata = np.ones_like(X_test_chunk, dtype=np.uint8) * 1
@@ -175,7 +189,7 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False
     metadata[1017:1024, :] = 0
     metadata_bitstring = prep_bitstring_metadata(metadata)
 
-    links = np.vstack((Links[0], Links[1]))
+    links = np.vstack((Links[0], Links[1], Links[2]))
     # write out fname
     indir = "Pattern_files"
     fname = indir + "/" + file_name
@@ -187,63 +201,8 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False
             print(f.readlines()[row])
 
 
-def pattern_producer_prescale_test_v1(n_algo_bits, debug=False):
-    Possibile_indeces = range(1152)
-    Possibile_rep = range(int(1024 / 9))
-
-    Available_links = get_Available_links(args)
-
-    indeces = random.sample(Possibile_indeces, n_algo_bits)
-    repetitions = np.random.choice(Possibile_rep, size=n_algo_bits, replace=True)
-    if debug:
-        print("Algo bit indeces")
-        print(np.array(indeces))
-        print("Algo bit repetitions")
-        print(np.array(repetitions))
-
-    X_input_low = np.zeros((1024, 24), dtype=np.uint64)
-    X_input_high = np.zeros((1024, 24), dtype=np.uint64)
-
-    for i in range(len(indeces)):
-        rep = random.sample(Possibile_rep, repetitions[i])
-        if indeces[i] < 576:
-            offset = int(indeces[i] / 64)
-            for current_index in rep:
-                random_link = random.sample(range(24), 1)
-                X_input_low[current_index * 9 + offset, random_link] = X_input_low[
-                                                                           current_index * 9 + offset, random_link] | np.uint64(
-                    (1 << (indeces[i] - offset * 64)))
-        else:
-            offset = int((indeces[i] - 576) / 64)
-            for current_index in rep:
-                random_link = random.sample(range(24), 1)
-                X_input_high[current_index * 9 + offset, random_link] = X_input_high[
-                                                                            current_index * 9 + offset, random_link] | np.uint64(
-                    (1 << ((indeces[i] - 576) - offset * 64)))
-
-    X_test_chunk = np.hstack((X_input_low, X_input_high))
-    data_bitstring_padded = prep_bitstring_data(X_test_chunk)
-
-    links = np.vstack((Available_links[0], Available_links[1]))
-    # write out fname
-    indir = "Pattern_files"
-    fname = indir + "/Finor_input_pattern_prescaler_test.txt"
-    write_pattern_file(data_bitstring_padded, outputfile=fname, links=links.flatten())
-    # save file for the simulation
-    indir = "../simulation/firmware/hdl/"
-    fname = indir + "/inputPattern.mem"
-    write_pattern_file(data_bitstring_padded, outputfile=fname, links=links.flatten())
-    # checking first frame
-    if debug:
-        for row in range(3, 12):
-            f = open(fname, 'r')
-            print(f.readlines()[row])
-
-    return indeces, repetitions
-
-
 def pattern_producer_prescale_test(n_algo_bits, debug=False):
-    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, 1152, 113, False, debug)
+    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, 576*3, 113, False, debug)
 
     Available_links = get_Available_links(args)
 
@@ -256,14 +215,14 @@ def pattern_producer_prescale_test(n_algo_bits, debug=False):
 def pattern_producer_trggmask_test(debug=False):
     Possibile_rep = range(int(113))
     N_trigg_masks = 8
-    Algos_per_trigg = int(1152 / N_trigg_masks)
+    Algos_per_trigg = int(576*3 / N_trigg_masks)
 
-    algo_subset = np.random.choice(1152, [N_trigg_masks, Algos_per_trigg], replace=False)
+    algo_subset = np.random.choice(576*3, [N_trigg_masks, Algos_per_trigg], replace=False)
     rep_per_trigg = np.random.choice(Possibile_rep, size=N_trigg_masks, replace=True)
 
     indeces = []
     positions = []
-    algo_matrix = np.zeros((1152, 113), bool)
+    algo_matrix = np.zeros((576*3, 113), bool)
 
     for i in range(N_trigg_masks):
         algos_position = np.random.choice(Possibile_rep, size=rep_per_trigg[i], replace=False)
@@ -294,7 +253,7 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, debug=False):
         raise Exception(
             "n_algo_bits must be larger than n_veto_bits, \nvalues got %d and %d" % (n_algo_bits, n_veto_bits))
 
-    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, 1152, 113, True, debug)
+    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, 576*3, 113, True, debug)
     algo_matrix_veto = np.copy(algo_matrix)
     veto_indeces = np.random.choice(indeces, size=n_veto_bits, replace=False)
     veto_matrix = np.zeros((n_veto_bits, 113), bool)
@@ -321,8 +280,8 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, debug=False):
 
 
 def pattern_producer_BXmask_test(p_algo, p_mask, debug=False):
-    BX_mask = np.random.choice(a=[False, True], size=(1152, 113), p=[p_mask, 1 - p_mask])
-    algo_matrix = np.random.choice(a=[False, True], size=(1152, 113), p=[p_algo, 1 - p_algo])
+    BX_mask = np.random.choice(a=[False, True], size=(576*3, 113), p=[p_mask, 1 - p_mask])
+    algo_matrix = np.random.choice(a=[False, True], size=(576*3, 113), p=[p_algo, 1 - p_algo])
     algo_matrix_masked = np.logical_and(algo_matrix, BX_mask).astype(bool)
 
     rep_tot = np.sum(algo_matrix_masked, 1).astype(np.uint32)

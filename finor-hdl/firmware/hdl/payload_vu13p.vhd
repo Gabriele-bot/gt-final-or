@@ -272,13 +272,13 @@ begin
         begin
             if rising_edge(clk_p) then
                 -- unprescaled
-                algos_link_regs(i)(algos_link_regs(i)'high downto 1) <= algos_link_regs(0)(algos_link_regs(0)'high - 1 downto 0);
+                algos_link_regs(i)(algos_link_regs(i)'high downto 1) <= algos_link_regs(i)(algos_link_regs(i)'high - 1 downto 0);
 
                 -- after bxmask
-                algos_bxmask_link_regs(i)(algos_bxmask_link_regs(i)'high downto 1) <= algos_bxmask_link_regs(0)(algos_bxmask_link_regs(0)'high - 1 downto 0);
+                algos_bxmask_link_regs(i)(algos_bxmask_link_regs(i)'high downto 1) <= algos_bxmask_link_regs(i)(algos_bxmask_link_regs(i)'high - 1 downto 0);
 
                 -- after bxmask prescaled
-                algos_presc_link_regs(i)(algos_presc_link_regs(i)'high downto 1) <= algos_presc_link_regs(0)(algos_presc_link_regs(0)'high - 1 downto 0);
+                algos_presc_link_regs(i)(algos_presc_link_regs(i)'high downto 1) <= algos_presc_link_regs(i)(algos_presc_link_regs(i)'high - 1 downto 0);
             end if;
         end process;
     end generate;

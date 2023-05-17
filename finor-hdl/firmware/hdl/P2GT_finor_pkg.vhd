@@ -46,7 +46,7 @@ package P2GT_finor_pkg is
     constant OUTPUT_channel : natural := 96;
     constant OUTPUT_quad    : natural := 24;
 
-    constant OUTPUT_algo_channels : ChannelSystemMap(N_MONITOR_SLR * 3 - 1 downto 0) := (30, 29, 28, 26, 25, 24, 103, 101, 102);
+    constant OUTPUT_algo_channels : ChannelSystemMap(N_MONITOR_SLR * 3 - 1 downto 0) := (30, 29, 28, 26, 25, 24, 102, 101, 100);
     constant OUTPUT_algo_quads    : QuadSystemMap(N_MONITOR_SLR - 1 downto 0)        := (7, 6, 25);
     constant DEBUG_channels       : ChannelSystemMap(2 - 1 downto 0)                 := (31, 27);
     constant DEBUG_quads          : QuadSystemMap(2 - 1 downto 0)                    := (7, 6);
