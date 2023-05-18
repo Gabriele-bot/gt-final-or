@@ -293,39 +293,6 @@ begin
     q(OUTPUT_algo_channels(1)) <= algos_bxmask_link_regs(0)(algos_bxmask_link_regs(0)'high);
     q(OUTPUT_algo_channels(0)) <= algos_presc_link_regs(0)(algos_presc_link_regs(0)'high);
 
-    --------------------------------------------------------------------------------
-    ------------------------------DEBUG OUT-----------------------------------------
-    --------------------------------------------------------------------------------
-    SLRout_ctrs_align_i : entity work.CTRS_fixed_alignment
-        generic map(
-            MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            DELAY_OFFSET    => SLR_CROSSING_LATENCY + 9 + 4
-        )
-        port map(
-            clk360         => clk_p,
-            rst360         => rst_loc(DEBUG_quads(0)),
-            clk40          => clk_payload(2),
-            rst40          => rst_payload(2),
-            ctrs_delay_lkd => delay_out_lkd_regs(0)(delay_out_lkd_regs(0)'high),
-            ctrs_delay_val => delay_out_regs(0)(delay_out_regs(0)'high),
-            ctrs_in        => ctrs(DEBUG_quads(0)),
-            ctrs_out       => ctrs_debug
-        );
-
-    q(DEBUG_channels(0)).data(8 + 1 + 12 + 4 - 1 downto 0) <= ctrs_debug.ttc_cmd & ctrs_debug.l1a & ctrs_debug.bctr & ctrs_debug.pctr;
-    q(DEBUG_channels(0)).data(63 downto 8 + 1 + 12 + 4)    <= (others => '0');
-    q(DEBUG_channels(0)).start_of_orbit                    <= '1' when (ctrs_debug.bctr = std_logic_vector(to_unsigned(0, 12)) and ctrs_debug.pctr = std_logic_vector(to_unsigned(0, 4))) else '0';
-    q(DEBUG_channels(0)).start                             <= '1' when (ctrs_debug.pctr = std_logic_vector(to_unsigned(0, 4))) else '0';
-    q(DEBUG_channels(0)).last                              <= '1' when (ctrs_debug.pctr = std_logic_vector(to_unsigned(8, 4))) else '0';
-    q(DEBUG_channels(0)).valid                             <= not (rst_loc(DEBUG_quads(0)));
-
-    q(DEBUG_channels(1)).data(8 + 1 + 12 + 4 - 1 downto 0) <= ctrs(DEBUG_quads(1)).ttc_cmd & ctrs(DEBUG_quads(1)).l1a & ctrs(DEBUG_quads(1)).bctr & ctrs(DEBUG_quads(1)).pctr;
-    q(DEBUG_channels(1)).data(63 downto 8 + 1 + 12 + 4)    <= (others => '0');
-    q(DEBUG_channels(1)).start_of_orbit                    <= '1' when (ctrs(DEBUG_quads(1)).bctr = std_logic_vector(to_unsigned(0, 12)) and ctrs(DEBUG_quads(1)).pctr = std_logic_vector(to_unsigned(0, 4))) else '0';
-    q(DEBUG_channels(1)).start                             <= '1' when (ctrs(DEBUG_quads(1)).pctr = std_logic_vector(to_unsigned(0, 4))) else '0';
-    q(DEBUG_channels(1)).last                              <= '1' when (ctrs(DEBUG_quads(1)).pctr = std_logic_vector(to_unsigned(8, 4))) else '0';
-    q(DEBUG_channels(1)).valid                             <= not (rst_loc(DEBUG_quads(1)));
-
     gpio    <= (others => '0');
     gpio_en <= (others => '0');
 
