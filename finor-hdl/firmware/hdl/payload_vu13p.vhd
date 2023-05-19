@@ -56,6 +56,9 @@ architecture rtl of emp_payload is
 
     signal ctrs_debug : ttc_stuff_t;
 
+    type SLR_ldata_t is array (N_MONITOR_SLR - 1 downto 0) of ldata(INPUT_LINKS_SLR - 1 downto 0);
+    signal d_ldata_slr : SLR_ldata_t;
+
     type SLRCross_delay_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
     type SLRdelay_t is array (N_MONITOR_SLR - 1 downto 0) of SLRCross_delay_t;
     signal delay_out_regs : SLRdelay_t := (others => (others => std_logic_vector(to_unsigned(MAX_CTRS_DELAY_360, log2c(MAX_CTRS_DELAY_360)))));
@@ -119,6 +122,12 @@ begin
             ipb_from_slaves => ipb_from_slaves
         );
 
+    d_SLR_ldata_fill_g : for i in 0 to INPUT_LINKS_SLR - 1 generate
+        d_ldata_slr(0)(i) <= d(SLRn0_INPUT_CHANNELS(i));
+        d_ldata_slr(1)(i) <= d(SLRn1_INPUT_CHANNELS(i));
+        d_ldata_slr(2)(i) <= d(SLRn2_INPUT_CHANNELS(i));
+    end generate;
+
     SLRn2_module : entity work.SLR_Monitoring_unit
         generic map(
             NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
@@ -129,16 +138,15 @@ begin
         port map(
             clk                    => clk,
             rst                    => rst,
-            ipb_in                 => ipb_to_slaves(N_SLV_SLRn2_MONITOR),
-            ipb_out                => ipb_from_slaves(N_SLV_SLRn2_MONITOR),
+            ipb_in                 => ipb_to_slaves(N_SLV_SLRN2_MONITOR),
+            ipb_out                => ipb_from_slaves(N_SLV_SLRN2_MONITOR),
             clk360                 => clk_p,
-            rst360_r               => rst_loc(SLRn2_quads(0)),
-            rst360_l               => rst_loc(SLRn2_quads(5)), --TODO need to get rid of the hard coding
+            rst360_r               => rst_loc(SLRn2_INPUT_QUADS(0)),
+            rst360_l               => rst_loc(SLRn2_INPUT_QUADS(5)), --TODO need to get rid of the hard coding
             clk40                  => clk_payload(2),
             rst40                  => rst_payload(2),
-            ctrs                   => ctrs(SLRn2_quads(0)),
-            d(11 downto 0)         => d(SLRn2_channels(11) downto SLRn2_channels(0)),
-            d(23 downto 12)        => d(SLRn2_channels(23) downto SLRn2_channels(12)),
+            ctrs                   => ctrs(SLRn2_INPUT_QUADS(0)),
+            d                      => d_ldata_slr(2),
             delay_lkd_o            => delay_out_lkd_regs(2)(0),
             delay_o                => delay_out_regs(2)(0),
             trigger_o              => trgg_regs(2)(0),
@@ -160,16 +168,15 @@ begin
         port map(
             clk                    => clk,
             rst                    => rst,
-            ipb_in                 => ipb_to_slaves(N_SLV_SLRn1_MONITOR),
-            ipb_out                => ipb_from_slaves(N_SLV_SLRn1_MONITOR),
+            ipb_in                 => ipb_to_slaves(N_SLV_SLRN1_MONITOR),
+            ipb_out                => ipb_from_slaves(N_SLV_SLRN1_MONITOR),
             clk360                 => clk_p,
-            rst360_r               => rst_loc(SLRn1_quads(0)),
-            rst360_l               => rst_loc(SLRn1_quads(5)), --TODO need to get rid of the hard coding
+            rst360_r               => rst_loc(SLRn1_INPUT_QUADS(0)),
+            rst360_l               => rst_loc(SLRn1_INPUT_QUADS(5)), --TODO need to get rid of the hard coding
             clk40                  => clk_payload(2),
             rst40                  => rst_payload(2),
-            ctrs                   => ctrs(SLRn1_quads(0)),
-            d(11 downto 0)         => d(SLRn1_channels(11) downto SLRn1_channels(0)),
-            d(23 downto 12)        => d(SLRn1_channels(23) downto SLRn1_channels(12)),
+            ctrs                   => ctrs(SLRn1_INPUT_QUADS(0)),
+            d                      => d_ldata_slr(1),
             delay_lkd_o            => delay_out_lkd_regs(1)(0),
             delay_o                => delay_out_regs(1)(0),
             trigger_o              => trgg_regs(1)(0),
@@ -191,16 +198,15 @@ begin
         port map(
             clk                    => clk,
             rst                    => rst,
-            ipb_in                 => ipb_to_slaves(N_SLV_SLRn0_MONITOR),
-            ipb_out                => ipb_from_slaves(N_SLV_SLRn0_MONITOR),
+            ipb_in                 => ipb_to_slaves(N_SLV_SLRN0_MONITOR),
+            ipb_out                => ipb_from_slaves(N_SLV_SLRN0_MONITOR),
             clk360                 => clk_p,
-            rst360_r               => rst_loc(SLRn0_quads(0)),
-            rst360_l               => rst_loc(SLRn0_quads(5)), --TODO need to get rid of the hard coding
+            rst360_r               => rst_loc(SLRn0_INPUT_QUADS(0)),
+            rst360_l               => rst_loc(SLRn0_INPUT_QUADS(5)), --TODO need to get rid of the hard coding
             clk40                  => clk_payload(2),
             rst40                  => rst_payload(2),
-            ctrs                   => ctrs(SLRn0_quads(0)),
-            d(11 downto 0)         => d(SLRn0_channels(11) downto SLRn0_channels(0)),
-            d(23 downto 12)        => d(SLRn0_channels(23) downto SLRn0_channels(12)),
+            ctrs                   => ctrs(SLRn0_INPUT_QUADS(0)),
+            d                      => d_ldata_slr(0),
             delay_lkd_o            => delay_out_lkd_regs(0)(0),
             delay_o                => delay_out_regs(0)(0),
             trigger_o              => trgg_regs(0)(0),
@@ -216,14 +222,12 @@ begin
         cross_SLR : process(clk_p)
         begin
             if rising_edge(clk_p) then
-                delay_out_regs(i)(delay_out_regs(i)'high downto 1) <= delay_out_regs(i)(delay_out_regs(i)'high - 1 downto 0);
-
+                delay_out_regs(i)(delay_out_regs(i)'high downto 1)         <= delay_out_regs(i)(delay_out_regs(i)'high - 1 downto 0);
                 delay_out_lkd_regs(i)(delay_out_lkd_regs(i)'high downto 1) <= delay_out_lkd_regs(i)(delay_out_lkd_regs(i)'high - 1 downto 0);
 
                 valid_out_regs(i)(valid_out_regs(i)'high downto 1) <= valid_out_regs(i)(valid_out_regs(i)'high - 1 downto 0);
 
-                trgg_regs(i)(trgg_regs(i)'high downto 1) <= trgg_regs(i)(trgg_regs(i)'high - 1 downto 0);
-
+                trgg_regs(i)(trgg_regs(i)'high downto 1)           <= trgg_regs(i)(trgg_regs(i)'high - 1 downto 0);
                 trgg_prvw_regs(i)(trgg_prvw_regs(i)'high downto 1) <= trgg_prvw_regs(i)(trgg_prvw_regs(i)'high - 1 downto 0);
 
                 veto_regs(i)(veto_regs(i)'high downto 1) <= veto_regs(i)(veto_regs(i)'high - 1 downto 0);
@@ -260,15 +264,15 @@ begin
             veto_0      => veto_regs(0)(veto_regs(0)'high),
             veto_1      => veto_regs(1)(veto_regs(1)'high),
             veto_2      => veto_regs(2)(veto_regs(2)'high),
-            q(0)        => q(OUTPUT_channel)
+            q(0)        => q(OUTPUT_CHANNEL)
         );
 
     --------------------------------------------------------------------------------
-    -------------------------ALGOBITS LINKS SLR CORSSING----------------------------
+    --------------------ALGOBITS LINKS SLR CORSSING LATENCY-------------------------
     --------------------------------------------------------------------------------
 
-    gen_crossSLR_algo_l : for i in 0 to N_MONITOR_SLR - 1 generate
-        cross_SLR_algo : process(clk_p)
+    gen_crossSLR_latency_algo_l : for i in 0 to N_MONITOR_SLR - 1 generate
+        delay_SLR_algos_link : process(clk_p)
         begin
             if rising_edge(clk_p) then
                 -- unprescaled
@@ -283,15 +287,15 @@ begin
         end process;
     end generate;
 
-    q(OUTPUT_algo_channels(8)) <= algos_link_regs(2)(algos_link_regs(2)'high);
-    q(OUTPUT_algo_channels(7)) <= algos_bxmask_link_regs(2)(algos_bxmask_link_regs(2)'high);
-    q(OUTPUT_algo_channels(6)) <= algos_presc_link_regs(2)(algos_presc_link_regs(2)'high);
-    q(OUTPUT_algo_channels(5)) <= algos_link_regs(1)(algos_link_regs(1)'high);
-    q(OUTPUT_algo_channels(4)) <= algos_bxmask_link_regs(1)(algos_bxmask_link_regs(1)'high);
-    q(OUTPUT_algo_channels(3)) <= algos_presc_link_regs(1)(algos_presc_link_regs(1)'high);
-    q(OUTPUT_algo_channels(2)) <= algos_link_regs(0)(algos_link_regs(0)'high);
-    q(OUTPUT_algo_channels(1)) <= algos_bxmask_link_regs(0)(algos_bxmask_link_regs(0)'high);
-    q(OUTPUT_algo_channels(0)) <= algos_presc_link_regs(0)(algos_presc_link_regs(0)'high);
+    q(SLRn2_OUTPUT_CHANNELS(0)) <= algos_link_regs(2)(algos_link_regs(2)'high);
+    q(SLRn2_OUTPUT_CHANNELS(1)) <= algos_bxmask_link_regs(2)(algos_bxmask_link_regs(2)'high);
+    q(SLRn2_OUTPUT_CHANNELS(2)) <= algos_presc_link_regs(2)(algos_presc_link_regs(2)'high);
+    q(SLRn1_OUTPUT_CHANNELS(0)) <= algos_link_regs(1)(algos_link_regs(1)'high);
+    q(SLRn1_OUTPUT_CHANNELS(1)) <= algos_bxmask_link_regs(1)(algos_bxmask_link_regs(1)'high);
+    q(SLRn1_OUTPUT_CHANNELS(2)) <= algos_presc_link_regs(1)(algos_presc_link_regs(1)'high);
+    q(SLRn0_OUTPUT_CHANNELS(0)) <= algos_link_regs(0)(algos_link_regs(0)'high);
+    q(SLRn0_OUTPUT_CHANNELS(1)) <= algos_bxmask_link_regs(0)(algos_bxmask_link_regs(0)'high);
+    q(SLRn0_OUTPUT_CHANNELS(2)) <= algos_presc_link_regs(0)(algos_presc_link_regs(0)'high);
 
     gpio    <= (others => '0');
     gpio_en <= (others => '0');
