@@ -203,11 +203,11 @@ if args.test == 'prescaler':
             HWtest.hw.dispatch()
         o_ctr_temp = o_ctr
 
-        ready_2, ready_1, ready_0 = HWtest.check_counter_ready_flags()
-        while not (ready_2 and ready_1 and ready_0):
+        ready = HWtest.check_counter_ready_flags()
+        while not (ready[2] and ready[1] and ready[0]):
             print("Counters are not ready to be read")
             time.sleep(5)
-            ready_2, ready_1, ready_0 = HWtest.check_counter_ready_flags()
+            ready = HWtest.check_counter_ready_flags()
 
         cnt_before = HWtest.read_cnt_arr(0)
         cnt_after = HWtest.read_cnt_arr(1)
@@ -675,11 +675,11 @@ elif args.test == 'BXmask':
             HWtest.hw.dispatch()
         o_ctr_temp = o_ctr
 
-        ready_1, ready_0 = HWtest.check_counter_ready_flags()
-        while not (ready_1 and ready_0):
+        ready = HWtest.check_counter_ready_flags()
+        while not (ready[2] and ready[1] and ready[0]):
             print("Counters are not ready to be read")
             time.sleep(5)
-            ready_1, ready_0 = HWtest.check_counter_ready_flags()
+            ready = HWtest.check_counter_ready_flags()
 
         # ttcStatus = ttcNode.readStatus()
         print("Current orbit counter = %d" % o_ctr)
