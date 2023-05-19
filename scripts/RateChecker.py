@@ -713,9 +713,9 @@ elif args.test == 'BXmask':
 elif args.test == 'algo-out':
 
     # TODO maybe put this in a config file? Or directly parse the vhdl pkg?
-    unprescaled_low_bits_link = 102
-    unprescaled_mid_bits_link = 26
-    unprescaled_high_bits_link = 30
+    unprescaled_low_bits_link = 4
+    unprescaled_mid_bits_link = 40
+    unprescaled_high_bits_link = 52
 
     in_valid, in_data, _ = read_pattern_file('Pattern_files/Finor_input_pattern_prescaler_test.txt', True)
     try:
@@ -763,8 +763,8 @@ elif args.test == 'algo-out':
         raise Exception('Mismatch was found, check your pattern files and/or the registers')
 
     temp_or = np.zeros(np.shape(in_data)[1], dtype=np.uint64)
-    temp_data_in = in_valid[len(input_links[1]):(len(input_links[1]) + len(input_links[2]))] * \
-                   in_data[len(input_links[1]):(len(input_links[1]) + len(input_links[2]))]
+    temp_data_in = in_valid[len(input_links[0]) + len(input_links[1]):(len(input_links[0]) + len(input_links[1]) + len(input_links[2]))] * \
+                   in_data[len(input_links[0]) + len(input_links[1]):(len(input_links[0]) + len(input_links[1]) + len(input_links[2]))]
 
     for i in range(np.shape(input_links)[1]):
         temp_or = np.bitwise_or(temp_or, temp_data_in[i, :])
@@ -775,7 +775,7 @@ elif args.test == 'algo-out':
             output_link_data = np.append(output_link_data, out_data[np.where(links == unprescaled_high_bits_link), i])
 
     if np.array_equal(output_link_data, temp_or[:len(output_link_data)]):
-        print("Mid output algobit pattern match the input data ORing (unprescaled)")
+        print("High output algobit pattern match the input data ORing (unprescaled)")
     else:
         raise Exception('Mismatch was found, check your pattern files and/or the registers')
 
