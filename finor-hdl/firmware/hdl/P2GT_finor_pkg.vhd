@@ -43,14 +43,14 @@ package P2GT_finor_pkg is
     constant SLRn1_INPUT_QUADS    : ChannelSystemMap(INPUT_LINKS_SLR / 4 - 1 downto 0) := (22, 21, 20, 11, 10, 9);
     constant SLRn2_INPUT_QUADS    : ChannelSystemMap(INPUT_LINKS_SLR / 4 - 1 downto 0) := (19, 18, 17, 14, 13, 12);
 
-    constant SLRn0_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (6, 5, 4);
-    constant SLRn1_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (42, 41, 40);
-    constant SLRn2_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (54, 53, 52);
-    constant SLRn0_OUTPUT_QUAD     : natural                          := 1;
-    constant SLRn1_OUTPUT_QUAD     : natural                          := 10;
-    constant SLRn2_OUTPUT_QUAD     : natural                          := 13;
+    constant SLRn0_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (26, 25, 24);
+    constant SLRn1_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (30, 29, 28);
+    constant SLRn2_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (98, 97, 96);
+    constant SLRn0_OUTPUT_QUAD     : natural                          := 6;
+    constant SLRn1_OUTPUT_QUAD     : natural                          := 7;
+    constant SLRn2_OUTPUT_QUAD     : natural                          := 24;
 
-    constant OUTPUT_CHANNEL : natural := 96;
+    constant OUTPUT_CHANNEL : natural := 99;
     constant OUTPUT_QUAD    : natural := 24;
 
     type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(LWORD_WIDTH * 9 - 1 downto 0);
