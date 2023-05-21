@@ -58,7 +58,7 @@ begin
             DATA_WIDTH         => CTRS_FLATTEN_WIDTH,
             MAX_DELAY          => MAX_LATENCY_360 + DELAY_OFFSET,
             RESET_WITH_NEW_DEL => FALSE,
-            STYLE              => "auto"
+            STYLE              => "block"
         )
         port map(
             clk       => clk360,
