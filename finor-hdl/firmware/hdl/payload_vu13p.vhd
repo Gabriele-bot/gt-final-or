@@ -55,6 +55,10 @@ architecture rtl of emp_payload is
     signal valid_in       : std_logic;
 
     signal ctrs_debug : ttc_stuff_t;
+    
+    type SLR_ldata_t is array (N_MONITOR_SLR - 1 downto 0) of ldata(INPUT_LINKS_SLR - 1 downto 0);
+    signal d_ldata_slr : SLR_ldata_t;
+    
 
     type SLRCross_delay_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
     type SLRdelay_t is array (N_MONITOR_SLR - 1 downto 0) of SLRCross_delay_t;
@@ -118,6 +122,12 @@ begin
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );
+        
+    d_SLR_ldata_fill_g : for i in 0 to INPUT_LINKS_SLR - 1 generate
+        d_ldata_slr(0)(i) <= d(SLRn0_INPUT_CHANNELS(i));
+        d_ldata_slr(1)(i) <= d(SLRn1_INPUT_CHANNELS(i));
+        d_ldata_slr(2)(i) <= d(SLRn2_INPUT_CHANNELS(i));
+    end generate;
 
 
     SLRn2_module : entity work.SLR_Monitoring_unit
