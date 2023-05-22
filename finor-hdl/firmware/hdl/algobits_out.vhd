@@ -45,7 +45,7 @@ architecture RTL of algobits_out is
 begin
 
     -- TODO put condition that N algos shuld not be greater than 576 here
-    padd_g : if N_SLR_ALGOS >= LWORD_WIDTH * 9 generate
+    padd_g : if N_SLR_ALGOS >= (LWORD_WIDTH * 9) generate
         algos_in_padded           <= algos_in(LWORD_WIDTH * 9 - 1 downto 0);
         algos_after_bxmask_padded <= algos_after_bxmask(LWORD_WIDTH * 9 - 1 downto 0);
         algos_after_prscl_padded  <= algos_after_prscl(LWORD_WIDTH * 9 - 1 downto 0);

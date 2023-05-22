@@ -28,8 +28,7 @@ package P2GT_finor_pkg is
     constant BEGIN_LUMI_SEC_BIT_SIM : integer := 3;
     constant MAX_DELAY_PDT          : integer := 511; -- corresponding to ~12.78 us  (40  MHz domain)
     constant MAX_CTRS_DELAY_360     : integer := 511; -- corresponding to ~1.42  us  (360 MHz domain)
-    constant SLR_CROSSING_LATENCY   : integer := 18;
-    constant FINOR_LATENCY          : integer := 3;
+    constant SLR_CROSSING_LATENCY   : integer := 9;
     constant N_SLR_ALGOS            : integer := 576;
     constant N_ALGOS                : integer := N_SLR_ALGOS * N_MONITOR_SLR;
     constant DESER_OUT_REG          : boolean := TRUE;
@@ -43,12 +42,25 @@ package P2GT_finor_pkg is
     constant SLRn1_INPUT_QUADS    : ChannelSystemMap(INPUT_LINKS_SLR / 4 - 1 downto 0) := (22, 21, 20, 11, 10, 9);
     constant SLRn2_INPUT_QUADS    : ChannelSystemMap(INPUT_LINKS_SLR / 4 - 1 downto 0) := (19, 18, 17, 14, 13, 12);
 
-    constant SLRn0_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (26, 25, 24);
-    constant SLRn1_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (30, 29, 28);
-    constant SLRn2_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (98, 97, 96);
-    constant SLRn0_OUTPUT_QUAD     : natural                          := 6;
-    constant SLRn1_OUTPUT_QUAD     : natural                          := 7;
-    constant SLRn2_OUTPUT_QUAD     : natural                          := 24;
+    -- =================================================================================
+    -- OUTPUTs on SLR1
+    -- =================================================================================
+    --constant SLRn0_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (26, 25, 24);
+    --constant SLRn1_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (30, 29, 28);
+    --constant SLRn2_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (98, 97, 96);
+    --constant SLRn0_OUTPUT_QUAD     : natural                          := 6;
+    --constant SLRn1_OUTPUT_QUAD     : natural                          := 7;
+    --constant SLRn2_OUTPUT_QUAD     : natural                          := 24;
+
+    -- =================================================================================
+    -- OUTPUTS on the same SLR as the inputs
+    -- =================================================================================
+    constant SLRn0_OUTPUT_CHANNELS : ChannelSystemMap(N_MONITOR_SLR - 1 downto 0) := (6, 5, 4);
+    constant SLRn1_OUTPUT_CHANNELS : ChannelSystemMap(N_MONITOR_SLR - 1 downto 0) := (42, 41, 40);
+    constant SLRn2_OUTPUT_CHANNELS : ChannelSystemMap(N_MONITOR_SLR - 1 downto 0) := (54, 53, 52);
+    constant SLRn0_OUTPUT_QUAD     : natural                                      := 1;
+    constant SLRn1_OUTPUT_QUAD     : natural                                      := 10;
+    constant SLRn2_OUTPUT_QUAD     : natural                                      := 13;
 
     constant OUTPUT_CHANNEL : natural := 99;
     constant OUTPUT_QUAD    : natural := 24;
