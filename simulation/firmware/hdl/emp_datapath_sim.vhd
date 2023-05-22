@@ -118,7 +118,7 @@ architecture RTL of emp_datapath_sim is
 
     --signal tmt_sync_i, tmt_sync                                                : tmt_sync_t;
     signal rst_i, bctr_lock, bc0, oc0, go, bmax : std_logic;
-    signal rst_p_d, rst_p_dd                    : std_logic := '0';
+    signal rst_p_del_array                      : std_logic_vector(9 downto 0) := (others => '0');
     signal clr                                  : std_logic;
     --signal cap_bus_i, cap_bus                                                : daq_cap_bus;
     signal pctr                                 : pctr_t;
@@ -131,15 +131,15 @@ begin
     ipb_out.ipb_ack   <= ipb_in.ipb_strobe;
     ipb_out.ipb_err   <= '0';
 
+    rst_p_del_array(0) <= rst_p;
     process(clk_p)
     begin
         if rising_edge(clk_p) then
-            rst_p_d  <= rst_p;
-            rst_p_dd <= rst_p_d;
+            rst_p_del_array(rst_p_del_array'high downto 1) <= rst_p_del_array(rst_p_del_array'high - 1 downto 0);
         end if;
     end process;
 
-    clr <= rst_p_dd or rst_p;
+    clr <= rst_p_del_array(2) or rst_p;
 
     ------------------------------------------
     -- Bunch counter
@@ -157,7 +157,7 @@ begin
         )
         port map(
             clk  => clk_p,
-            rst  => rst_p,
+            rst  => rst_p_del_array(5),
             clr  => '0',
             bc0  => bc0,
             oc0  => oc0,
@@ -185,11 +185,11 @@ begin
             gDebugMessages  => debug
         )
         port map(
-            clk_p,
-            rst_p,
-            pctr,
-            bctr,
-            q_int
+            clk      => clk_p,
+            rst      => rst_p_del_array(5),
+            pctr     => pctr,
+            bctr     => bctr,
+            LinkData => q_int
         );
 
     sink : entity work.EMPCaptureFileWriter
@@ -201,17 +201,17 @@ begin
             gDebugMessages => debug
         )
         port map(
-            clk_p,
-            rst_p,
-            pctr,
-            bctr,
-            d_int
+            clk      => clk_p,
+            rst      => rst_p_del_array(5),
+            pctr     => pctr,
+            bctr     => bctr,
+            LinkData => d_int
         );
 
     sgen : for i in 0 to N_REGION - 1 generate
     begin
         -- Outputs to local logic 
-        rst_out(i)          <= rst_p;
+        rst_out(i)          <= rst_p_del_array(5);
         ctrs_out(i).ttc_cmd <= ttc_cmd;
         ctrs_out(i).l1a     <= ttc_l1a; --l1a;
         ctrs_out(i).bctr    <= bctr;

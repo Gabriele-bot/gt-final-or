@@ -74,10 +74,10 @@ src -c emp-fwk:components/datapath emp_data_types.vhd
 
 
 
-src tb_decl.vhd
+src --vhdl2008 tb_decl.vhd
 
 
-src emp_datapath_sim.vhd
+src --vhdl2008  emp_datapath_sim.vhd
 
 src -c emp-fwk:components/framework emp_device_types.vhd 
 #src emp_device_decl.vhd 
