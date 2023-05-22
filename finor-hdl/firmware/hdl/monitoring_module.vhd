@@ -53,7 +53,7 @@ end monitoring_module;
 
 architecture rtl of monitoring_module is
 
-    constant NULL_VETO_MASK   : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    constant NULL_VETO_MASK : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
     -- fabric signals        
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
@@ -685,7 +685,8 @@ begin
     delay_element_i : entity work.delay_element_ringbuffer
         generic map(
             DATA_WIDTH => NR_ALGOS,
-            MAX_DELAY  => MAX_DELAY
+            MAX_DELAY  => MAX_DELAY,
+            STYLE      => "block"
         )
         port map(
             clk       => clk40,

@@ -29,6 +29,7 @@ src --vhdl2008 algo_pre_scaler.vhd
 src --vhdl2008 algo_rate_counter.vhd
 src --vhdl2008 algo_rate_counter_pdt.vhd 
 src --vhdl2008 algo_slice.vhd
+src --vhdl2008 SDPRAM_wrapper.vhd
 src --vhdl2008 delay_element_ringbuffer.vhd
 src --vhdl2008 Mask.vhd
 src --vhdl2008 read_FSM.vhd

@@ -27,27 +27,27 @@ end entity delay_element_ringbuffer;
 
 architecture RTL of delay_element_ringbuffer is
 
-    constant MAX_VAL_UNISGNED : unsigned(log2c(MAX_DELAY) - 1 downto 0) := (others => '1');
+    --constant MAX_VAL_UNISGNED : unsigned(log2c(MAX_DELAY) - 1 downto 0) := (others => '1');
 
-    type ram_type is array (0 to 2 ** log2c(MAX_DELAY) - 1) of std_logic_vector(data_i'range);
-    signal ram : ram_type := (others => (others => '0'));
+    --type ram_type is array (0 to 2 ** log2c(MAX_DELAY) - 1) of std_logic_vector(data_i'range);
+    --signal ram : ram_type := (others => (others => '0'));
 
-    subtype index_type is integer range ram_type'range;
+    subtype index_type is integer range 0 to 2 ** log2c(MAX_DELAY) - 1;
     signal head : index_type;
     signal tail : index_type;
 
     signal head_unsigned : unsigned(log2c(MAX_DELAY) - 1 downto 0);
     signal tail_unsigned : unsigned(log2c(MAX_DELAY) - 1 downto 0);
 
-    signal curr_delay : unsigned(log2c(MAX_DELAY) - 1 downto 0)         := (others => '0');
-    signal delay_reg  : std_logic_vector(log2c(MAX_DELAY) - 1 downto 0) := (others => '0');
+    --signal curr_delay : unsigned(log2c(MAX_DELAY) - 1 downto 0)         := (others => '0');
+    signal delay_reg : std_logic_vector(log2c(MAX_DELAY) - 1 downto 0) := (others => '0');
 
     signal rst_loc : std_logic;
 
     signal data_out_s : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
-    attribute ram_style : string;
-    attribute ram_style of ram : signal is STYLE;
+    --attribute ram_style : string;
+    --attribute ram_style of ram : signal is STYLE;
 
     -- Increment and wrap
     procedure incr(signal index : inout index_type) is
@@ -113,17 +113,35 @@ begin
     tail <= to_integer(tail_unsigned);
 
     -- Write to and read from the RAM
-    PROC_RAM : process(clk)
-    begin
-        if rising_edge(clk) then
-            ram(head) <= data_i;
-            if unsigned(delay) = 1 then
-                data_out_s <= data_i;
-            else
-                data_out_s <= ram(tail);
-            end if;
-        end if;
-    end process;
+    --PROC_RAM : process(clk)
+    --begin
+    --    if rising_edge(clk) then
+    --        ram(head) <= data_i;
+    --        if unsigned(delay) = 1 then
+    --            data_out_s <= data_i;
+    --        else
+    --            data_out_s <= ram(tail);
+    --        end if;
+    --    end if;
+    --end process;
+
+    RAM_wrapper : entity work.SDPRAM_wrapper
+        generic map(
+            ADDR_WIDTH => log2c(MAX_DELAY),
+            DATA_WIDTH => DATA_WIDTH,
+            STYLE      => STYLE
+        )
+        port map(
+            clk   => clk,
+            rst   => rst,
+            ena   => not rst_loc,
+            wea   => not rst_loc,
+            addra => std_logic_vector(head_unsigned),
+            din   => data_i,
+            enb   => delay_lkd,
+            addrb => std_logic_vector(tail_unsigned),
+            dout  => data_out_s
+        );
 
     PROC_OUT : process(delay, data_out_s, delay_lkd, data_i)
     begin
