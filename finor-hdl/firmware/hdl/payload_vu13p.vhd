@@ -50,32 +50,32 @@ architecture rtl of emp_payload is
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
     signal ipb_from_slaves : ipb_rbus_array(N_SLAVES - 1 downto 0);
 
-    type SLRvalid_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    type SLRvalid_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0);
     signal valid_out_regs : SLRvalid_t := (others => (others => '0'));
-    signal valid_in       : std_logic := '0';
+    signal valid_in       : std_logic  := '0';
 
     signal ctrs_debug : ttc_stuff_t;
 
     type SLR_ldata_t is array (N_MONITOR_SLR - 1 downto 0) of ldata(INPUT_LINKS_SLR - 1 downto 0);
     signal d_ldata_slr : SLR_ldata_t;
 
-    type SLRCross_delay_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
+    type SLRCross_delay_t is array (SLR_CROSSING_LATENCY_TRIGGERBITS downto 0) of std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
     type SLRdelay_t is array (N_MONITOR_SLR - 1 downto 0) of SLRCross_delay_t;
     signal delay_out_regs : SLRdelay_t := (others => (others => std_logic_vector(to_unsigned(MAX_CTRS_DELAY_360, log2c(MAX_CTRS_DELAY_360)))));
 
-    type SLRdelay_lkd_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    type SLRdelay_lkd_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0);
     signal delay_out_lkd_regs : SLRdelay_lkd_t := (others => (others => '0'));
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
-    type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY downto 0) of std_logic_vector(N_TRIGG - 1 downto 0);
+    type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY_TRIGGERBITS downto 0) of std_logic_vector(N_TRIGG - 1 downto 0);
     type SLRtrigg_t is array (N_MONITOR_SLR - 1 downto 0) of SLRCross_trigg_t;
     signal trgg_regs      : SLRtrigg_t := (others => (others => (others => '0')));
     signal trgg_prvw_regs : SLRtrigg_t := (others => (others => (others => '0')));
 
-    type SLRveto_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY downto 0);
+    type SLRveto_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0);
     signal veto_regs : SLRveto_t := (others => (others => '0'));
 
-    type SLRCross_lword_reg_t is array (SLR_CROSSING_LATENCY - 1 downto 0) of lword; -- minus one due to some register in the mux
+    type SLRCross_lword_reg_t is array (SLR_CROSSING_LATENCY_ALGOBITS - 1 downto 0) of lword; -- minus one due to some register in the mux
     type SLRlword_t is array (N_MONITOR_SLR - 1 downto 0) of SLRCross_lword_reg_t;
     signal algos_link_regs        : SLRlword_t := (others => (others => LWORD_NULL));
     signal algos_bxmask_link_regs : SLRlword_t := (others => (others => LWORD_NULL));
@@ -183,7 +183,8 @@ begin
             trigger_preview_o      => trgg_prvw_regs(1)(0),
             trigger_valid_o        => valid_out_regs(1)(0),
             veto_o                 => veto_regs(1)(0),
-            q_algos_o              => algos_link_regs(1)(0), q_algos_after_bxmask_o => algos_bxmask_link_regs(1)(0),
+            q_algos_o              => algos_link_regs(1)(0),
+            q_algos_after_bxmask_o => algos_bxmask_link_regs(1)(0),
             q_algos_after_prscl_o  => algos_presc_link_regs(1)(0)
         );
 
@@ -238,6 +239,7 @@ begin
 
     SLRout_FinalOR_or : entity work.SLR_Output
         generic map(
+            NR_TRIGGERS           => N_TRIGG,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
             MAX_DELAY             => MAX_DELAY_PDT
         )

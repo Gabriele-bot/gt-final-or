@@ -16,22 +16,23 @@ package P2GT_finor_pkg is
     -- =======================================================================================================
     -- GT Final-OR definitions
     -- =======================================================================================================
-    constant N_BOARD                : integer := 12;
-    constant N_SLR_PER_BOARD        : integer := 4;
-    constant N_MONITOR_SLR          : integer := 3;
-    constant INPUT_R_LINKS_SLR      : integer := 12;
-    constant INPUT_L_LINKS_SLR      : integer := 12;
-    constant INPUT_LINKS_SLR        : integer := INPUT_R_LINKS_SLR + INPUT_L_LINKS_SLR;
-    constant INPUT_QUADS            : integer := 3 + 3;
-    constant N_TRIGG                : integer := 8;
-    constant BEGIN_LUMI_SEC_BIT     : integer := 18;
-    constant BEGIN_LUMI_SEC_BIT_SIM : integer := 3;
-    constant MAX_DELAY_PDT          : integer := 511; -- corresponding to ~12.78 us  (40  MHz domain)
-    constant MAX_CTRS_DELAY_360     : integer := 511; -- corresponding to ~1.42  us  (360 MHz domain)
-    constant SLR_CROSSING_LATENCY   : integer := 9;
-    constant N_SLR_ALGOS            : integer := 576;
-    constant N_ALGOS                : integer := N_SLR_ALGOS * N_MONITOR_SLR;
-    constant DESER_OUT_REG          : boolean := TRUE;
+    constant N_BOARD                          : integer := 12;
+    constant N_SLR_PER_BOARD                  : integer := 4;
+    constant N_MONITOR_SLR                    : integer := 3;
+    constant INPUT_R_LINKS_SLR                : integer := 12;
+    constant INPUT_L_LINKS_SLR                : integer := 12;
+    constant INPUT_LINKS_SLR                  : integer := INPUT_R_LINKS_SLR + INPUT_L_LINKS_SLR;
+    constant INPUT_QUADS                      : integer := 3 + 3;
+    constant N_TRIGG                          : integer := 8;
+    constant BEGIN_LUMI_SEC_BIT               : integer := 18;
+    constant BEGIN_LUMI_SEC_BIT_SIM           : integer := 3;
+    constant MAX_DELAY_PDT                    : integer := 511; -- corresponding to ~12.78 us  (40  MHz domain)
+    constant MAX_CTRS_DELAY_360               : integer := 511; -- corresponding to ~1.42  us  (360 MHz domain)
+    constant SLR_CROSSING_LATENCY_TRIGGERBITS : integer := 10;
+    constant SLR_CROSSING_LATENCY_ALGOBITS    : integer := 4;
+    constant N_SLR_ALGOS                      : integer := 576;
+    constant N_ALGOS                          : integer := N_SLR_ALGOS * N_MONITOR_SLR;
+    constant DESER_OUT_REG                    : boolean := TRUE;
 
     type ChannelSystemMap is array (natural range <>) of natural;
     type QuadSystemMap is array (natural range <>) of natural;

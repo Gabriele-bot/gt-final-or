@@ -29,7 +29,7 @@ package emp_project_decl is
     constant REGION_CONF : region_conf_array_t := (
         -------------------- SLR0 LEFT -------------------- 
         0      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR0
-        1      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR0
+        1      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25),     --input algo-bits links SLR0 & output algo-bits SLR0
         2      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR0
         3      => kDummyRegion,         -- Not Used
         -------------------- SLR1 LEFT --------------------
@@ -40,11 +40,11 @@ package emp_project_decl is
         -------------------- SLR2 LEFT --------------------
         8      => kDummyRegion,         -- Not used
         9      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2
-        10     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2
+        10     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25),     --input algo-bits links SLR2 & output algo-bits SLR2
         11     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2
         -------------------- SLR3 LEFT --------------------
         12     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR3
-        13     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR3 
+        13     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25),     --input algo-bits links SLR3 & output algo-bits SLR3
         14     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR3
         15     => kDummyRegion,         -- Unconnected
         -- Cross-chip------------------------------------------
@@ -59,7 +59,7 @@ package emp_project_decl is
         22     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2
         23     => kDummyRegion,         -- Not Used
         -------------------- SLR1 RIGHT --------------------
-        24     => (mgt_i_kind => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25), --output algo-bits SLR3 & output trigger-bits link SLR1
+        24     => (mgt_i_kind => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25), --output trigger-bits link SLR1
         25     => kDummyRegion,         -- Not Used 
         26     => kDummyRegion,         -- Unconnected
         27     => kDummyRegion,         -- HighSpeedBus

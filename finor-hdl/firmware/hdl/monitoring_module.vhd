@@ -22,6 +22,7 @@ use work.math_pkg.all;
 entity monitoring_module is
     generic(
         NR_ALGOS              : natural;
+        NR_TRIGGERS           : natural;
         PRESCALE_FACTOR_INIT  : std_logic_vector(31 DOWNTO 0) := X"00000064"; --1.00
         BEGIN_LUMI_TOGGLE_BIT : natural                       := 18;
         MAX_DELAY             : natural                       := 255;
@@ -43,8 +44,8 @@ entity monitoring_module is
         valid_algos_in          : in  std_logic;
         algos_after_bxmask_o    : out std_logic_vector(NR_ALGOS - 1 downto 0);
         algos_after_prescaler_o : out std_logic_vector(NR_ALGOS - 1 downto 0);
-        trigger_o               : out std_logic_vector(N_TRIGG - 1 downto 0);
-        trigger_preview_o       : out std_logic_vector(N_TRIGG - 1 downto 0);
+        trigger_o               : out std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trigger_preview_o       : out std_logic_vector(NR_TRIGGERS - 1 downto 0);
         valid_trigger_o         : out std_logic;
         veto_o                  : out std_logic;
         resync_o                : out std_logic
@@ -52,6 +53,9 @@ entity monitoring_module is
 end monitoring_module;
 
 architecture rtl of monitoring_module is
+    
+    attribute keep_hierarchy : string;
+    attribute keep_hierarchy of rtl : architecture is "no";
 
     constant NULL_VETO_MASK : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
@@ -78,7 +82,7 @@ architecture rtl of monitoring_module is
     signal rate_cnt_after_prescaler_preview : ipb_reg_v(NR_ALGOS - 1 downto 0);
     signal rate_cnt_post_dead_time          : ipb_reg_v(NR_ALGOS - 1 downto 0);
 
-    signal masks_ipbus_regs : ipb_reg_v(NR_ALGOS / 32 * N_TRIGG - 1 downto 0) := (others => (others => '1'));
+    signal masks_ipbus_regs : ipb_reg_v(NR_ALGOS / 32 * NR_TRIGGERS - 1 downto 0) := (others => (others => '1'));
     signal masks            : mask_arr                                        := (others => (others => '1'));
 
     signal veto_ipbus_regs          : ipb_reg_v(NR_ALGOS / 32 - 1 downto 0)   := (others => (others => '0'));
@@ -122,8 +126,8 @@ architecture rtl of monitoring_module is
 
     signal addr, addr_prscl         : std_logic_vector(log2c(NR_ALGOS) - 1 downto 0);
     signal addr_prscl_w             : std_logic_vector(log2c(NR_ALGOS) - 1 downto 0)                := (others => '0');
-    signal addr_mask                : std_logic_vector(log2c(NR_ALGOS / 32 * N_TRIGG) - 1 downto 0);
-    signal addr_mask_w              : std_logic_vector(log2c(NR_ALGOS / 32 * N_TRIGG) - 1 downto 0) := (others => '0');
+    signal addr_mask                : std_logic_vector(log2c(NR_ALGOS / 32 * NR_TRIGGERS) - 1 downto 0);
+    signal addr_mask_w              : std_logic_vector(log2c(NR_ALGOS / 32 * NR_TRIGGERS) - 1 downto 0) := (others => '0');
     signal addr_veto                : std_logic_vector(log2c(NR_ALGOS / 32) - 1 downto 0);
     signal addr_veto_w              : std_logic_vector(log2c(NR_ALGOS / 32) - 1 downto 0)           := (others => '0');
     signal we, we_mask              : std_logic;
@@ -148,8 +152,8 @@ architecture rtl of monitoring_module is
     signal veto_cnt      : std_logic_vector(RATE_COUNTER_WIDTH - 1 DOWNTO 0);
     signal veto_stat_reg : ipb_reg_v(0 downto 0);
 
-    signal trigger_out         : std_logic_vector(N_TRIGG - 1 downto 0);
-    signal trigger_out_preview : std_logic_vector(N_TRIGG - 1 downto 0);
+    signal trigger_out         : std_logic_vector(NR_TRIGGERS - 1 downto 0);
+    signal trigger_out_preview : std_logic_vector(NR_TRIGGERS - 1 downto 0);
 
 begin
 
@@ -276,7 +280,7 @@ begin
 
     trgg_mask_read_FSM_i : entity work.read_FSM
         generic map(
-            RAM_DEPTH      => NR_ALGOS / 32 * N_TRIGG,
+            RAM_DEPTH      => NR_ALGOS / 32 * NR_TRIGGERS,
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
@@ -555,7 +559,7 @@ begin
     masks_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"ffffffff",
-            ADDR_WIDTH => log2c(NR_ALGOS / 32 * N_TRIGG),
+            ADDR_WIDTH => log2c(NR_ALGOS / 32 * NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -578,7 +582,7 @@ begin
         end if;
     end process;
 
-    mask_l : for i in N_TRIGG - 1 downto 0 generate
+    mask_l : for i in NR_TRIGGERS - 1 downto 0 generate
         process(clk40)
         begin
             if rising_edge(clk40) then

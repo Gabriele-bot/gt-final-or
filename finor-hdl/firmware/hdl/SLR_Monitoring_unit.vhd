@@ -315,6 +315,7 @@ begin
     monitoring_module : entity work.monitoring_module
         generic map(
             NR_ALGOS              => N_SLR_ALGOS,
+            NR_TRIGGERS           => N_TRIGG, 
             PRESCALE_FACTOR_INIT  => X"00000064", --1.00,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
             MAX_DELAY             => MAX_DELAY

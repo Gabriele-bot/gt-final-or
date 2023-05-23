@@ -212,7 +212,7 @@ class FinOrController:
         ctrs_delay_0 = self.hw.getNode("payload.SLRn0_monitor.CSR.stat.input_delay").read()
         self.hw.dispatch()
         
-        return ctrs_delay_2, ctrs_delay_1, ctrs_delay_0
+        return ctrs_delay_0, ctrs_delay_1, ctrs_delay_2
         
     def check_alignement_error(self):
         err_2 = self.hw.getNode("payload.SLRn2_monitor.CSR.stat.align_err").read()
@@ -220,7 +220,7 @@ class FinOrController:
         err_0 = self.hw.getNode("payload.SLRn0_monitor.CSR.stat.align_err").read()
         self.hw.dispatch()
 
-        return err_2, err_1, err_0
+        return err_0, err_1, err_2
 
     def reset_alignement_error(self):
         self.hw.getNode("payload.SLRn2_monitor.CSR.ctrl.rst_align_err").write(1)
@@ -243,7 +243,7 @@ class FinOrController:
         latency_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
         self.hw.dispatch()
 
-        return latency_2, latency_1, latency_0
+        return latency_0, latency_1, latency_2
 
     def check_counter_ready_flags(self):
         ready_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.ready").read()
@@ -251,7 +251,7 @@ class FinOrController:
         ready_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.ready").read()
         self.hw.dispatch()
 
-        return ready_2, ready_1, ready_0
+        return ready_0, ready_1, ready_2
 
     def read_cnt_arr(self, sel):
         if sel == 0:

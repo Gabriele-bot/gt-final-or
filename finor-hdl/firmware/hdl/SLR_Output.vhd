@@ -20,6 +20,7 @@ use work.P2GT_finor_pkg.all;
 
 entity SLR_Output is
     generic(
+        NR_TRIGGERS : natural;
         BEGIN_LUMI_TOGGLE_BIT : natural := 18;
         MAX_DELAY             : natural := MAX_DELAY_PDT
     );
@@ -37,12 +38,12 @@ entity SLR_Output is
         delay_lkd   : in  std_logic;
         delay_in    : in  std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
         valid_in    : in  std_logic;
-        trgg_0      : in  std_logic_vector(N_TRIGG - 1 downto 0);
-        trgg_1      : in  std_logic_vector(N_TRIGG - 1 downto 0);
-        trgg_2      : in  std_logic_vector(N_TRIGG - 1 downto 0);
-        trgg_prvw_0 : in  std_logic_vector(N_TRIGG - 1 downto 0);
-        trgg_prvw_1 : in  std_logic_vector(N_TRIGG - 1 downto 0);
-        trgg_prvw_2 : in  std_logic_vector(N_TRIGG - 1 downto 0);
+        trgg_0      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_1      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_2      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_prvw_0 : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_prvw_1 : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_prvw_2 : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
         veto_0      : in  std_logic;
         veto_1      : in  std_logic;
         veto_2      : in  std_logic;
@@ -65,10 +66,10 @@ architecture RTL of SLR_Output is
     signal valid_out, start_out, start_of_orbit_out, last_out : std_logic;
     signal link_out                                           : lword;
 
-    signal Final_OR, Final_OR_delayed                                     : std_logic_vector(N_TRIGG - 1 downto 0);
-    signal Final_OR_preview, Final_OR_preview_delayed                     : std_logic_vector(N_TRIGG - 1 downto 0);
-    signal Final_OR_with_veto, Final_OR_with_veto_delayed                 : std_logic_vector(N_TRIGG - 1 downto 0);
-    signal Final_OR_preview_with_veto, Final_OR_preview_with_veto_delayed : std_logic_vector(N_TRIGG - 1 downto 0);
+    signal Final_OR, Final_OR_delayed                                     : std_logic_vector(NR_TRIGGERS - 1 downto 0);
+    signal Final_OR_preview, Final_OR_preview_delayed                     : std_logic_vector(NR_TRIGGERS - 1 downto 0);
+    signal Final_OR_with_veto, Final_OR_with_veto_delayed                 : std_logic_vector(NR_TRIGGERS - 1 downto 0);
+    signal Final_OR_preview_with_veto, Final_OR_preview_with_veto_delayed : std_logic_vector(NR_TRIGGERS - 1 downto 0);
 
     -- counters and bgos signals
     signal ttc_bc0, ttc_oc0, ttc_ec0 : std_logic := '0';
@@ -87,14 +88,14 @@ architecture RTL of SLR_Output is
     signal ctrs_internal : ttc_stuff_t;
     signal ctrs_align    : ttc_stuff_t;
 
-    signal rate_cnt_finor                    : ipb_reg_v(N_TRIGG - 1 downto 0);
-    signal rate_cnt_finor_pdt                : ipb_reg_v(N_TRIGG - 1 downto 0);
-    signal rate_cnt_finor_prvw               : ipb_reg_v(N_TRIGG - 1 downto 0);
-    signal rate_cnt_finor_prvw_pdt           : ipb_reg_v(N_TRIGG - 1 downto 0);
-    signal rate_cnt_finor_with_veto          : ipb_reg_v(N_TRIGG - 1 downto 0);
-    signal rate_cnt_finor_with_veto_pdt      : ipb_reg_v(N_TRIGG - 1 downto 0);
-    signal rate_cnt_finor_prvw_with_veto     : ipb_reg_v(N_TRIGG - 1 downto 0);
-    signal rate_cnt_finor_prvw_with_veto_pdt : ipb_reg_v(N_TRIGG - 1 downto 0);
+    signal rate_cnt_finor                    : ipb_reg_v(NR_TRIGGERS - 1 downto 0);
+    signal rate_cnt_finor_pdt                : ipb_reg_v(NR_TRIGGERS - 1 downto 0);
+    signal rate_cnt_finor_prvw               : ipb_reg_v(NR_TRIGGERS - 1 downto 0);
+    signal rate_cnt_finor_prvw_pdt           : ipb_reg_v(NR_TRIGGERS - 1 downto 0);
+    signal rate_cnt_finor_with_veto          : ipb_reg_v(NR_TRIGGERS - 1 downto 0);
+    signal rate_cnt_finor_with_veto_pdt      : ipb_reg_v(NR_TRIGGERS - 1 downto 0);
+    signal rate_cnt_finor_prvw_with_veto     : ipb_reg_v(NR_TRIGGERS - 1 downto 0);
+    signal rate_cnt_finor_prvw_with_veto_pdt : ipb_reg_v(NR_TRIGGERS - 1 downto 0);
 
     signal ctrl_reg : ipb_reg_v(N_CTRL_REGS - 1 downto 0) := (others => (others => '0'));
     signal stat_reg : ipb_reg_v(N_STAT_REGS - 1 downto 0) := (others => (others => '0'));
@@ -102,7 +103,7 @@ architecture RTL of SLR_Output is
     type state_t is (idle, start, increment);
     signal state : state_t := idle;
 
-    signal addr                                                                 : std_logic_vector(log2c(N_TRIGG) - 1 downto 0);
+    signal addr                                                                 : std_logic_vector(log2c(NR_TRIGGERS) - 1 downto 0);
     signal we                                                                   : std_logic;
     signal ready                                                                : std_logic;
     signal d_rate_cnt_finor, d_rate_cnt_finor_pdt                               : std_logic_vector(31 downto 0);
@@ -150,7 +151,7 @@ begin
     ctrs_align_i : entity work.CTRS_fixed_alignment
         generic map(
             MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            DELAY_OFFSET    => SLR_CROSSING_LATENCY + 9 + 4 --deserializer + SLR cross
+            DELAY_OFFSET    => SLR_CROSSING_LATENCY_TRIGGERBITS + 9 + 4 --deserializer + SLR cross
         )
         port map(
             clk360         => clk360,
@@ -247,7 +248,7 @@ begin
 
     rate_cntrs_read_FSM_i : entity work.write_FSM
         generic map(
-            RAM_DEPTH => N_TRIGG
+            RAM_DEPTH => NR_TRIGGERS
         )
         port map(
             clk        => clk40,
@@ -296,14 +297,14 @@ begin
     Final_OR         <= trgg_0 or trgg_1 or trgg_2;
     Final_OR_preview <= trgg_prvw_0 or trgg_prvw_1 or trgg_prvw_2;
 
-    Final_OR_with_veto_l : for i in 0 to N_TRIGG - 1 generate
+    Final_OR_with_veto_l : for i in 0 to NR_TRIGGERS - 1 generate
         Final_OR_with_veto(i)         <= (trgg_0(i) or trgg_1(i) or trgg_2(i)) and not (veto_0 or veto_1 or veto_2);
         Final_OR_preview_with_veto(i) <= (trgg_prvw_0(i) or trgg_prvw_1(i) or trgg_prvw_2(i)) and not (veto_0 or veto_1 or veto_2);
     end generate;
 
     delay_element_i : entity work.delay_element_ringbuffer
         generic map(
-            DATA_WIDTH => N_TRIGG,
+            DATA_WIDTH => NR_TRIGGERS,
             MAX_DELAY  => MAX_DELAY
         )
         port map(
@@ -317,7 +318,7 @@ begin
 
     delay_element_preview_i : entity work.delay_element_ringbuffer
         generic map(
-            DATA_WIDTH => N_TRIGG,
+            DATA_WIDTH => NR_TRIGGERS,
             MAX_DELAY  => MAX_DELAY
         )
         port map(
@@ -331,7 +332,7 @@ begin
 
     delay_element_veto_i : entity work.delay_element_ringbuffer
         generic map(
-            DATA_WIDTH => N_TRIGG,
+            DATA_WIDTH => NR_TRIGGERS,
             MAX_DELAY  => MAX_DELAY
         )
         port map(
@@ -345,7 +346,7 @@ begin
 
     delay_element_preview_veto_i : entity work.delay_element_ringbuffer
         generic map(
-            DATA_WIDTH => N_TRIGG,
+            DATA_WIDTH => NR_TRIGGERS,
             MAX_DELAY  => MAX_DELAY
         )
         port map(
@@ -399,7 +400,7 @@ begin
 
     veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0) <= veto_cnt;
 
-    gen_rate_counters_l : for i in 0 to N_TRIGG - 1 generate
+    gen_rate_counters_l : for i in 0 to NR_TRIGGERS - 1 generate
         rate_counters_i : entity work.algo_rate_counter
             generic map(
                 COUNTER_WIDTH => RATE_COUNTER_WIDTH
@@ -524,7 +525,7 @@ begin
     rate_cnt_finor_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(N_TRIGG),
+            ADDR_WIDTH => log2c(NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -542,7 +543,7 @@ begin
     rate_cnt_finor_pdt_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(N_TRIGG),
+            ADDR_WIDTH => log2c(NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -560,7 +561,7 @@ begin
     rate_cnt_finor_preview_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(N_TRIGG),
+            ADDR_WIDTH => log2c(NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -578,7 +579,7 @@ begin
     rate_cnt_finor_preview_pdt_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(N_TRIGG),
+            ADDR_WIDTH => log2c(NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -596,7 +597,7 @@ begin
     rate_cnt_finor_with_veto_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(N_TRIGG),
+            ADDR_WIDTH => log2c(NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -614,7 +615,7 @@ begin
     rate_cnt_finor_with_veto_pdt_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(N_TRIGG),
+            ADDR_WIDTH => log2c(NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -632,7 +633,7 @@ begin
     rate_cnt_finor_preview_with_veto_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(N_TRIGG),
+            ADDR_WIDTH => log2c(NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -650,7 +651,7 @@ begin
     rate_cnt_finor_preview_with_veto_pdt_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(N_TRIGG),
+            ADDR_WIDTH => log2c(NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -665,11 +666,11 @@ begin
             addr    => addr
         );
 
-    link_out.data(N_TRIGG - 1 downto 0)               <= Final_OR when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(N_TRIGG * 2 - 1 downto N_TRIGG)     <= Final_OR_preview when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(N_TRIGG * 3 - 1 downto 2 * N_TRIGG) <= Final_OR_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(N_TRIGG * 4 - 1 downto 3 * N_TRIGG) <= Final_OR_preview_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(LWORD_WIDTH - 1 downto 4 * N_TRIGG) <= (others => '0');
+    link_out.data(NR_TRIGGERS - 1 downto 0)               <= Final_OR when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    link_out.data(NR_TRIGGERS * 2 - 1 downto NR_TRIGGERS)     <= Final_OR_preview when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    link_out.data(NR_TRIGGERS * 3 - 1 downto 2 * NR_TRIGGERS) <= Final_OR_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    link_out.data(NR_TRIGGERS * 4 - 1 downto 3 * NR_TRIGGERS) <= Final_OR_preview_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    link_out.data(LWORD_WIDTH - 1 downto 4 * NR_TRIGGERS) <= (others => '0');
 
     link_out.strobe         <= not rst360;
     link_out.valid          <= valid_in;
