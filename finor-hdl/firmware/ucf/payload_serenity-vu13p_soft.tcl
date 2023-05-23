@@ -21,3 +21,6 @@ set_property USER_SLR_ASSIGNMENT $SLR_out [get_cells -hierarchical -filter {NAME
 set_property USER_SLR_ASSIGNMENT $SLR_n1  [get_cells -hierarchical -filter {NAME =~ *payload/SLRn1*}]
 set_property USER_SLR_ASSIGNMENT $SLR_n2  [get_cells -hierarchical -filter {NAME =~ *payload/SLRn2*}]
 
+set_property keep_hierarchy no [get_cells -hierarchical -filter {NAME =~ *payload/SLRn0*/monitoring_module}]
+set_property keep_hierarchy no [get_cells -hierarchical -filter {NAME =~ *payload/SLRn1*/monitoring_module}]
+set_property keep_hierarchy no [get_cells -hierarchical -filter {NAME =~ *payload/SLRn2*/monitoring_module}]

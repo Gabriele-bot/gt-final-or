@@ -53,9 +53,6 @@ entity monitoring_module is
 end monitoring_module;
 
 architecture rtl of monitoring_module is
-    
-    attribute keep_hierarchy : string;
-    attribute keep_hierarchy of rtl : architecture is "no";
 
     constant NULL_VETO_MASK : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 

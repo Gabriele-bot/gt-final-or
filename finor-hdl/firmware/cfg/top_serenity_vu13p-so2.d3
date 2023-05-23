@@ -2,7 +2,7 @@ src --vhdl2008  top_serenity_vu13p-so2_decl.vhd
 
 include -c emp-fwk:boards/serenity/dc_vu13p dc_vu13p_so2.dep
 
-src ../ucf/payload_serenity-vu13p_hard.tcl
+src ../ucf/payload_serenity-vu13p_soft.tcl
 src ../ucf/payload_timings.tcl
 
 include top.d3

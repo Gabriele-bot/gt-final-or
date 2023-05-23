@@ -20,3 +20,7 @@ add_cells_to_pblock [get_pblock pblock_SLR_n2]  [get_cells -hierarchical -filter
 add_cells_to_pblock [get_pblock pblock_SLR_n1]  [get_cells -hierarchical -filter {NAME =~ *payload/SLRn1*}]
 add_cells_to_pblock [get_pblock pblock_SLR_n0]  [get_cells -hierarchical -filter {NAME =~ *payload/SLRn0*}]
 add_cells_to_pblock [get_pblock pblock_SLR_out] [get_cells -hierarchical -filter {NAME =~ *payload/SLRout*}]
+
+set_property keep_hierarchy no [get_cells -hierarchical -filter {NAME =~ *payload/SLRn0*/monitoring_module}]
+set_property keep_hierarchy no [get_cells -hierarchical -filter {NAME =~ *payload/SLRn1*/monitoring_module}]
+set_property keep_hierarchy no [get_cells -hierarchical -filter {NAME =~ *payload/SLRn2*/monitoring_module}]
