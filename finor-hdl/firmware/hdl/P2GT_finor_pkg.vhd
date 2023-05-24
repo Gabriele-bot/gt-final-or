@@ -28,7 +28,7 @@ package P2GT_finor_pkg is
     constant BEGIN_LUMI_SEC_BIT_SIM           : integer := 3;
     constant MAX_DELAY_PDT                    : integer := 511; -- corresponding to ~12.78 us  (40  MHz domain)
     constant MAX_CTRS_DELAY_360               : integer := 486; -- corresponding to ~1.35  us  (360 MHz domain) (511-12-9-4)
-    constant SLR_CROSSING_LATENCY_TRIGGERBITS : integer := 12;
+    constant SLR_CROSSING_LATENCY_TRIGGERBITS : integer := 13;
     constant SLR_CROSSING_LATENCY_ALGOBITS    : integer := 4;
     constant N_SLR_ALGOS                      : integer := 576;
     constant N_ALGOS                          : integer := N_SLR_ALGOS * N_MONITOR_SLR;
