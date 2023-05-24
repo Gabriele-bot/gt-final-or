@@ -44,7 +44,8 @@ architecture RTL of delay_element_ringbuffer is
 
     signal rst_loc : std_logic;
 
-    signal data_out_s : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal data_in_reg : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal data_out_s  : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
     --attribute ram_style : string;
     --attribute ram_style of ram : signal is STYLE;
@@ -64,7 +65,8 @@ begin
     check_dealy_var : process(clk)
     begin
         if rising_edge(clk) then
-            delay_reg <= delay;
+            delay_reg   <= delay;
+            data_in_reg <= data_i;
         end if;
     end process;
 
@@ -143,11 +145,13 @@ begin
             dout  => data_out_s
         );
 
-    PROC_OUT : process(delay, data_out_s, delay_lkd, data_i)
+    PROC_OUT : process(delay, data_out_s, delay_lkd, data_i, data_in_reg)
     begin
         if delay_lkd = '1' then
             if unsigned(delay) = 0 then
                 data_o <= data_i;
+            elsif unsigned(delay) = 1 then
+                data_o <= data_in_reg;
             else
                 data_o <= data_out_s;
             end if;
