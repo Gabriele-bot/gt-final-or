@@ -38,8 +38,7 @@ entity SLR_Monitoring_unit is
         rst40                  : in  std_logic;
         ctrs                   : in  ttc_stuff_t;
         d                      : in  ldata(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0); -- data in
-        delay_lkd_o            : out std_logic;
-        delay_o                : out std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
+        start_of_orbit_o       : out std_logic;
         trigger_o              : out std_logic_vector(N_TRIGG - 1 downto 0);
         trigger_preview_o      : out std_logic_vector(N_TRIGG - 1 downto 0);
         trigger_valid_o        : out std_logic;
@@ -97,7 +96,7 @@ architecture RTL of SLR_Monitoring_unit is
     signal links_valids  : std_logic_vector(INPUT_LINKS_SLR - 1 downto 0);
     signal link_valid_OR : std_logic;
 
-    signal bx_nr_360, bx_nr_40 : bctr_t                                                   := (others => '0');
+    signal bx_nr_360, bx_nr_40 : p2gt_bctr_t                                              := (others => '0');
     signal delay_measured      : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0) := std_logic_vector(to_unsigned(MAX_CTRS_DELAY_360, log2c(MAX_CTRS_DELAY_360)));
     signal delay_lkd           : std_logic;
 
@@ -315,7 +314,7 @@ begin
     monitoring_module : entity work.monitoring_module
         generic map(
             NR_ALGOS              => N_SLR_ALGOS,
-            NR_TRIGGERS           => N_TRIGG, 
+            NR_TRIGGERS           => N_TRIGG,
             PRESCALE_FACTOR_INIT  => X"00000064", --1.00,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
             MAX_DELAY             => MAX_DELAY
@@ -338,6 +337,7 @@ begin
             trigger_preview_o       => trigger_out_preview,
             valid_trigger_o         => trigger_valid_o,
             veto_o                  => veto_out,
+            start_of_orbit_o        => start_of_orbit_o,
             resync_o                => ttc_resync
         );
 
@@ -367,9 +367,7 @@ begin
             q_algos_after_bxmask => q_algos_after_bxmask_o,
             q_algos_after_prscl  => q_algos_after_prscl_o
         );
-
-    delay_lkd_o       <= delay_lkd;
-    delay_o           <= delay_measured;
+     
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;
     veto_o            <= veto_out;

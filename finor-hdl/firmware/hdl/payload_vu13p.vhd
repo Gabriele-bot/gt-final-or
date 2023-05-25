@@ -59,13 +59,6 @@ architecture rtl of emp_payload is
     type SLR_ldata_t is array (N_MONITOR_SLR - 1 downto 0) of ldata(INPUT_LINKS_SLR - 1 downto 0);
     signal d_ldata_slr : SLR_ldata_t;
 
-    type SLRCross_delay_t is array (SLR_CROSSING_LATENCY_TRIGGERBITS downto 0) of std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
-    type SLRdelay_t is array (N_MONITOR_SLR - 1 downto 0) of SLRCross_delay_t;
-    signal delay_out_regs : SLRdelay_t := (others => (others => std_logic_vector(to_unsigned(MAX_CTRS_DELAY_360, log2c(MAX_CTRS_DELAY_360)))));
-
-    type SLRdelay_lkd_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0);
-    signal delay_out_lkd_regs : SLRdelay_lkd_t := (others => (others => '0'));
-
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
     type SLRCross_trigg_t is array (SLR_CROSSING_LATENCY_TRIGGERBITS downto 0) of std_logic_vector(N_TRIGG - 1 downto 0);
     type SLRtrigg_t is array (N_MONITOR_SLR - 1 downto 0) of SLRCross_trigg_t;
@@ -75,7 +68,9 @@ architecture rtl of emp_payload is
     type SLRveto_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0);
     signal veto_regs : SLRveto_t := (others => (others => '0'));
 
-    type SLRCross_lword_reg_t is array (SLR_CROSSING_LATENCY_ALGOBITS - 1 downto 0) of lword; -- minus one due to some register in the mux
+    signal start_of_orbit_regs : std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0) := (others => '0');
+
+    type SLRCross_lword_reg_t is array (OUTPUT_LATENCY_ALGOBITS - 1 downto 0) of lword; -- minus one due to some register in the mux
     type SLRlword_t is array (N_MONITOR_SLR - 1 downto 0) of SLRCross_lword_reg_t;
     signal algos_link_regs        : SLRlword_t := (others => (others => LWORD_NULL));
     signal algos_bxmask_link_regs : SLRlword_t := (others => (others => LWORD_NULL));
@@ -86,9 +81,7 @@ architecture rtl of emp_payload is
     attribute keep of trgg_prvw_regs : signal is true;
     attribute keep of veto_regs : signal is true;
     attribute keep of valid_out_regs : signal is true;
-
-    attribute keep of delay_out_regs : signal is true;
-    attribute keep of delay_out_lkd_regs : signal is true;
+    attribute keep of start_of_orbit_regs : signal is true;
 
     --attribute keep of algos_link_regs : signal is true;
     --attribute keep of algos_bxmask_link_regs : signal is true;
@@ -99,9 +92,7 @@ architecture rtl of emp_payload is
     attribute shreg_extract of trgg_prvw_regs : signal is "no";
     attribute shreg_extract of veto_regs : signal is "no";
     attribute shreg_extract of valid_out_regs : signal is "no";
-
-    attribute shreg_extract of delay_out_regs : signal is "no";
-    attribute shreg_extract of delay_out_lkd_regs : signal is "no";
+    attribute shreg_extract of start_of_orbit_regs : signal is "no";
 
     --attribute shreg_extract of algos_link_regs : signal is "no";
     --attribute shreg_extract of algos_bxmask_link_regs : signal is "no";
@@ -147,8 +138,7 @@ begin
             rst40                  => rst_payload(2),
             ctrs                   => ctrs(SLRn2_INPUT_QUADS(0)),
             d                      => d_ldata_slr(2),
-            delay_lkd_o            => delay_out_lkd_regs(2)(0),
-            delay_o                => delay_out_regs(2)(0),
+            start_of_orbit_o       => open,
             trigger_o              => trgg_regs(2)(0),
             trigger_preview_o      => trgg_prvw_regs(2)(0),
             trigger_valid_o        => valid_out_regs(2)(0),
@@ -177,8 +167,7 @@ begin
             rst40                  => rst_payload(2),
             ctrs                   => ctrs(SLRn1_INPUT_QUADS(0)),
             d                      => d_ldata_slr(1),
-            delay_lkd_o            => delay_out_lkd_regs(1)(0),
-            delay_o                => delay_out_regs(1)(0),
+            start_of_orbit_o       => open,
             trigger_o              => trgg_regs(1)(0),
             trigger_preview_o      => trgg_prvw_regs(1)(0),
             trigger_valid_o        => valid_out_regs(1)(0),
@@ -207,8 +196,7 @@ begin
             rst40                  => rst_payload(2),
             ctrs                   => ctrs(SLRn0_INPUT_QUADS(0)),
             d                      => d_ldata_slr(0),
-            delay_lkd_o            => delay_out_lkd_regs(0)(0),
-            delay_o                => delay_out_regs(0)(0),
+            start_of_orbit_o       => start_of_orbit_regs(0),
             trigger_o              => trgg_regs(0)(0),
             trigger_preview_o      => trgg_prvw_regs(0)(0),
             trigger_valid_o        => valid_out_regs(0)(0),
@@ -222,9 +210,6 @@ begin
         cross_SLR : process(clk_p)
         begin
             if rising_edge(clk_p) then
-                delay_out_regs(i)(delay_out_regs(i)'high downto 1)         <= delay_out_regs(i)(delay_out_regs(i)'high - 1 downto 0);
-                delay_out_lkd_regs(i)(delay_out_lkd_regs(i)'high downto 1) <= delay_out_lkd_regs(i)(delay_out_lkd_regs(i)'high - 1 downto 0);
-
                 valid_out_regs(i)(valid_out_regs(i)'high downto 1) <= valid_out_regs(i)(valid_out_regs(i)'high - 1 downto 0);
 
                 trgg_regs(i)(trgg_regs(i)'high downto 1)           <= trgg_regs(i)(trgg_regs(i)'high - 1 downto 0);
@@ -235,7 +220,14 @@ begin
         end process;
     end generate;
 
-    valid_in <= valid_out_regs(0)(valid_out_regs(0)'high) or valid_out_regs(1)(valid_out_regs(1)'high);
+    soo_cross_SLR : process(clk_p)
+    begin
+        if rising_edge(clk_p) then
+            start_of_orbit_regs(start_of_orbit_regs'high downto 1) <= start_of_orbit_regs(start_of_orbit_regs'high - 1 downto 0);
+        end if;
+    end process;
+
+    valid_in <= valid_out_regs(0)(valid_out_regs(0)'high) or valid_out_regs(1)(valid_out_regs(1)'high) or valid_out_regs(2)(valid_out_regs(2)'high);
 
     SLRout_FinalOR_or : entity work.SLR_Output
         generic map(
@@ -244,28 +236,27 @@ begin
             MAX_DELAY             => MAX_DELAY_PDT
         )
         port map(
-            clk         => clk,
-            rst         => rst,
-            ipb_in      => ipb_to_slaves(N_SLV_SLR_FINOR),
-            ipb_out     => ipb_from_slaves(N_SLV_SLR_FINOR),
-            clk360      => clk_p,
-            rst360      => rst_loc(OUTPUT_QUAD),
-            clk40       => clk_payload(2),
-            rst40       => rst_payload(2),
-            ctrs        => ctrs(OUTPUT_QUAD),
-            delay_lkd   => delay_out_lkd_regs(0)(delay_out_lkd_regs(0)'high),
-            delay_in    => delay_out_regs(0)(delay_out_regs(0)'high),
-            valid_in    => valid_in,
-            trgg_0      => trgg_regs(0)(trgg_regs(0)'high),
-            trgg_1      => trgg_regs(1)(trgg_regs(1)'high),
-            trgg_2      => trgg_regs(2)(trgg_regs(2)'high),
-            trgg_prvw_0 => trgg_prvw_regs(0)(trgg_prvw_regs(0)'high),
-            trgg_prvw_1 => trgg_prvw_regs(1)(trgg_prvw_regs(1)'high),
-            trgg_prvw_2 => trgg_prvw_regs(2)(trgg_prvw_regs(2)'high),
-            veto_0      => veto_regs(0)(veto_regs(0)'high),
-            veto_1      => veto_regs(1)(veto_regs(1)'high),
-            veto_2      => veto_regs(2)(veto_regs(2)'high),
-            q(0)        => q(OUTPUT_CHANNEL)
+            clk              => clk,
+            rst              => rst,
+            ipb_in           => ipb_to_slaves(N_SLV_SLR_FINOR),
+            ipb_out          => ipb_from_slaves(N_SLV_SLR_FINOR),
+            clk360           => clk_p,
+            rst360           => rst_loc(OUTPUT_QUAD),
+            clk40            => clk_payload(2),
+            rst40            => rst_payload(2),
+            ctrs             => ctrs(OUTPUT_QUAD),
+            valid_in         => valid_in,
+            start_of_orbit_i => start_of_orbit_regs(start_of_orbit_regs'high),
+            trgg_0           => trgg_regs(0)(trgg_regs(0)'high),
+            trgg_1           => trgg_regs(1)(trgg_regs(1)'high),
+            trgg_2           => trgg_regs(2)(trgg_regs(2)'high),
+            trgg_prvw_0      => trgg_prvw_regs(0)(trgg_prvw_regs(0)'high),
+            trgg_prvw_1      => trgg_prvw_regs(1)(trgg_prvw_regs(1)'high),
+            trgg_prvw_2      => trgg_prvw_regs(2)(trgg_prvw_regs(2)'high),
+            veto_0           => veto_regs(0)(veto_regs(0)'high),
+            veto_1           => veto_regs(1)(veto_regs(1)'high),
+            veto_2           => veto_regs(2)(veto_regs(2)'high),
+            q(0)             => q(OUTPUT_CHANNEL)
         );
 
     --------------------------------------------------------------------------------

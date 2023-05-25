@@ -16,7 +16,7 @@ entity CTRS_delay_producer is
         rst360       : in  std_logic;
         clk40        : in  std_logic;
         rst40        : in  std_logic;
-        ref_bx_nr    : in  bctr_t;
+        ref_bx_nr    : in  p2gt_bctr_t;
         ctrs_in      : in  ttc_stuff_t;
         delay_resync : in  std_logic;
         delay_lkd    : out std_logic;

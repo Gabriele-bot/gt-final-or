@@ -48,6 +48,7 @@ entity monitoring_module is
         trigger_preview_o       : out std_logic_vector(NR_TRIGGERS - 1 downto 0);
         valid_trigger_o         : out std_logic;
         veto_o                  : out std_logic;
+        start_of_orbit_o        : out std_logic;
         resync_o                : out std_logic
     );
 end monitoring_module;
@@ -80,7 +81,7 @@ architecture rtl of monitoring_module is
     signal rate_cnt_post_dead_time          : ipb_reg_v(NR_ALGOS - 1 downto 0);
 
     signal masks_ipbus_regs : ipb_reg_v(NR_ALGOS / 32 * NR_TRIGGERS - 1 downto 0) := (others => (others => '1'));
-    signal masks            : mask_arr                                        := (others => (others => '1'));
+    signal masks            : mask_arr                                            := (others => (others => '1'));
 
     signal veto_ipbus_regs          : ipb_reg_v(NR_ALGOS / 32 - 1 downto 0)   := (others => (others => '0'));
     signal veto_mask, veto_mask_int : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
@@ -122,11 +123,11 @@ architecture rtl of monitoring_module is
     signal d_rate_cnt_after_prescaler_preview, d_rate_cnt_post_dead_time : std_logic_vector(31 downto 0);
 
     signal addr, addr_prscl         : std_logic_vector(log2c(NR_ALGOS) - 1 downto 0);
-    signal addr_prscl_w             : std_logic_vector(log2c(NR_ALGOS) - 1 downto 0)                := (others => '0');
+    signal addr_prscl_w             : std_logic_vector(log2c(NR_ALGOS) - 1 downto 0)                    := (others => '0');
     signal addr_mask                : std_logic_vector(log2c(NR_ALGOS / 32 * NR_TRIGGERS) - 1 downto 0);
     signal addr_mask_w              : std_logic_vector(log2c(NR_ALGOS / 32 * NR_TRIGGERS) - 1 downto 0) := (others => '0');
     signal addr_veto                : std_logic_vector(log2c(NR_ALGOS / 32) - 1 downto 0);
-    signal addr_veto_w              : std_logic_vector(log2c(NR_ALGOS / 32) - 1 downto 0)           := (others => '0');
+    signal addr_veto_w              : std_logic_vector(log2c(NR_ALGOS / 32) - 1 downto 0)               := (others => '0');
     signal we, we_mask              : std_logic;
     signal ready                    : std_logic;
     signal ready_mask, ready_mask_1 : std_logic;
@@ -151,6 +152,7 @@ architecture rtl of monitoring_module is
 
     signal trigger_out         : std_logic_vector(NR_TRIGGERS - 1 downto 0);
     signal trigger_out_preview : std_logic_vector(NR_TRIGGERS - 1 downto 0);
+    signal BX_nr_trigger       : p2gt_bctr_t;
 
 begin
 
@@ -838,7 +840,15 @@ begin
             veto_out_s <= or veto;
         end if;
     end process;
+    
+    BX_trigger_p : process(clk40)
+    begin
+        if rising_edge(clk40) then
+            BX_nr_trigger <= ctrs_internal.bctr;
+        end if;
+    end process;
 
+    start_of_orbit_o  <= '1' when BX_nr_trigger = std_logic_vector(to_unsigned(0, 12)) and valid_trigger_o = '1' else '0';
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;
     veto_o            <= veto_out_s;

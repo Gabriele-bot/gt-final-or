@@ -20,34 +20,33 @@ use work.P2GT_finor_pkg.all;
 
 entity SLR_Output is
     generic(
-        NR_TRIGGERS : natural;
+        NR_TRIGGERS           : natural;
         BEGIN_LUMI_TOGGLE_BIT : natural := 18;
         MAX_DELAY             : natural := MAX_DELAY_PDT
     );
     port(
-        clk         : in  std_logic;    -- ipbus signals
-        rst         : in  std_logic;
-        ipb_in      : in  ipb_wbus;
-        ipb_out     : out ipb_rbus;
+        clk              : in  std_logic; -- ipbus signals
+        rst              : in  std_logic;
+        ipb_in           : in  ipb_wbus;
+        ipb_out          : out ipb_rbus;
         --==========================================================--
-        clk360      : in  std_logic;
-        rst360      : in  std_logic;
-        clk40       : in  std_logic;
-        rst40       : in  std_logic;
-        ctrs        : in  ttc_stuff_t;
-        delay_lkd   : in  std_logic;
-        delay_in    : in  std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0);
-        valid_in    : in  std_logic;
-        trgg_0      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_1      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_2      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_prvw_0 : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_prvw_1 : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_prvw_2 : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        veto_0      : in  std_logic;
-        veto_1      : in  std_logic;
-        veto_2      : in  std_logic;
-        q           : out ldata(0 downto 0) -- data out
+        clk360           : in  std_logic;
+        rst360           : in  std_logic;
+        clk40            : in  std_logic;
+        rst40            : in  std_logic;
+        ctrs             : in  ttc_stuff_t;
+        valid_in         : in  std_logic;
+        start_of_orbit_i : in  std_logic;
+        trgg_0           : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_1           : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_2           : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_prvw_0      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_prvw_1      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        trgg_prvw_2      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
+        veto_0           : in  std_logic;
+        veto_1           : in  std_logic;
+        veto_2           : in  std_logic;
+        q                : out ldata(0 downto 0) -- data out
     );
 end entity SLR_Output;
 
@@ -60,7 +59,11 @@ architecture RTL of SLR_Output is
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
     signal ipb_from_slaves : ipb_rbus_array(N_SLAVES - 1 downto 0);
 
-    signal frame_cntr : integer range 0 to 8;
+    signal frame_cntr     : integer range 0 to 8;
+    signal start_bit      : std_logic;
+    signal start_of_orbit : std_logic;
+    signal last           : std_logic;
+    signal valid          : std_logic;
 
     signal valid_in_del                                       : std_logic;
     signal valid_out, start_out, start_of_orbit_out, last_out : std_logic;
@@ -71,19 +74,27 @@ architecture RTL of SLR_Output is
     signal Final_OR_with_veto, Final_OR_with_veto_delayed                 : std_logic_vector(NR_TRIGGERS - 1 downto 0);
     signal Final_OR_preview_with_veto, Final_OR_preview_with_veto_delayed : std_logic_vector(NR_TRIGGERS - 1 downto 0);
 
+    signal Final_OR_40                   : std_logic_vector(NR_TRIGGERS - 1 downto 0);
+    signal Final_OR_preview_40           : std_logic_vector(NR_TRIGGERS - 1 downto 0);
+    signal Final_OR_with_veto_40         : std_logic_vector(NR_TRIGGERS - 1 downto 0);
+    signal Final_OR_preview_with_veto_40 : std_logic_vector(NR_TRIGGERS - 1 downto 0);
+
     -- counters and bgos signals
-    signal ttc_bc0, ttc_oc0, ttc_ec0 : std_logic := '0';
+    signal bx_nr_360, bx_nr_40       : p2gt_bctr_t                                              := (others => '0');
+    signal delay_measured            : std_logic_vector(log2c(MAX_CTRS_DELAY_360) - 1 downto 0) := std_logic_vector(to_unsigned(MAX_CTRS_DELAY_360, log2c(MAX_CTRS_DELAY_360)));
+    signal delay_lkd                 : std_logic;
+    signal ttc_bc0, ttc_oc0, ttc_ec0 : std_logic                                                := '0';
     signal ttc_resync, ttc_start     : std_logic;
     signal ttc_test_en               : std_logic;
-    signal bc0_reg, oc0_reg, ec0_reg : std_logic := '0';
-    signal bc0_40, oc0_40, ec0_40    : std_logic := '0';
+    signal bc0_reg, oc0_reg, ec0_reg : std_logic                                                := '0';
+    signal bc0_40, oc0_40, ec0_40    : std_logic                                                := '0';
     signal resync_reg, start_reg     : std_logic;
     signal resync_40, start_40       : std_logic;
     signal begin_lumi_per            : std_logic;
     signal begin_lumi_per_del1       : std_logic;
     signal end_lumi_per              : std_logic;
     signal l1a_latency_delay         : std_logic_vector(log2c(MAX_DELAY) - 1 downto 0);
-    
+
     signal ctrs_reg      : ttc_stuff_t;
     signal ctrs_internal : ttc_stuff_t;
     signal ctrs_align    : ttc_stuff_t;
@@ -112,6 +123,7 @@ architecture RTL of SLR_Output is
     signal d_rate_cnt_finor_prvw_with_veto, d_rate_cnt_finor_prvw_with_veto_pdt : std_logic_vector(31 downto 0);
 
     signal veto_out_s    : std_logic;
+    signal veto_out_40   : std_logic;
     signal veto_cnt      : std_logic_vector(RATE_COUNTER_WIDTH - 1 DOWNTO 0);
     signal veto_stat_reg : ipb_reg_v(0 downto 0);
 
@@ -131,6 +143,11 @@ begin
         end if;
     end process frame_counter_p;
 
+    start_bit      <= '1' when (frame_cntr = 0 and valid_in = '1') else '0';
+    start_of_orbit <= '1' when (frame_cntr = 0 and start_of_orbit_i = '1') else '0';
+    last           <= '1' when (frame_cntr = 8 and valid_in = '1') else '0';
+    valid          <= valid_in;
+
     fabric_i : entity work.ipbus_fabric_sel
         generic map(
             NSLV      => N_SLAVES,
@@ -148,10 +165,44 @@ begin
     ---------------COUNTERS INTERNAL---------------------------------------------------
     ----------------------------------------------------------------------------------
 
+    -----------------------------------------------------------------------------------
+    ---------------COUNTERS ALIGN------------------------------------------------------
+    -----------------------------------------------------------------------------------
+
+    BX_producer_i : entity work.CTRS_BX_nr_producer
+        port map(
+            clk360         => clk360,
+            rst360         => rst360,
+            clk40          => clk40,
+            rst40          => rst40,
+            valid          => valid,
+            last           => last,
+            start          => start_bit,
+            start_of_orbit => start_of_orbit,
+            bx_nr_40       => bx_nr_40,
+            bx_nr_360      => bx_nr_360
+        );
+
+    BX_delay_i : entity work.CTRS_delay_producer
+        generic map(
+            MAX_LATENCY_360 => MAX_CTRS_DELAY_360
+        )
+        port map(
+            clk360       => clk360,
+            rst360       => rst360,
+            clk40        => clk40,
+            rst40        => rst40,
+            ref_bx_nr    => bx_nr_360,
+            ctrs_in      => ctrs,
+            --delay_resync => ttc_resync or delay_resync,
+            delay_resync => ttc_resync,
+            delay_lkd    => delay_lkd,
+            delay_val    => delay_measured
+        );
     ctrs_align_i : entity work.CTRS_fixed_alignment
         generic map(
             MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
-            DELAY_OFFSET    => SLR_CROSSING_LATENCY_TRIGGERBITS + 9 + 4 --deserializer + SLR cross
+            DELAY_OFFSET    => 0
         )
         port map(
             clk360         => clk360,
@@ -159,7 +210,7 @@ begin
             clk40          => clk40,
             rst40          => rst40,
             ctrs_delay_lkd => delay_lkd,
-            ctrs_delay_val => delay_in,
+            ctrs_delay_val => delay_measured,
             ctrs_in        => ctrs,
             ctrs_out       => ctrs_align
         );
@@ -211,12 +262,12 @@ begin
     sync_ctrs_p : process(clk40)
     begin
         if rising_edge(clk40) then
-            ctrs_internal <= ctrs_reg;
-            bc0_40        <= bc0_reg;
-            oc0_40        <= oc0_reg;
-            ec0_40        <= ec0_reg;
-            start_40      <= start_reg;
-            resync_40     <= resync_reg;
+            ctrs_internal <= ctrs_align;
+            bc0_40        <= ttc_bc0;
+            oc0_40        <= ttc_oc0;
+            ec0_40        <= ttc_ec0;
+            start_40      <= ttc_start;
+            resync_40     <= ttc_resync;
         end if;
     end process;
 
@@ -302,6 +353,16 @@ begin
         Final_OR_preview_with_veto(i) <= (trgg_prvw_0(i) or trgg_prvw_1(i) or trgg_prvw_2(i)) and not (veto_0 or veto_1 or veto_2);
     end generate;
 
+    process(clk40)
+    begin
+        if rising_edge(clk40) then
+            Final_OR_40                   <= Final_OR;
+            Final_OR_preview_40           <= Final_OR_preview;
+            Final_OR_with_veto_40         <= Final_OR_with_veto;
+            Final_OR_preview_with_veto_40 <= Final_OR_preview_with_veto;
+        end if;
+    end process;
+
     delay_element_i : entity work.delay_element_ringbuffer
         generic map(
             DATA_WIDTH => NR_TRIGGERS,
@@ -360,6 +421,13 @@ begin
 
     veto_out_s <= veto_0 or veto_1 or veto_2;
 
+    process(clk40)
+    begin
+        if rising_edge(clk40) then
+            veto_out_40 <= veto_out_s;
+        end if;
+    end process;
+
     ----------------------------------------------------------------------------------
     -----------------------------Veto Rate Counter------------------------------------
     ----------------------------------------------------------------------------------   
@@ -373,7 +441,7 @@ begin
             rst40           => rst40,
             sres_counter    => '0',
             store_cnt_value => begin_lumi_per_del1,
-            algo_i          => veto_out_s,
+            algo_i          => veto_out_40,
             counter_o       => veto_cnt
         );
 
@@ -410,7 +478,7 @@ begin
                 rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
-                algo_i          => Final_OR(i),
+                algo_i          => Final_OR_40(i),
                 counter_o       => rate_cnt_finor(i)
             );
 
@@ -437,7 +505,7 @@ begin
                 rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
-                algo_i          => Final_OR_preview(i),
+                algo_i          => Final_OR_preview_40(i),
                 counter_o       => rate_cnt_finor_prvw(i)
             );
 
@@ -464,7 +532,7 @@ begin
                 rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
-                algo_i          => Final_OR_with_veto(i),
+                algo_i          => Final_OR_with_veto_40(i),
                 counter_o       => rate_cnt_finor_with_veto(i)
             );
 
@@ -491,7 +559,7 @@ begin
                 rst40           => rst40,
                 sres_counter    => '0',
                 store_cnt_value => begin_lumi_per,
-                algo_i          => Final_OR_preview_with_veto(i),
+                algo_i          => Final_OR_preview_with_veto_40(i),
                 counter_o       => rate_cnt_finor_prvw_with_veto(i)
             );
 
@@ -666,17 +734,17 @@ begin
             addr    => addr
         );
 
-    link_out.data(NR_TRIGGERS - 1 downto 0)               <= Final_OR when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    link_out.data(NR_TRIGGERS - 1 downto 0)                   <= Final_OR when frame_cntr = 0 and valid_in = '1' else (others => '0');
     link_out.data(NR_TRIGGERS * 2 - 1 downto NR_TRIGGERS)     <= Final_OR_preview when frame_cntr = 0 and valid_in = '1' else (others => '0');
     link_out.data(NR_TRIGGERS * 3 - 1 downto 2 * NR_TRIGGERS) <= Final_OR_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
     link_out.data(NR_TRIGGERS * 4 - 1 downto 3 * NR_TRIGGERS) <= Final_OR_preview_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(LWORD_WIDTH - 1 downto 4 * NR_TRIGGERS) <= (others => '0');
+    link_out.data(LWORD_WIDTH - 1 downto 4 * NR_TRIGGERS)     <= (others => '0');
 
     link_out.strobe         <= not rst360;
     link_out.valid          <= valid_in;
-    link_out.start          <= '1' when frame_cntr = 0 and valid_in = '1' else '0';
-    link_out.last           <= '1' when frame_cntr = 8 and valid_in = '1' else '0';
-    link_out.start_of_orbit <= '1' when frame_cntr = 0 and valid_in = '1' and (ctrs_internal.bctr = std_logic_vector(to_unsigned(0, 12))) else '0';
+    link_out.start          <= start_bit;
+    link_out.last           <= last;
+    link_out.start_of_orbit <= start_of_orbit;
 
     output_p : process(clk360)
     begin
