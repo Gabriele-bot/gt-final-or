@@ -100,6 +100,10 @@ architecture rtl of emp_payload is
 
 begin
 
+    assert N_SLR_ALGOS <= 576
+    report "Selected number of algos per SLR is greater than 576"
+    severity FAILURE;
+
     fabric_i : entity work.ipbus_fabric_sel
         generic map(
             NSLV      => N_SLAVES,

@@ -33,6 +33,10 @@ parser.add_argument('-hl', '--HighLinks', type=str, default="36-47")
 
 args = parser.parse_args()
 
+#Magic numbers, needs to be placed in a config file, better to parse the vhd package
+slr_algos = 512
+monitoring_slrs = 3
+
 # from https://gitlab.cern.ch/cms-cactus/phase2/pyswatch/-/blob/master/src/swatch/config.py
 
 _INDEX_LIST_STRING_REGEX = re.compile(r'([0-9]+(?:-[0-9]+)?)(?:,([0-9]+(?:-[0-9]+)?))*')
@@ -61,7 +65,7 @@ uhal.disableLogging()
 lumi_bit = args.lumisection
 
 if args.test != 'algo-out':
-    HWtest = FinOrController(serenity='Serenity3', connection_file=args.connections, device='x0', emp_flag=False)
+    HWtest = FinOrController(serenity='Serenity3', connection_file=args.connections, device='x0', SLR_ALGOS=slr_algos, emp_flag=False)
 
     # EMPdevice = HWtest.get_device()
     # ttcNode   = EMPdevice.getTTC()
@@ -87,6 +91,7 @@ if args.test == 'prescaler':
     # load data from PaternProducer metadata
     algo_data = np.loadtxt('Pattern_files/metadata/Prescaler_test/algo_rep.txt')
     index = algo_data[0]
+
     repetitions = algo_data[1]
 
     o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
@@ -103,7 +108,7 @@ if args.test == 'prescaler':
         HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
-    trigger_mask = np.ones((3, 144), dtype=np.uint32) * 2 ** 32 - 1
+    trigger_mask = np.ones((3, 128), dtype=np.uint32) * 2 ** 32 - 1
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -119,7 +124,7 @@ if args.test == 'prescaler':
     print(format_row.format('Trigger mask SLR n2', ls_trigg_mark_before[2], ls_trigg_mark_after[2]))
 
     # Set the veto mask
-    veto_mask = np.zeros((3, 18), dtype=np.uint32)
+    veto_mask = np.zeros((3, 16), dtype=np.uint32)
 
     HWtest.load_veto_mask(veto_mask)
 
@@ -131,31 +136,31 @@ if args.test == 'prescaler':
     print(format_row.format('Veto mask SLR n1', ls_veto_mark_before[1], ls_veto_mark_after[1]))
     print(format_row.format('Veto mask SLR n2', ls_veto_mark_before[2], ls_veto_mark_after[2]))
 
-    prsc_fct = np.uint32(100 * np.ones((3, 576)))  # 1.00
-    prsc_fct_prvw = np.uint32(100 * np.ones((3, 576)))  # 1.00
+    prsc_fct = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
+    prsc_fct_prvw = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
 
-    index_low = index[np.where(index < 576)[0]]
-    index_mid = index[np.where((index >= 576) & (index < 1152))[0]]
-    index_high = index[np.where((index >= 1152) & (index < 1728))[0]]
+    index_low = index[np.where(index < slr_algos)[0]]
+    index_mid = index[np.where((index >= slr_algos) & (index < slr_algos*2))[0]]
+    index_high = index[np.where((index >= slr_algos*2) & (index < slr_algos*3))[0]]
 
     if args.ps_column == "random":
-        prsc_fct[2][np.int16(index_high - 1152)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_high)))
-        prsc_fct[1][np.int16(index_mid - 576)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_mid)))
+        prsc_fct[2][np.int16(index_high - slr_algos*2)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_high)))
+        prsc_fct[1][np.int16(index_mid - slr_algos)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_mid)))
         prsc_fct[0][np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_low)))
     elif args.ps_column == "linear":
-        prsc_fct[2][np.int16(index_high - 1152)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_high)))
-        prsc_fct[1][np.int16(index_mid - 576)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_mid)))
+        prsc_fct[2][np.int16(index_high - slr_algos*2)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_high)))
+        prsc_fct[1][np.int16(index_mid - slr_algos)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_mid)))
         prsc_fct[0][np.int16(index_low)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index_low)))
 
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
 
     if args.ps_column == "random":
-        prsc_fct_prvw[2][np.int16(index_high - 1152)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_high)))
-        prsc_fct_prvw[1][np.int16(index_mid - 576)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_mid)))
+        prsc_fct_prvw[2][np.int16(index_high - slr_algos*2)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_high)))
+        prsc_fct_prvw[1][np.int16(index_mid - slr_algos)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_mid)))
         prsc_fct_prvw[0][np.int16(index_low)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index_low)))
     elif args.ps_column == "linear":
-        prsc_fct_prvw[2][np.int16(index_high - 1152)] = np.uint32(np.linspace(100, 2 ** 24 - 101, len(index_high)))
-        prsc_fct_prvw[1][np.int16(index_mid - 576)] = np.uint32(np.linspace(100, 2 ** 24 - 101, len(index_mid)))
+        prsc_fct_prvw[2][np.int16(index_high - slr_algos*2)] = np.uint32(np.linspace(100, 2 ** 24 - 101, len(index_high)))
+        prsc_fct_prvw[1][np.int16(index_mid - slr_algos)] = np.uint32(np.linspace(100, 2 ** 24 - 101, len(index_mid)))
         prsc_fct_prvw[0][np.int16(index_low)] = np.uint32(np.linspace(100, 2 ** 24 - 101, len(index_low)))
 
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
@@ -170,9 +175,9 @@ if args.test == 'prescaler':
     print(format_row.format('Prescaler SLR n2', ls_prescale_mark_before[2], ls_prescale_mark_after[2]))
 
     # compute expected rate
-    rate_before_theo = np.float64(np.zeros(1728))
-    rate_after_theo = np.float64(np.zeros(1728))
-    rate_prvw_theo = np.float64(np.zeros(1728))
+    rate_before_theo = np.float64(np.zeros(slr_algos*3))
+    rate_after_theo = np.float64(np.zeros(slr_algos*3))
+    rate_prvw_theo = np.float64(np.zeros(slr_algos*3))
 
     rate_before_theo[np.uint32(index)] = np.uint32(repetitions * (2 ** lumi_bit))
     rate_after_theo[np.uint32(index)] = np.uint32(
@@ -276,26 +281,26 @@ elif args.test == 'trigger_mask':
         HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks to match trigg_index
-    trigger_mask = np.zeros((3, 144), dtype=np.uint32)
+    trigger_mask = np.zeros((3, 128), dtype=np.uint32)
     for mask_i, indeces in enumerate(trigg_index):
         for index in indeces:
-            if index < 576:
-                reg_index = np.uint16(np.floor(index / 32) + mask_i * 18)
+            if index < slr_algos:
+                reg_index = np.uint16(np.floor(index / 32) + mask_i * int(slr_algos/32))
                 # print(reg_index)
                 trigger_mask[0][np.uint16(reg_index)] = trigger_mask[0][np.uint32(reg_index)] | (
                         1 << np.uint32(index - 32 * np.floor(index / 32)))
             # print(hex(trigger_mask[0][np.uint16(reg_index)]))
-            elif 576 <= index < 1152:
-                reg_index = np.uint16(np.floor((index - 576) / 32) + mask_i * 18)
+            elif slr_algos <= index < slr_algos*2:
+                reg_index = np.uint16(np.floor((index - slr_algos) / 32) + mask_i * int(slr_algos/32))
                 # print(reg_index)
                 trigger_mask[1][np.uint16(reg_index)] = trigger_mask[1][np.uint32(reg_index)] | (
-                        1 << np.uint32((index - 576) - 32 * np.floor((index - 576) / 32)))
+                        1 << np.uint32((index - slr_algos) - 32 * np.floor((index - slr_algos) / 32)))
             # print(hex(trigger_mask[1][np.uint16(reg_index)]))
-            else:
-                reg_index = np.uint16(np.floor((index - 1152) / 32) + mask_i * 18)
+            elif slr_algos*2 <= index < slr_algos*3:
+                reg_index = np.uint16(np.floor((index - slr_algos*2) / 32) + mask_i * int(slr_algos/32))
                 # print(reg_index)
                 trigger_mask[2][np.uint16(reg_index)] = trigger_mask[2][np.uint32(reg_index)] | (
-                        1 << np.uint32((index - 1152) - 32 * np.floor((index - 1152) / 32)))
+                        1 << np.uint32((index - slr_algos*2) - 32 * np.floor((index - slr_algos*2) / 32)))
             # print(hex(trigger_mask[1][np.uint16(reg_index)]))
 
     HWtest.load_mask_arr(trigger_mask)
@@ -311,7 +316,7 @@ elif args.test == 'trigger_mask':
     print(format_row.format('Trigger mask SLR n1', ls_trigg_mark_before[1], ls_trigg_mark_after[1]))
     print(format_row.format('Trigger mask SLR n2', ls_trigg_mark_before[2], ls_trigg_mark_after[2]))
 
-    veto_mask = np.zeros((3, 18), dtype=np.uint32)
+    veto_mask = np.zeros((3, 16), dtype=np.uint32)
 
     HWtest.load_veto_mask(veto_mask)
 
@@ -324,8 +329,8 @@ elif args.test == 'trigger_mask':
     print(format_row.format('Veto mask SLR n2', ls_veto_mark_before[2], ls_veto_mark_after[2]))
 
     # Set pre-scaler factors
-    prsc_fct = np.uint32(100 * np.ones((3, 576)))  # 1.00
-    prsc_fct_prvw = np.uint32(100 * np.ones((3, 576)))  # 1.00
+    prsc_fct = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
+    prsc_fct_prvw = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
 
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
@@ -430,7 +435,7 @@ elif args.test == 'veto_mask':
         HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks to match trigg_index
-    trigger_mask = np.ones((3, 144), dtype=np.uint32) * 2 ** 32 - 1
+    trigger_mask = np.ones((3, 128), dtype=np.uint32) * 2 ** 32 - 1
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -446,20 +451,20 @@ elif args.test == 'veto_mask':
     print(format_row.format('Trigger mask SLR n2', ls_trigg_mark_before[2], ls_trigg_mark_after[2]))
 
     # Set the veto mask
-    veto_mask = np.zeros((3, 18), dtype=np.uint32)
+    veto_mask = np.zeros((3, 16), dtype=np.uint32)
     for index in veto_indeces:
-        if index < 576:
+        if index < slr_algos:
             reg_index = np.uint16(np.floor(index / 32))
             veto_mask[0][np.uint16(reg_index)] = veto_mask[0][np.uint32(reg_index)] | (
                     1 << np.uint32(index - 32 * np.floor(index / 32)))
-        elif 576 <= index < 1152:
-            reg_index = np.uint16(np.floor((index - 576) / 32))
+        elif slr_algos <= index < slr_algos*2:
+            reg_index = np.uint16(np.floor((index - slr_algos) / 32))
             veto_mask[1][np.uint16(reg_index)] = veto_mask[1][np.uint32(reg_index)] | (
-                    1 << np.uint32((index - 576) - 32 * np.floor((index - 576) / 32)))
-        else:
-            reg_index = np.uint16(np.floor((index - 1152) / 32))
+                    1 << np.uint32((index - slr_algos) - 32 * np.floor((index - slr_algos) / 32)))
+        elif slr_algos*2 <= index < slr_algos*3:
+            reg_index = np.uint16(np.floor((index - slr_algos*2) / 32))
             veto_mask[2][np.uint16(reg_index)] = veto_mask[2][np.uint32(reg_index)] | (
-                    1 << np.uint32((index - 1152) - 32 * np.floor((index - 1152) / 32)))
+                    1 << np.uint32((index - slr_algos*2) - 32 * np.floor((index - slr_algos*2) / 32)))
 
     HWtest.load_veto_mask(veto_mask)
 
@@ -472,8 +477,8 @@ elif args.test == 'veto_mask':
     print(format_row.format('Veto mask SLR n2', ls_veto_mark_before[2], ls_veto_mark_after[2]))
 
     # Set pre-scaler factors
-    prsc_fct = np.uint32(100 * np.ones((3, 576)))  # 1.00
-    prsc_fct_prvw = np.uint32(100 * np.ones((3, 576)))  # 1.00
+    prsc_fct = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
+    prsc_fct_prvw = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
 
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
@@ -538,6 +543,9 @@ elif args.test == 'veto_mask':
         trigg_cnt_pdt_wveto = HWtest.read_trigg_cnt(5)
 
         veto_cnt_reg = HWtest.read_veto_cnt()
+        veto_cnt_SLR0_reg = HWtest.read_partial_veto_cnt(0)
+        veto_cnt_SLR1_reg = HWtest.read_partial_veto_cnt(1)
+        veto_cnt_SLR2_reg = HWtest.read_partial_veto_cnt(2)
 
         print(format_row.format('Trigger', *trigg_cnt))
         print(format_row.format('Trigger pdt', *trigg_cnt_pdt))
@@ -545,6 +553,10 @@ elif args.test == 'veto_mask':
         print(format_row.format('Trigger pdt vetoed', *trigg_cnt_pdt_wveto))
 
         print('Veto counter value = %d' % (veto_cnt_reg))
+        print('Veto counter SLR0 value = %d' % (veto_cnt_SLR0_reg))
+        print('Veto counter SLR1 value = %d' % (veto_cnt_SLR1_reg))
+        print('Veto counter SLR2 value = %d' % (veto_cnt_SLR2_reg))
+
 
         for trigg_index, cnt in enumerate(trigg_cnt):
             error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
@@ -585,28 +597,30 @@ elif args.test == 'BXmask':
 
     BX_mask = np.load('Pattern_files/metadata/BXmask_test/BX_mask.npy')
 
-    bxmask = np.zeros((3, 18, 4096), dtype=np.uint32)
+    bxmask = np.zeros((3, 16, 4096), dtype=np.uint32)
 
     # set the BX mask accordingly
     for BX_nr in range(np.shape(BX_mask)[1]):
         for index, mask in enumerate(BX_mask[:, BX_nr]):
-            if index < 576:
+            if mask:
+                print(index, BX_nr)
+            if index < slr_algos:
                 reg_index = np.uint16(np.floor(index / 32))
                 bit_pos = np.uint16(index - reg_index * 32)
                 bxmask[0, reg_index, BX_nr] = (bxmask[0, reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
-            elif 576 <= index < 1152:
-                reg_index = np.uint16(np.floor((index - 576) / 32))
-                bit_pos = np.uint16((index - 576) - reg_index * 32)
+            elif slr_algos <= index < slr_algos*2:
+                reg_index = np.uint16(np.floor((index - slr_algos) / 32))
+                bit_pos = np.uint16((index - slr_algos) - reg_index * 32)
                 bxmask[1, reg_index, BX_nr] = (bxmask[1, reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
-            else:
-                reg_index = np.uint16(np.floor((index - 1152) / 32))
-                bit_pos = np.uint16((index - 1152) - reg_index * 32)
+            elif slr_algos*2 <= index < slr_algos*3:
+                reg_index = np.uint16(np.floor((index - slr_algos*2) / 32))
+                bit_pos = np.uint16((index - slr_algos*2) - reg_index * 32)
                 bxmask[2, reg_index, BX_nr] = (bxmask[2, reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
 
     HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
-    trigger_mask = np.ones((3, 144), dtype=np.uint32) * 2 ** 32 - 1
+    trigger_mask = np.ones((3, 128), dtype=np.uint32) * 2 ** 32 - 1
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -621,7 +635,7 @@ elif args.test == 'BXmask':
     print(format_row.format('Trigger mask SLR n1', ls_trigg_mark_before[1], ls_trigg_mark_after[1]))
 
     # Set the veto mask
-    veto_mask = np.zeros((3, 18), dtype=np.uint32)
+    veto_mask = np.zeros((3, 16), dtype=np.uint32)
 
     HWtest.load_veto_mask(veto_mask)
 
@@ -633,8 +647,8 @@ elif args.test == 'BXmask':
     print(format_row.format('Veto mask SLR n1', ls_veto_mark_before[1], ls_veto_mark_after[1]))
 
     # Set pre-scaler factors
-    prsc_fct = np.uint32(100 * np.ones((3, 576)))  # 1.00
-    prsc_fct_prvw = np.uint32(100 * np.ones((3, 576)))  # 1.00
+    prsc_fct = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
+    prsc_fct_prvw = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
 
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
@@ -648,7 +662,7 @@ elif args.test == 'BXmask':
     print(format_row.format('Prescaler SLR n1', ls_prescale_mark_before[1], ls_prescale_mark_after[1]))
 
     # compute expected rate
-    rate_before_theo = np.float64(np.zeros(1728))
+    rate_before_theo = np.float64(np.zeros(slr_algos*3))
 
     rate_before_theo[np.uint32(indeces)] = np.uint32(repetitions * (2 ** lumi_bit))
 

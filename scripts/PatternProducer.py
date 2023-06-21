@@ -13,6 +13,8 @@ from bitstringconverter import *
 parser = argparse.ArgumentParser(description='GT-Final OR board Pattern producer')
 parser.add_argument('-i', '--indexes', metavar='N', type=int, default=1,
                     help='Number of algos to send')
+parser.add_argument('-a', '--slr_algos', metavar='N', type=int, default=576,
+                    help='Number of algos per SLR')
 parser.add_argument('-ll', '--LowLinks', type=str, default="0-11")
 parser.add_argument('-ml', '--MidLinks', type=str, default="36-47")
 parser.add_argument('-hl', '--HighLinks', type=str, default="48-59")
@@ -20,6 +22,7 @@ parser.add_argument('-hl', '--HighLinks', type=str, default="48-59")
 args = parser.parse_args()
 
 board = 'vu13p'
+monitor_SLR = 3
 
 #################################### Channel Parser #######################################
 
@@ -68,8 +71,8 @@ def prep_bitstring_metadata(metadata_int_new):
     return metadata_bitstring
 
 
-def extract_random_indexes(n_algo_bits, max_algos=1152, max_rep=113, low_rep=True, debug=False):
-    Possibile_indeces = range(max_algos)
+def extract_random_indexes(n_algo_bits, N_slr_algos, max_rep=113, low_rep=True, debug=False):
+    Possibile_indeces = list(np.hstack((range(N_slr_algos), range(576, 576 + N_slr_algos, 1), range(1152, 1152 + N_slr_algos, 1))))
     Possibile_rep = range(int(max_rep))
 
     indeces = random.sample(Possibile_indeces, n_algo_bits)
@@ -89,7 +92,7 @@ def extract_random_indexes(n_algo_bits, max_algos=1152, max_rep=113, low_rep=Tru
         print("Algo bit repetitions")
         print(np.array(repetitions))
 
-    algo_matrix = np.zeros((max_algos, max_rep), bool)
+    algo_matrix = np.zeros((monitor_SLR*576, max_rep), bool)
 
     for rep, index in zip(repetitions, indeces):
         random_spot = np.random.choice(Possibile_rep, size=rep, replace=False)
@@ -104,6 +107,22 @@ def get_Available_links(arguments):
         (parse_index_list_string(arguments.LowLinks), parse_index_list_string(arguments.MidLinks), parse_index_list_string(arguments.HighLinks)))
 
     return Available_links
+
+
+def merge_indeces(indeces, N_slr_algos):
+    new_indeces = np.copy(indeces)
+    errors = 0
+    for n, i in enumerate(new_indeces):
+        if 576 <= i < 1152:
+            new_indeces[n] = i - (576 - N_slr_algos)
+        elif 1152 <= i < 1728:
+            new_indeces[n] = i - (1152 - N_slr_algos*2)
+        if (N_slr_algos <= i < 576) | (576 + N_slr_algos <= i < 1152) | (1152 + N_slr_algos <= i < 1728):
+            errors = errors + 1
+
+    if errors > 0:
+        print("ahia")
+    return new_indeces
 
 
 def pattern_data_producer(indeces, positions, file_name, Links, debug):
@@ -151,7 +170,7 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False
     X_input_high = np.zeros((1017, len(Links[2])), dtype=np.uint64)
 
     Possibile_rep = np.array(range(int(1024 / 9)))
-    Possibile_indeces = np.array(range(576*3))
+    Possibile_indeces = np.array(range(576*monitor_SLR))
     index_mask = np.logical_or.reduce(algo_matrix, 1).astype(bool)
     indeces = Possibile_indeces[index_mask]
 
@@ -201,28 +220,31 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False
             print(f.readlines()[row])
 
 
-def pattern_producer_prescale_test(n_algo_bits, debug=False):
-    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, 576*3, 113, False, debug)
-
+def pattern_producer_prescale_test(n_algo_bits, N_slr_algos=args.slr_algos, debug=False):
+    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, N_slr_algos, 113, False, debug)
     Available_links = get_Available_links(args)
 
     pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_prescaler_test.txt", Available_links, debug,
                              for_sim=True)
 
-    return indeces, repetitions
+    new_indeces = merge_indeces(indeces, args.slr_algos)
+
+    return new_indeces, repetitions
 
 
 def pattern_producer_trggmask_test(debug=False):
     Possibile_rep = range(int(113))
     N_trigg_masks = 8
-    Algos_per_trigg = int(576*3 / N_trigg_masks)
+    Algos_per_trigg = int(args.slr_algos*monitor_SLR / N_trigg_masks)
+    Possibile_indeces = np.hstack(
+        (range(args.slr_algos), range(576, 576 + args.slr_algos, 1), range(1152, 1152 + args.slr_algos, 1)))
 
-    algo_subset = np.random.choice(576*3, [N_trigg_masks, Algos_per_trigg], replace=False)
+    algo_subset = np.random.choice(Possibile_indeces, [N_trigg_masks, Algos_per_trigg], replace=False)
     rep_per_trigg = np.random.choice(Possibile_rep, size=N_trigg_masks, replace=True)
 
     indeces = []
     positions = []
-    algo_matrix = np.zeros((576*3, 113), bool)
+    algo_matrix = np.zeros((576*monitor_SLR, 113), bool)
 
     for i in range(N_trigg_masks):
         algos_position = np.random.choice(Possibile_rep, size=rep_per_trigg[i], replace=False)
@@ -245,7 +267,12 @@ def pattern_producer_trggmask_test(debug=False):
     # pattern_data_producer(indeces, positions, "Finor_input_pattern_trigg_test.txt", Available_links, debug)
     pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_trigg_test.txt", Available_links, debug, False)
 
-    return algo_subset, rep_per_trigg
+    new_algo_subset = np.copy(algo_subset)
+
+    for n, algo_set in enumerate(algo_subset):
+        new_algo_subset[n] = merge_indeces(algo_set, args.slr_algos)
+
+    return new_algo_subset, rep_per_trigg
 
 
 def pattern_producer_veto_test(n_algo_bits, n_veto_bits, debug=False):
@@ -253,7 +280,7 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, debug=False):
         raise Exception(
             "n_algo_bits must be larger than n_veto_bits, \nvalues got %d and %d" % (n_algo_bits, n_veto_bits))
 
-    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, 576*3, 113, True, debug)
+    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, args.slr_algos, 113, True, debug)
     algo_matrix_veto = np.copy(algo_matrix)
     veto_indeces = np.random.choice(indeces, size=n_veto_bits, replace=False)
     veto_matrix = np.zeros((n_veto_bits, 113), bool)
@@ -276,12 +303,27 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, debug=False):
 
     pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_veto_test.txt", Available_links, debug)
 
-    return finor_counts, veto_indeces
+    new_veto_indeces = merge_indeces(veto_indeces, args.slr_algos)
+
+    return finor_counts, new_veto_indeces
 
 
-def pattern_producer_BXmask_test(p_algo, p_mask, debug=False):
+def pattern_producer_BXmask_test(p_algo, p_mask, N_slr_algos=args.slr_algos, debug=False):
     BX_mask = np.random.choice(a=[False, True], size=(576*3, 113), p=[p_mask, 1 - p_mask])
     algo_matrix = np.random.choice(a=[False, True], size=(576*3, 113), p=[p_algo, 1 - p_algo])
+    algo_matrix[N_slr_algos:576] = False
+    algo_matrix[576 + N_slr_algos:1152] = False
+    algo_matrix[1152 + N_slr_algos:1728] = False
+
+    BX_mask[N_slr_algos:576] = False
+    BX_mask[576+N_slr_algos:1152] = False
+    BX_mask[1152+N_slr_algos:1728] = False
+
+    BX_mask_new = np.zeros(shape=(N_slr_algos * 3, 113))
+    BX_mask_new[:N_slr_algos     , :113] = BX_mask[:N_slr_algos, :113]
+    BX_mask_new[N_slr_algos:N_slr_algos*2 , :113] = BX_mask[576:576 + N_slr_algos, :113]
+    BX_mask_new[N_slr_algos*2:N_slr_algos*3, :113] = BX_mask[1152:1152 + N_slr_algos, :113]
+
     algo_matrix_masked = np.logical_and(algo_matrix, BX_mask).astype(bool)
 
     rep_tot = np.sum(algo_matrix_masked, 1).astype(np.uint32)
@@ -295,10 +337,12 @@ def pattern_producer_BXmask_test(p_algo, p_mask, debug=False):
 
     pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_BXmask_test.txt", Available_links, debug)
 
-    return indeces, repetitions, BX_mask, finor_counts
+    new_indeces = merge_indeces(indeces, args.slr_algos)
+
+    return new_indeces, repetitions, BX_mask_new, finor_counts
 
 
-index, repetition = pattern_producer_prescale_test(args.indexes, False)
+index, repetition = pattern_producer_prescale_test(args.indexes, args.slr_algos, False)
 indir = "Pattern_files"
 fname = indir + "/metadata/Prescaler_test/algo_rep.txt"
 algo_data = np.vstack((index, repetition))
@@ -318,14 +362,19 @@ np.savetxt(fname, finor_cnts, fmt='%d')
 fname = indir + "/metadata/Veto_test/veto_indeces.txt"
 np.savetxt(fname, veto_indeces, fmt='%d')
 
-index, repetition, mask, finor_cnts = pattern_producer_BXmask_test(0.999, 0.600, False)
+index, repetition, mask, finor_cnts = pattern_producer_BXmask_test(0.5, 0.999, args.slr_algos, False)
 indir = "Pattern_files"
 fname = indir + "/metadata/BXmask_test/algo_rep.txt"
 algo_data = np.vstack((index, repetition))
+print(algo_data)
 np.savetxt(fname, algo_data, fmt='%d')
 indir = "Pattern_files"
 fname = indir + "/metadata/BXmask_test/finor_counts.npy"
 np.save(fname, finor_cnts)
 indir = "Pattern_files"
 fname = indir + "/metadata/BXmask_test/BX_mask.npy"
+for BX_nr in range(np.shape(mask)[1]):
+    for index, bxmask in enumerate(mask[:, BX_nr]):
+        if bxmask:
+            print(index, BX_nr)
 np.save(fname, mask)

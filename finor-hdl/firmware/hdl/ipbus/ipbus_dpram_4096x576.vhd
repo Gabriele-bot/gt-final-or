@@ -41,6 +41,9 @@ architecture rtl of ipbus_dpram_4096x576 is
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
     signal ipb_from_slaves : ipb_rbus_array(N_SLAVES - 1 downto 0);
 
+    signal d_int : std_logic_vector(576 - 1 downto 0);
+    signal q_int : std_logic_vector(576 - 1 downto 0);
+
 begin
 
     fabric_i : entity work.ipbus_fabric_sel
@@ -73,11 +76,14 @@ begin
                 ipb_out => ipb_from_slaves(mem_index(i)),
                 rclk    => rclk,
                 we      => we,
-                d       => d(32 * (i + 1) - 1 downto 32 * i),
-                q       => q(32 * (i + 1) - 1 downto 32 * i),
+                d       => d_int(32 * (i + 1) - 1 downto 32 * i),
+                q       => q_int(32 * (i + 1) - 1 downto 32 * i),
                 addr    => std_logic_vector(addr)
             );
 
     end generate;
+
+    d_int(DATA_WIDTH - 1 downto 0) <= d;
+    q                              <= q_int(DATA_WIDTH - 1 downto 0);
 
 end rtl;

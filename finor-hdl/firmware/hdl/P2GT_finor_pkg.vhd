@@ -30,7 +30,8 @@ package P2GT_finor_pkg is
     constant MAX_CTRS_DELAY_360               : integer := 486; -- corresponding to ~1.35  us  (360 MHz domain) (511-12-9-4)
     constant SLR_CROSSING_LATENCY_TRIGGERBITS : integer := 13;
     constant OUTPUT_LATENCY_ALGOBITS          : integer := 4;
-    constant N_SLR_ALGOS                      : integer := 576;
+    constant N_SLR_ALGOS                      : integer := 512;
+    constant N_SLR_ALGOS_MAX                  : integer := LWORD_WIDTH * 9;
     constant N_ALGOS                          : integer := N_SLR_ALGOS * N_MONITOR_SLR;
     constant DESER_OUT_REG                    : boolean := TRUE;
 
@@ -62,13 +63,12 @@ package P2GT_finor_pkg is
     constant SLRn0_OUTPUT_QUAD     : natural                                      := 1;
     constant SLRn1_OUTPUT_QUAD     : natural                                      := 10;
     constant SLRn2_OUTPUT_QUAD     : natural                                      := 13;
-    
+
     -- =================================================================================
     -- OUTPUTS trigger bits
     -- =================================================================================
     constant OUTPUT_CHANNEL : natural := 99;
     constant OUTPUT_QUAD    : natural := 24;
-    
 
     type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(LWORD_WIDTH * 9 - 1 downto 0);
     type mask_arr is array (N_TRIGG - 1 downto 0) of std_logic_vector(N_SLR_ALGOS - 1 downto 0);

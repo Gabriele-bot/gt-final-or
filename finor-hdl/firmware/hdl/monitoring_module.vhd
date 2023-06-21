@@ -68,22 +68,22 @@ architecture rtl of monitoring_module is
     signal algos_after_prescaler_preview : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
     -- prescale factor ipb regs
-    signal prscl_fct      : ipb_reg_v(NR_ALGOS - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
-    signal prscl_fct_prvw : ipb_reg_v(NR_ALGOS - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
+    signal prscl_fct      : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
+    signal prscl_fct_prvw : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
 
     signal rst_prescale_counters           : std_logic;
     signal change_prescale_column_occurred : std_logic;
 
     -- rate counter ipb regs
-    signal rate_cnt_before_prescaler        : ipb_reg_v(NR_ALGOS - 1 downto 0);
-    signal rate_cnt_after_prescaler         : ipb_reg_v(NR_ALGOS - 1 downto 0);
-    signal rate_cnt_after_prescaler_preview : ipb_reg_v(NR_ALGOS - 1 downto 0);
-    signal rate_cnt_post_dead_time          : ipb_reg_v(NR_ALGOS - 1 downto 0);
+    signal rate_cnt_before_prescaler        : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0);
+    signal rate_cnt_after_prescaler         : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0);
+    signal rate_cnt_after_prescaler_preview : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0);
+    signal rate_cnt_post_dead_time          : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0);
 
-    signal masks_ipbus_regs : ipb_reg_v(NR_ALGOS / 32 * NR_TRIGGERS - 1 downto 0) := (others => (others => '1'));
+    signal masks_ipbus_regs : ipb_reg_v(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS - 1 downto 0) := (others => (others => '1'));
     signal masks            : mask_arr                                            := (others => (others => '1'));
 
-    signal veto_ipbus_regs          : ipb_reg_v(NR_ALGOS / 32 - 1 downto 0)   := (others => (others => '0'));
+    signal veto_ipbus_regs          : ipb_reg_v(N_SLR_ALGOS_MAX / 32 - 1 downto 0)   := (others => (others => '0'));
     signal veto_mask, veto_mask_int : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
     signal request_factor_update : std_logic;
@@ -122,12 +122,12 @@ architecture rtl of monitoring_module is
     signal d_rate_cnt_before_prescaler, d_rate_cnt_after_prescaler       : std_logic_vector(31 downto 0);
     signal d_rate_cnt_after_prescaler_preview, d_rate_cnt_post_dead_time : std_logic_vector(31 downto 0);
 
-    signal addr, addr_prscl         : std_logic_vector(log2c(NR_ALGOS) - 1 downto 0);
-    signal addr_prscl_w             : std_logic_vector(log2c(NR_ALGOS) - 1 downto 0)                    := (others => '0');
-    signal addr_mask                : std_logic_vector(log2c(NR_ALGOS / 32 * NR_TRIGGERS) - 1 downto 0);
-    signal addr_mask_w              : std_logic_vector(log2c(NR_ALGOS / 32 * NR_TRIGGERS) - 1 downto 0) := (others => '0');
-    signal addr_veto                : std_logic_vector(log2c(NR_ALGOS / 32) - 1 downto 0);
-    signal addr_veto_w              : std_logic_vector(log2c(NR_ALGOS / 32) - 1 downto 0)               := (others => '0');
+    signal addr, addr_prscl         : std_logic_vector(log2c(N_SLR_ALGOS_MAX) - 1 downto 0);
+    signal addr_prscl_w             : std_logic_vector(log2c(N_SLR_ALGOS_MAX) - 1 downto 0)                    := (others => '0');
+    signal addr_mask                : std_logic_vector(log2c(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS) - 1 downto 0);
+    signal addr_mask_w              : std_logic_vector(log2c(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS) - 1 downto 0) := (others => '0');
+    signal addr_veto                : std_logic_vector(log2c(N_SLR_ALGOS_MAX / 32) - 1 downto 0);
+    signal addr_veto_w              : std_logic_vector(log2c(N_SLR_ALGOS_MAX / 32) - 1 downto 0)               := (others => '0');
     signal we, we_mask              : std_logic;
     signal ready                    : std_logic;
     signal ready_mask, ready_mask_1 : std_logic;
@@ -248,7 +248,7 @@ begin
 
     rate_cntrs_read_FSM_i : entity work.write_FSM
         generic map(
-            RAM_DEPTH => NR_ALGOS
+            RAM_DEPTH => N_SLR_ALGOS_MAX
         )
         port map(
             clk        => clk40,
@@ -261,7 +261,7 @@ begin
 
     prescaler_read_FSM_i : entity work.read_FSM
         generic map(
-            RAM_DEPTH      => NR_ALGOS,
+            RAM_DEPTH      => N_SLR_ALGOS_MAX,
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
@@ -279,7 +279,7 @@ begin
 
     trgg_mask_read_FSM_i : entity work.read_FSM
         generic map(
-            RAM_DEPTH      => NR_ALGOS / 32 * NR_TRIGGERS,
+            RAM_DEPTH      => N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS,
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
@@ -304,7 +304,7 @@ begin
 
     veto_read_FSM_i : entity work.read_FSM
         generic map(
-            RAM_DEPTH      => NR_ALGOS / 32,
+            RAM_DEPTH      => N_SLR_ALGOS_MAX / 32,
             BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
         )
         port map(
@@ -347,7 +347,7 @@ begin
     prscl_fct_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => PRESCALE_FACTOR_INIT,
-            ADDR_WIDTH => log2c(NR_ALGOS),
+            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX),
             DATA_WIDTH => 32
         )
         port map(
@@ -369,7 +369,7 @@ begin
     prscl_fct_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => PRESCALE_FACTOR_INIT,
-            ADDR_WIDTH => log2c(NR_ALGOS),
+            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX),
             DATA_WIDTH => 32
         )
         port map(
@@ -401,7 +401,7 @@ begin
     rate_cnt_before_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(NR_ALGOS),
+            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX),
             DATA_WIDTH => 32
         )
         port map(
@@ -423,7 +423,7 @@ begin
     rate_cnt_after_prsc_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(NR_ALGOS),
+            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX),
             DATA_WIDTH => 32
         )
         port map(
@@ -445,7 +445,7 @@ begin
     rate_cnt_after_prsc_prvw_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(NR_ALGOS),
+            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX),
             DATA_WIDTH => 32
         )
         port map(
@@ -467,7 +467,7 @@ begin
     rate_cnt_post_dead_time_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(NR_ALGOS),
+            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX),
             DATA_WIDTH => 32
         )
         port map(
@@ -558,7 +558,7 @@ begin
     masks_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"ffffffff",
-            ADDR_WIDTH => log2c(NR_ALGOS / 32 * NR_TRIGGERS),
+            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS),
             DATA_WIDTH => 32
         )
         port map(
@@ -581,23 +581,26 @@ begin
         end if;
     end process;
 
-    mask_l : for i in NR_TRIGGERS - 1 downto 0 generate
-        process(clk40)
-        begin
-            if rising_edge(clk40) then
-                if (ready_mask = '1' and ready_mask_1 = '0') then --rising edge
-                    masks(i) <= (masks_ipbus_regs(i * 18 + 17), masks_ipbus_regs(i * 18 + 16),
-                                 masks_ipbus_regs(i * 18 + 15), masks_ipbus_regs(i * 18 + 14),
-                                 masks_ipbus_regs(i * 18 + 13), masks_ipbus_regs(i * 18 + 12),
-                                 masks_ipbus_regs(i * 18 + 11), masks_ipbus_regs(i * 18 + 10),
-                                 masks_ipbus_regs(i * 18 + 9), masks_ipbus_regs(i * 18 + 8),
-                                 masks_ipbus_regs(i * 18 + 7), masks_ipbus_regs(i * 18 + 6),
-                                 masks_ipbus_regs(i * 18 + 5), masks_ipbus_regs(i * 18 + 4),
-                                 masks_ipbus_regs(i * 18 + 3), masks_ipbus_regs(i * 18 + 2),
-                                 masks_ipbus_regs(i * 18 + 1), masks_ipbus_regs(i * 18 + 0));
+    mask_out_l : for i in NR_TRIGGERS - 1 downto 0 generate
+        mask_in_l : for j in NR_ALGOS / 32 - 1 downto 0 generate
+            process(clk40)
+            begin
+                if rising_edge(clk40) then
+                    if (ready_mask = '1' and ready_mask_1 = '0') then --rising edge
+                        masks(i)((j + 1) * 32 - 1 downto j * 32) <= masks_ipbus_regs(i * (NR_ALGOS / 32) + j);
+                        --masks(i) <= (masks_ipbus_regs(i * 18 + 17), masks_ipbus_regs(i * 18 + 16),
+                        --             masks_ipbus_regs(i * 18 + 15), masks_ipbus_regs(i * 18 + 14),
+                        --             masks_ipbus_regs(i * 18 + 13), masks_ipbus_regs(i * 18 + 12),
+                        --             masks_ipbus_regs(i * 18 + 11), masks_ipbus_regs(i * 18 + 10),
+                        --             masks_ipbus_regs(i * 18 + 9), masks_ipbus_regs(i * 18 + 8),
+                        --             masks_ipbus_regs(i * 18 + 7), masks_ipbus_regs(i * 18 + 6),
+                        --             masks_ipbus_regs(i * 18 + 5), masks_ipbus_regs(i * 18 + 4),
+                        --             masks_ipbus_regs(i * 18 + 3), masks_ipbus_regs(i * 18 + 2),
+                        --             masks_ipbus_regs(i * 18 + 1), masks_ipbus_regs(i * 18 + 0));
+                    end if;
                 end if;
-            end if;
-        end process;
+            end process;
+        end generate;
     end generate;
     -- TODO What happens if I want to change the N_TRIGGER constant?? Need to change te code to support that
 
@@ -608,7 +611,7 @@ begin
     veto_regs : entity work.ipbus_initialized_dpram
         generic map(
             INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(NR_ALGOS / 32),
+            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX / 32),
             DATA_WIDTH => 32
         )
         port map(
@@ -631,22 +634,25 @@ begin
         end if;
     end process;
 
-    process(clk40)
-    begin
-        if rising_edge(clk40) then
-            if (ready_veto = '1' and ready_veto_1 = '0') then --rising edge
-                veto_mask <= (veto_ipbus_regs(17), veto_ipbus_regs(16),
-                              veto_ipbus_regs(15), veto_ipbus_regs(14),
-                              veto_ipbus_regs(13), veto_ipbus_regs(12),
-                              veto_ipbus_regs(11), veto_ipbus_regs(10),
-                              veto_ipbus_regs(9), veto_ipbus_regs(8),
-                              veto_ipbus_regs(7), veto_ipbus_regs(6),
-                              veto_ipbus_regs(5), veto_ipbus_regs(4),
-                              veto_ipbus_regs(3), veto_ipbus_regs(2),
-                              veto_ipbus_regs(1), veto_ipbus_regs(0));
+    veto_reg_l : for j in NR_ALGOS / 32 - 1 downto 0 generate
+        process(clk40)
+        begin
+            if rising_edge(clk40) then
+                if (ready_veto = '1' and ready_veto_1 = '0') then --rising edge
+                    veto_mask((j + 1) * 32 - 1 downto j * 32) <= veto_ipbus_regs(j);
+                    --veto_mask <= (veto_ipbus_regs(17), veto_ipbus_regs(16),
+                    --            veto_ipbus_regs(15), veto_ipbus_regs(14),
+                    --              veto_ipbus_regs(13), veto_ipbus_regs(12),
+                    --              veto_ipbus_regs(11), veto_ipbus_regs(10),
+                    --              veto_ipbus_regs(9), veto_ipbus_regs(8),
+                    --              veto_ipbus_regs(7), veto_ipbus_regs(6),
+                    --              veto_ipbus_regs(5), veto_ipbus_regs(4),
+                    --              veto_ipbus_regs(3), veto_ipbus_regs(2),
+                    --              veto_ipbus_regs(1), veto_ipbus_regs(0));
+                end if;
             end if;
-        end if;
-    end process;
+        end process;
+    end generate;
     -- TODO What happens if I want to change the N_ALGOS?? Need to change te code to support that
 
     veto_update_i : entity work.update_process
@@ -840,7 +846,7 @@ begin
             veto_out_s <= or veto;
         end if;
     end process;
-    
+
     BX_trigger_p : process(clk40)
     begin
         if rising_edge(clk40) then

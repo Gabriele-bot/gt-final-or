@@ -11,18 +11,19 @@ use work.emp_ttc_decl.all;
 
 entity Link_deserializer is
     generic(
+        OUT_WIDTH : integer := 9 * LWORD_WIDTH;
         OUT_REG : boolean := TRUE
     );
     port(
-        clk360             : in std_logic;
-        rst360             : in std_logic;
-        clk40              : in std_logic;
-        rst40              : in std_logic;
-        lane_data_in       : in lword;
-        rst_err            : in std_logic;
-        align_err_o        : out std_logic;
-        demux_data_o       : out std_logic_vector(9*LWORD_WIDTH-1 downto 0);
-        valid_out          : out std_logic
+        clk360       : in  std_logic;
+        rst360       : in  std_logic;
+        clk40        : in  std_logic;
+        rst40        : in  std_logic;
+        lane_data_in : in  lword;
+        rst_err      : in  std_logic;
+        align_err_o  : out std_logic;
+        demux_data_o : out std_logic_vector(OUT_WIDTH - 1 downto 0);
+        valid_out    : out std_logic
     );
 end Link_deserializer;
 
@@ -38,11 +39,15 @@ architecture rtl of Link_deserializer is
     signal align_err : std_logic := '0';
 
 begin
+    
+    assert OUT_WIDTH <= 9 * LWORD_WIDTH
+    report "Deserializer output witdh cannot be greater than 576"
+    severity FAILURE;
 
     data_in_valid_del_arr(0) <= lane_data_in.valid;
     del_valid_p : process (clk360)
     begin
-        if rising_edge(clk360) then -- rising clock edge
+        if rising_edge(clk360) then     -- rising clock edge
             data_in_valid_del_arr(9 downto 1) <=  data_in_valid_del_arr(8 downto 0);
         end if;
     end process del_valid_p;
@@ -50,7 +55,7 @@ begin
 
     frame_counter_p : process (clk360)
     begin
-        if rising_edge(clk360) then -- rising clock edge
+        if rising_edge(clk360) then     -- rising clock edge
             if lane_data_in.valid = '0' then
                 frame_cntr <= 0;
             elsif frame_cntr < 8 then
@@ -77,7 +82,7 @@ begin
 
     load_data_p : process (clk360)
     begin
-        if rising_edge(clk360) then -- rising clock edge
+        if rising_edge(clk360) then     -- rising clock edge
             if frame_cntr_temp = 8 and frame_cntr /= 8 then
                 data_deserialized <= (others => '0');
             elsif frame_cntr = 8 then
@@ -96,13 +101,13 @@ begin
                     demux_data_o <= (others => '0');
                     valid_out    <= '0';
                 else
-                    demux_data_o <= data_deserialized;
+                    demux_data_o <= data_deserialized(OUT_WIDTH - 1 downto 0);
                     valid_out    <= data_in_valid_del_arr(9);
                 end if;
             end if;
         end process;
     else generate
-        demux_data_o <= data_deserialized;
+        demux_data_o <= data_deserialized(OUT_WIDTH - 1 downto 0);
         valid_out    <= data_in_valid_del_arr(9);
     end generate;
 

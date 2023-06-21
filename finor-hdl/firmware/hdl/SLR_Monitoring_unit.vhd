@@ -223,7 +223,8 @@ begin
 
     deser_i : entity work.Link_deserializer
         generic map(
-            OUT_REG => DESER_OUT_REG
+            OUT_WIDTH => N_SLR_ALGOS,
+            OUT_REG   => DESER_OUT_REG
         )
         port map(
             clk360       => clk360,
@@ -367,7 +368,7 @@ begin
             q_algos_after_bxmask => q_algos_after_bxmask_o,
             q_algos_after_prscl  => q_algos_after_prscl_o
         );
-     
+
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;
     veto_o            <= veto_out;
