@@ -99,8 +99,8 @@ if args.test == 'prescaler':
     print("Current orbit counter = %d" % np.array(o_ctr))
 
     # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
-    bxmask = np.zeros((3, 18, 4096), dtype=np.uint32)
-    bxmask[0:3, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
+    bxmask = np.zeros((3, 16, 4096), dtype=np.uint32)
+    bxmask[0:3, 0:16, 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
 
     if args.simulation:
         print("Using default BXmask")
@@ -272,8 +272,8 @@ elif args.test == 'trigger_mask':
     trigg_rep = np.loadtxt('Pattern_files/metadata/Trigg_mask_test/trigg_rep.txt')
 
     # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
-    bxmask = np.zeros((3, 18, 4096), dtype=np.uint32)
-    bxmask[0:3, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
+    bxmask = np.zeros((3, 16, 4096), dtype=np.uint32)
+    bxmask[0:3, 0:16, 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
 
     if args.simulation:
         print("Using default BXmask")
@@ -426,8 +426,8 @@ elif args.test == 'veto_mask':
     veto_indeces = np.loadtxt('Pattern_files/metadata/Veto_test/veto_indeces.txt')
 
     # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
-    bxmask = np.zeros((3, 18, 4096), dtype=np.uint32)
-    bxmask[0:3, 0:18, 0:113] = (2 ** 32 - 1) * np.ones((18, 113), dtype=np.uint32)
+    bxmask = np.zeros((3, 16, 4096), dtype=np.uint32)
+    bxmask[0:3, 0:16, 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
 
     if args.simulation:
         print("Using default BXmask")
