@@ -129,12 +129,12 @@ begin
 
     link_valid_OR <= or links_valids;
 
-    process(clk360)
-    begin
-        if rising_edge(clk360) then
-            d_reg <= d;
-        end if;
-    end process;
+    --process(clk360)
+    --begin
+    --    if rising_edge(clk360) then
+    --        d_reg <= d;
+    --    end if;
+    --end process;
 
     CSR_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
@@ -184,7 +184,8 @@ begin
             clk360    => clk360,
             rst360    => rst360_r,
             link_mask => link_mask(NR_RIGHT_LINKS - 1 downto 0),
-            d         => d_reg(NR_RIGHT_LINKS - 1 downto 0),
+            --d         => d_reg(NR_RIGHT_LINKS - 1 downto 0),
+            d         => d(NR_RIGHT_LINKS - 1 downto 0),
             q         => d_right_reg(0)
         );
 
@@ -196,7 +197,8 @@ begin
             clk360    => clk360,
             rst360    => rst360_l,
             link_mask => link_mask(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
-            d         => d_reg(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
+            --d         => d_reg(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
+            d         => d(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
             q         => d_left_reg(0)
         );
 
