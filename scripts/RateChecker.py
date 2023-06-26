@@ -33,9 +33,14 @@ parser.add_argument('-hl', '--HighLinks', type=str, default="36-47")
 
 args = parser.parse_args()
 
+# TODO maybe put this in a config file? Or directly parse the vhdl pkg?
 #Magic numbers, needs to be placed in a config file, better to parse the vhd package
-slr_algos = 512
+slr_algos = 576
 monitoring_slrs = 3
+
+unprescaled_low_bits_link = 4
+unprescaled_mid_bits_link = 40
+unprescaled_high_bits_link = 52
 
 # from https://gitlab.cern.ch/cms-cactus/phase2/pyswatch/-/blob/master/src/swatch/config.py
 
@@ -99,8 +104,9 @@ if args.test == 'prescaler':
     print("Current orbit counter = %d" % np.array(o_ctr))
 
     # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
-    bxmask = np.zeros((3, 16, 4096), dtype=np.uint32)
-    bxmask[0:3, 0:16, 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
+    bxmask = np.zeros((3, int(np.ceil(slr_algos/32)), 4096), dtype=np.uint32)
+    #bxmask[0:3, 0:int(np.ceil(slr_algos/32)), 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
+    bxmask[0:3, 0:int(np.ceil(slr_algos / 32)), 0:113] = np.ones_like(bxmask)[:, :, :113]*(2 ** 32 - 1)
 
     if args.simulation:
         print("Using default BXmask")
@@ -108,7 +114,7 @@ if args.test == 'prescaler':
         HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
-    trigger_mask = np.ones((3, 128), dtype=np.uint32) * 2 ** 32 - 1
+    trigger_mask = np.ones((3, int(np.ceil(slr_algos / 32))*8), dtype=np.uint32) * 2 ** 32 - 1
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -124,7 +130,7 @@ if args.test == 'prescaler':
     print(format_row.format('Trigger mask SLR n2', ls_trigg_mark_before[2], ls_trigg_mark_after[2]))
 
     # Set the veto mask
-    veto_mask = np.zeros((3, 16), dtype=np.uint32)
+    veto_mask = np.zeros((3, int(np.ceil(slr_algos / 32))), dtype=np.uint32)
 
     HWtest.load_veto_mask(veto_mask)
 
@@ -272,8 +278,9 @@ elif args.test == 'trigger_mask':
     trigg_rep = np.loadtxt('Pattern_files/metadata/Trigg_mask_test/trigg_rep.txt')
 
     # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
-    bxmask = np.zeros((3, 16, 4096), dtype=np.uint32)
-    bxmask[0:3, 0:16, 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
+    bxmask = np.zeros((3, int(np.ceil(slr_algos / 32)), 4096), dtype=np.uint32)
+    # bxmask[0:3, 0:int(np.ceil(slr_algos/32)), 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
+    bxmask[0:3, 0:int(np.ceil(slr_algos / 32)), 0:113] = np.ones_like(bxmask)[:, :, :113]*(2 ** 32 - 1)
 
     if args.simulation:
         print("Using default BXmask")
@@ -281,7 +288,7 @@ elif args.test == 'trigger_mask':
         HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks to match trigg_index
-    trigger_mask = np.zeros((3, 128), dtype=np.uint32)
+    trigger_mask = np.zeros((3, int(np.ceil(slr_algos / 32))*8), dtype=np.uint32)
     for mask_i, indeces in enumerate(trigg_index):
         for index in indeces:
             if index < slr_algos:
@@ -316,7 +323,7 @@ elif args.test == 'trigger_mask':
     print(format_row.format('Trigger mask SLR n1', ls_trigg_mark_before[1], ls_trigg_mark_after[1]))
     print(format_row.format('Trigger mask SLR n2', ls_trigg_mark_before[2], ls_trigg_mark_after[2]))
 
-    veto_mask = np.zeros((3, 16), dtype=np.uint32)
+    veto_mask = np.zeros((3, int(np.ceil(slr_algos / 32))), dtype=np.uint32)
 
     HWtest.load_veto_mask(veto_mask)
 
@@ -426,8 +433,9 @@ elif args.test == 'veto_mask':
     veto_indeces = np.loadtxt('Pattern_files/metadata/Veto_test/veto_indeces.txt')
 
     # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
-    bxmask = np.zeros((3, 16, 4096), dtype=np.uint32)
-    bxmask[0:3, 0:16, 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
+    bxmask = np.zeros((3, int(np.ceil(slr_algos / 32)), 4096), dtype=np.uint32)
+    # bxmask[0:3, 0:int(np.ceil(slr_algos/32)), 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
+    bxmask[0:3, 0:int(np.ceil(slr_algos / 32)), 0:113] = np.ones_like(bxmask)[:, :, :113]*(2 ** 32 - 1)
 
     if args.simulation:
         print("Using default BXmask")
@@ -435,7 +443,7 @@ elif args.test == 'veto_mask':
         HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks to match trigg_index
-    trigger_mask = np.ones((3, 128), dtype=np.uint32) * 2 ** 32 - 1
+    trigger_mask = np.ones((3, int(np.ceil(slr_algos / 32))*8), dtype=np.uint32) * 2 ** 32 - 1
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -451,7 +459,7 @@ elif args.test == 'veto_mask':
     print(format_row.format('Trigger mask SLR n2', ls_trigg_mark_before[2], ls_trigg_mark_after[2]))
 
     # Set the veto mask
-    veto_mask = np.zeros((3, 16), dtype=np.uint32)
+    veto_mask = np.zeros((3, int(np.ceil(slr_algos / 32))), dtype=np.uint32)
     for index in veto_indeces:
         if index < slr_algos:
             reg_index = np.uint16(np.floor(index / 32))
@@ -597,7 +605,7 @@ elif args.test == 'BXmask':
 
     BX_mask = np.load('Pattern_files/metadata/BXmask_test/BX_mask.npy')
 
-    bxmask = np.zeros((3, 16, 4096), dtype=np.uint32)
+    bxmask = np.zeros((3, int(np.ceil(slr_algos / 32)), 4096), dtype=np.uint32)
 
     # set the BX mask accordingly
     for BX_nr in range(np.shape(BX_mask)[1]):
@@ -620,7 +628,7 @@ elif args.test == 'BXmask':
     HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
-    trigger_mask = np.ones((3, 128), dtype=np.uint32) * 2 ** 32 - 1
+    trigger_mask = np.ones((3, int(np.ceil(slr_algos / 32))*8), dtype=np.uint32) * 2 ** 32 - 1
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -633,9 +641,10 @@ elif args.test == 'BXmask':
     print(format_row.format('', 'LS Mark Before', 'LS Mark After'))
     print(format_row.format('Trigger mask SLR n0', ls_trigg_mark_before[0], ls_trigg_mark_after[0]))
     print(format_row.format('Trigger mask SLR n1', ls_trigg_mark_before[1], ls_trigg_mark_after[1]))
+    print(format_row.format('Trigger mask SLR n2', ls_trigg_mark_before[2], ls_trigg_mark_after[2]))
 
     # Set the veto mask
-    veto_mask = np.zeros((3, 16), dtype=np.uint32)
+    veto_mask = np.zeros((3, int(np.ceil(slr_algos / 32))), dtype=np.uint32)
 
     HWtest.load_veto_mask(veto_mask)
 
@@ -645,6 +654,7 @@ elif args.test == 'BXmask':
         ls_veto_mark_after = HWtest.read_lumi_sec_veto_mask_mark()
     print(format_row.format('Veto mask SLR n0', ls_veto_mark_before[0], ls_veto_mark_after[0]))
     print(format_row.format('Veto mask SLR n1', ls_veto_mark_before[1], ls_veto_mark_after[1]))
+    print(format_row.format('Veto mask SLR n2', ls_veto_mark_before[2], ls_veto_mark_after[2]))
 
     # Set pre-scaler factors
     prsc_fct = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
@@ -660,6 +670,7 @@ elif args.test == 'BXmask':
         ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark()
     print(format_row.format('Prescaler SLR n0', ls_prescale_mark_before[0], ls_prescale_mark_after[0]))
     print(format_row.format('Prescaler SLR n1', ls_prescale_mark_before[1], ls_prescale_mark_after[1]))
+    print(format_row.format('Prescaler SLR n2', ls_prescale_mark_before[2], ls_prescale_mark_after[2]))
 
     # compute expected rate
     rate_before_theo = np.float64(np.zeros(slr_algos*3))
@@ -725,11 +736,6 @@ elif args.test == 'BXmask':
 # ----------------------------ALGO OUT TEST--------------------------------------------
 # -------------------------------------------------------------------------------------
 elif args.test == 'algo-out':
-
-    # TODO maybe put this in a config file? Or directly parse the vhdl pkg?
-    unprescaled_low_bits_link = 4
-    unprescaled_mid_bits_link = 40
-    unprescaled_high_bits_link = 52
 
     in_valid, in_data, _ = read_pattern_file('Pattern_files/Finor_input_pattern_prescaler_test.txt', True)
     try:
