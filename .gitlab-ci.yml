@@ -13,7 +13,7 @@ variables:
   VIVADO_VERSION: "2022.2"
   BUILD_DIR: "build"
   MTI_VCO_MODE: "64"
-  HARDWARE_TEST_IMAGE_TAG: v0-3-39
+  HARDWARE_TEST_IMAGE_TAG: v0-3-46
   # Set PARENT_PIPELINE_ID as used in vivado-build-emp.yml in place of CI_PIPELINE_ID
   PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
   PROJECT_NAME: p2gt_finor_serenity-vu13p
