@@ -373,8 +373,4 @@ fname = indir + "/metadata/BXmask_test/finor_counts.npy"
 np.save(fname, finor_cnts)
 indir = "Pattern_files"
 fname = indir + "/metadata/BXmask_test/BX_mask.npy"
-for BX_nr in range(np.shape(mask)[1]):
-    for index, bxmask in enumerate(mask[:, BX_nr]):
-        if bxmask:
-            print(index, BX_nr)
 np.save(fname, mask)
