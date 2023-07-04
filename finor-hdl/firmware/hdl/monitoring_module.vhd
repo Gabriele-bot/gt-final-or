@@ -56,6 +56,8 @@ end monitoring_module;
 architecture rtl of monitoring_module is
 
     constant NULL_VETO_MASK : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    constant N_CTRL         : natural                                 := 2;
+    constant N_STAT         : natural                                 := 5;
 
     -- fabric signals        
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
@@ -71,8 +73,10 @@ architecture rtl of monitoring_module is
     signal prscl_fct      : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
     signal prscl_fct_prvw : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
 
-    signal rst_prescale_counters           : std_logic;
-    signal change_prescale_column_occurred : std_logic;
+    signal rst_prescale_counters                   : std_logic;
+    signal rst_prescale_preview_counters           : std_logic;
+    signal change_prescale_column_occurred         : std_logic;
+    signal change_prescale_preview_column_occurred : std_logic;
 
     -- rate counter ipb regs
     signal rate_cnt_before_prescaler        : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0);
@@ -81,21 +85,23 @@ architecture rtl of monitoring_module is
     signal rate_cnt_post_dead_time          : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0);
 
     signal masks_ipbus_regs : ipb_reg_v(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS - 1 downto 0) := (others => (others => '1'));
-    signal masks            : mask_arr                                            := (others => (others => '1'));
+    signal masks            : mask_arr                                                   := (others => (others => '1'));
 
-    signal veto_ipbus_regs          : ipb_reg_v(N_SLR_ALGOS_MAX / 32 - 1 downto 0)   := (others => (others => '0'));
-    signal veto_mask, veto_mask_int : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    signal veto_ipbus_regs          : ipb_reg_v(N_SLR_ALGOS_MAX / 32 - 1 downto 0) := (others => (others => '0'));
+    signal veto_mask, veto_mask_int : std_logic_vector(NR_ALGOS - 1 downto 0)      := (others => '0');
 
-    signal request_factor_update : std_logic;
-    signal new_prescale_column   : std_logic;
-    signal request_masks_update  : std_logic;
-    signal new_trgg_masks        : std_logic;
-    signal request_veto_update   : std_logic;
-    signal new_veto              : std_logic;
-    signal ctrl_reg              : ipb_reg_v(1 downto 0) := (others => (others => '0'));
-    signal ctrl_reg_stb          : ipb_reg_v(1 downto 0) := (others => (others => '0'));
-    signal stat_reg              : ipb_reg_v(3 downto 0) := (others => (others => '0'));
-    signal ctrl_stb              : std_logic_vector(1 downto 0);
+    signal request_factor_update         : std_logic;
+    signal request_factor_preview_update : std_logic;
+    signal new_prescale_column           : std_logic;
+    signal new_prescale_preview_column   : std_logic;
+    signal request_masks_update          : std_logic;
+    signal new_trgg_masks                : std_logic;
+    signal request_veto_update           : std_logic;
+    signal new_veto                      : std_logic;
+    signal ctrl_reg                      : ipb_reg_v(N_CTRL - 1 downto 0) := (others => (others => '0'));
+    signal ctrl_reg_stb                  : ipb_reg_v(N_CTRL - 1 downto 0) := (others => (others => '0'));
+    signal stat_reg                      : ipb_reg_v(N_STAT - 1 downto 0) := (others => (others => '0'));
+    signal ctrl_stb                      : std_logic_vector(N_CTRL - 1 downto 0);
 
     -- counters and bgos signals
     signal ttc_bc0, ttc_oc0, ttc_ec0 : std_logic := '0';
@@ -122,8 +128,11 @@ architecture rtl of monitoring_module is
     signal d_rate_cnt_before_prescaler, d_rate_cnt_after_prescaler       : std_logic_vector(31 downto 0);
     signal d_rate_cnt_after_prescaler_preview, d_rate_cnt_post_dead_time : std_logic_vector(31 downto 0);
 
-    signal addr, addr_prscl         : std_logic_vector(log2c(N_SLR_ALGOS_MAX) - 1 downto 0);
+    signal addr_rate_cntr           : std_logic_vector(log2c(N_SLR_ALGOS_MAX) - 1 downto 0);
+    signal addr_prscl               : std_logic_vector(log2c(N_SLR_ALGOS_MAX) - 1 downto 0);
     signal addr_prscl_w             : std_logic_vector(log2c(N_SLR_ALGOS_MAX) - 1 downto 0)                    := (others => '0');
+    signal addr_prscl_prvw          : std_logic_vector(log2c(N_SLR_ALGOS_MAX) - 1 downto 0);
+    signal addr_prscl_prvw_w        : std_logic_vector(log2c(N_SLR_ALGOS_MAX) - 1 downto 0)                    := (others => '0');
     signal addr_mask                : std_logic_vector(log2c(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS) - 1 downto 0);
     signal addr_mask_w              : std_logic_vector(log2c(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS) - 1 downto 0) := (others => '0');
     signal addr_veto                : std_logic_vector(log2c(N_SLR_ALGOS_MAX / 32) - 1 downto 0);
@@ -135,15 +144,16 @@ architecture rtl of monitoring_module is
 
     signal algo_bx_mask_mem_out : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '1');
 
-    signal orbit_nr                 : std_logic_vector(47 downto 0);
-    signal lumi_sec_nr              : std_logic_vector(31 downto 0);
-    signal lumi_sec_load_prscl_mark : std_logic_vector(31 downto 0);
-    signal lumi_sec_load_masks_mark : std_logic_vector(31 downto 0);
-    signal lumi_sec_load_veto_mark  : std_logic_vector(31 downto 0);
-    signal test_en                  : std_logic;
-    signal suppress_cal_trigger     : std_logic;
-    signal supp_cal_BX_low          : std_logic_vector(11 downto 0);
-    signal supp_cal_BX_high         : std_logic_vector(11 downto 0);
+    signal orbit_nr                      : std_logic_vector(47 downto 0);
+    signal lumi_sec_nr                   : std_logic_vector(31 downto 0);
+    signal lumi_sec_load_prscl_mark      : std_logic_vector(31 downto 0);
+    signal lumi_sec_load_prscl_prvw_mark : std_logic_vector(31 downto 0);
+    signal lumi_sec_load_masks_mark      : std_logic_vector(31 downto 0);
+    signal lumi_sec_load_veto_mark       : std_logic_vector(31 downto 0);
+    signal test_en                       : std_logic;
+    signal suppress_cal_trigger          : std_logic;
+    signal supp_cal_BX_low               : std_logic_vector(11 downto 0);
+    signal supp_cal_BX_high              : std_logic_vector(11 downto 0);
 
     signal veto          : std_logic_vector(NR_ALGOS - 1 downto 0);
     signal veto_out_s    : std_logic;
@@ -254,7 +264,7 @@ begin
             clk        => clk40,
             rst        => rst40,
             write_flag => begin_lumi_per_del1,
-            addr_o     => addr,
+            addr_o     => addr_rate_cntr,
             addr_w_o   => open,
             we_o       => we
         );
@@ -274,6 +284,24 @@ begin
             addr_o             => addr_prscl,
             addr_w_o           => addr_prscl_w,
             request_update     => request_factor_update,
+            ready_o            => open
+        );
+
+    prescaler_preview_read_FSM_i : entity work.read_FSM
+        generic map(
+            RAM_DEPTH      => N_SLR_ALGOS_MAX,
+            BEGIN_LUMI_BIT => BEGIN_LUMI_TOGGLE_BIT
+        )
+        port map(
+            clk                => clk40,
+            rst                => rst40,
+            load_flag          => new_prescale_preview_column,
+            orbit_nr           => orbit_nr,
+            lumi_sec_nr        => lumi_sec_nr,
+            lumi_sec_load_mark => lumi_sec_load_prscl_prvw_mark,
+            addr_o             => addr_prscl_prvw,
+            addr_w_o           => addr_prscl_prvw_w,
+            request_update     => request_factor_preview_update,
             ready_o            => open
         );
 
@@ -381,7 +409,7 @@ begin
             we      => '0',
             d       => (others => '0'),
             q       => q_prscl_fct_prvw,
-            addr    => std_logic_vector(addr_prscl)
+            addr    => std_logic_vector(addr_prscl_prvw)
         );
 
     -- process to read from ipbus-RAMs
@@ -389,8 +417,8 @@ begin
     begin
         if rising_edge(clk40) then
             -----------Prescalers----------------------------
-            prscl_fct(to_integer(unsigned(addr_prscl_w)))      <= q_prscl_fct;
-            prscl_fct_prvw(to_integer(unsigned(addr_prscl_w))) <= q_prscl_fct_prvw;
+            prscl_fct(to_integer(unsigned(addr_prscl_w)))           <= q_prscl_fct;
+            prscl_fct_prvw(to_integer(unsigned(addr_prscl_prvw_w))) <= q_prscl_fct_prvw;
         end if;
     end process;
 
@@ -413,7 +441,7 @@ begin
             we      => we,
             d       => d_rate_cnt_before_prescaler,
             q       => open,
-            addr    => std_logic_vector(addr)
+            addr    => std_logic_vector(addr_rate_cntr)
         );
 
     ----------------------------------------------------------------------------------
@@ -435,7 +463,7 @@ begin
             we      => we,
             d       => d_rate_cnt_after_prescaler,
             q       => open,
-            addr    => std_logic_vector(addr)
+            addr    => std_logic_vector(addr_rate_cntr)
         );
 
     ----------------------------------------------------------------------------------
@@ -457,7 +485,7 @@ begin
             we      => we,
             d       => d_rate_cnt_after_prescaler_preview,
             q       => open,
-            addr    => std_logic_vector(addr)
+            addr    => std_logic_vector(addr_rate_cntr)
         );
 
     ----------------------------------------------------------------------------------
@@ -479,18 +507,18 @@ begin
             we      => we,
             d       => d_rate_cnt_post_dead_time,
             q       => open,
-            addr    => std_logic_vector(addr)
+            addr    => std_logic_vector(addr_rate_cntr)
         );
 
-    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler(to_integer(unsigned(addr)));
-    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler(to_integer(unsigned(addr)));
-    d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(unsigned(addr)));
-    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(to_integer(unsigned(addr)));
+    d_rate_cnt_before_prescaler        <= rate_cnt_before_prescaler(to_integer(unsigned(addr_rate_cntr)));
+    d_rate_cnt_after_prescaler         <= rate_cnt_after_prescaler(to_integer(unsigned(addr_rate_cntr)));
+    d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(unsigned(addr_rate_cntr)));
+    d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(to_integer(unsigned(addr_rate_cntr)));
 
     CSR_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
-            N_CTRL         => 2,
-            N_STAT         => 4,
+            N_CTRL         => N_CTRL,
+            N_STAT         => N_STAT,
             DEST_SYNC_FF   => 3,
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
@@ -511,7 +539,7 @@ begin
     strobe_loop : process(clk40)
     begin
         if rising_edge(clk40) then
-            for i in 1 downto 0 loop
+            for i in N_CTRL - 1 downto 0 loop
                 if ctrl_stb(i) = '1' then
                     ctrl_reg_stb(i) <= ctrl_reg(i);
                 end if;
@@ -519,20 +547,22 @@ begin
         end if;
     end process;
 
-    new_prescale_column <= ctrl_reg(0)(0) and ctrl_stb(0);
-    new_trgg_masks      <= ctrl_reg(0)(1) and ctrl_stb(0);
-    new_veto            <= ctrl_reg(0)(2) and ctrl_stb(0);
-    l1a_latency_delay   <= ctrl_reg_stb(0)(log2c(MAX_DELAY) + 2 downto 3);
-    supp_cal_BX_low     <= ctrl_reg_stb(1)(11 downto 0);
-    supp_cal_BX_high    <= ctrl_reg_stb(1)(23 downto 12);
+    new_prescale_column         <= ctrl_reg(0)(0) and ctrl_stb(0);
+    new_prescale_preview_column <= ctrl_reg(0)(1) and ctrl_stb(0);
+    new_trgg_masks              <= ctrl_reg(0)(2) and ctrl_stb(0);
+    new_veto                    <= ctrl_reg(0)(3) and ctrl_stb(0);
+    l1a_latency_delay           <= ctrl_reg_stb(0)(log2c(MAX_DELAY) + 3 downto 4);
+    supp_cal_BX_low             <= ctrl_reg_stb(1)(11 downto 0);
+    supp_cal_BX_high            <= ctrl_reg_stb(1)(23 downto 12);
 
     ready <= not we;
 
     stat_reg(0)(0)           <= ready;
     stat_reg(0)(31 downto 1) <= (others => '0');
     stat_reg(1)              <= lumi_sec_load_prscl_mark;
-    stat_reg(2)              <= lumi_sec_load_masks_mark;
-    stat_reg(3)              <= lumi_sec_load_veto_mark;
+    stat_reg(2)              <= lumi_sec_load_prscl_prvw_mark;
+    stat_reg(3)              <= lumi_sec_load_masks_mark;
+    stat_reg(4)              <= lumi_sec_load_veto_mark;
 
     ----------------------------------------------------------------------------------
     ---------------RESET PRE-SCALE COUNTER LOGIC--------------------------------------
@@ -546,10 +576,16 @@ begin
             elsif begin_lumi_per_del1 = '1' then
                 change_prescale_column_occurred <= '0';
             end if;
+            if request_factor_preview_update = '1' then
+                change_prescale_preview_column_occurred <= '1';
+            elsif begin_lumi_per_del1 = '1' then
+                change_prescale_preview_column_occurred <= '0';
+            end if;
         end if;
     end process;
 
-    rst_prescale_counters <= begin_lumi_per and change_prescale_column_occurred; -- TODO possibility of glitches, need to investigate
+    rst_prescale_counters         <= begin_lumi_per and change_prescale_column_occurred; -- TODO possibility of glitches, need to investigate
+    rst_prescale_preview_counters <= begin_lumi_per and change_prescale_preview_column_occurred; -- TODO possibility of glitches, need to investigate
 
     ----------------------------------------------------------------------------------
     ---------------TRIGGER MASKS REGISTERS--------------------------------------------
@@ -734,30 +770,32 @@ begin
                 PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT
             )
             port map(
-                clk40                            => clk40,
-                rst40                            => rst40,
-                sres_algo_rate_counter           => '0',
-                sres_algo_pre_scaler             => rst_prescale_counters,
-                sres_algo_post_dead_time_counter => '0',
-                suppress_cal_trigger             => suppress_cal_trigger,
-                l1a                              => ctrs_internal.l1a, --TODO modify this
-                request_update_factor_pulse      => request_factor_update,
-                begin_lumi_per                   => begin_lumi_per,
-                end_lumi_per                     => end_lumi_per,
-                algo_i                           => algos_in(i),
-                algo_after_prscl_del_i           => algos_delayed(i),
-                prescale_factor                  => prscl_fct(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
-                prescale_factor_preview          => prscl_fct_prvw(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
-                algo_bx_mask                     => algo_bx_mask_mem_out(i),
-                veto_mask                        => veto_mask_int(i),
-                rate_cnt_before_prescaler        => rate_cnt_before_prescaler(i),
-                rate_cnt_after_prescaler         => rate_cnt_after_prescaler(i),
-                rate_cnt_after_prescaler_preview => rate_cnt_after_prescaler_preview(i),
-                rate_cnt_post_dead_time          => rate_cnt_post_dead_time(i),
-                algo_after_bxomask               => algos_after_bxmask(i),
-                algo_after_prescaler             => algos_after_prescaler(i),
-                algo_after_prescaler_preview     => algos_after_prescaler_preview(i),
-                veto                             => veto(i)
+                clk40                               => clk40,
+                rst40                               => rst40,
+                sres_algo_rate_counter              => '0',
+                sres_algo_pre_scaler                => rst_prescale_counters,
+                sres_algo_pre_scaler_preview        => rst_prescale_preview_counters,
+                sres_algo_post_dead_time_counter    => '0',
+                suppress_cal_trigger                => suppress_cal_trigger,
+                l1a                                 => ctrs_internal.l1a, --TODO modify this
+                request_update_factor_pulse         => request_factor_update,
+                request_update_factor_preview_pulse => request_factor_preview_update,
+                begin_lumi_per                      => begin_lumi_per,
+                end_lumi_per                        => end_lumi_per,
+                algo_i                              => algos_in(i),
+                algo_after_prscl_del_i              => algos_delayed(i),
+                prescale_factor                     => prscl_fct(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
+                prescale_factor_preview             => prscl_fct_prvw(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
+                algo_bx_mask                        => algo_bx_mask_mem_out(i),
+                veto_mask                           => veto_mask_int(i),
+                rate_cnt_before_prescaler           => rate_cnt_before_prescaler(i),
+                rate_cnt_after_prescaler            => rate_cnt_after_prescaler(i),
+                rate_cnt_after_prescaler_preview    => rate_cnt_after_prescaler_preview(i),
+                rate_cnt_post_dead_time             => rate_cnt_post_dead_time(i),
+                algo_after_bxomask                  => algos_after_bxmask(i),
+                algo_after_prescaler                => algos_after_prescaler(i),
+                algo_after_prescaler_preview        => algos_after_prescaler_preview(i),
+                veto                                => veto(i)
             );
     end generate;
 
