@@ -259,6 +259,7 @@ begin
             ctrs             => ctrs(OUTPUT_QUAD),
             valid_in         => valid_in,
             start_of_orbit_i => start_of_orbit_regs(start_of_orbit_regs'high),
+            -- TODO change this to one line
             trgg_0           => trgg_regs(0)(trgg_regs(0)'high),
             trgg_1           => trgg_regs(1)(trgg_regs(1)'high),
             trgg_2           => trgg_regs(2)(trgg_regs(2)'high),

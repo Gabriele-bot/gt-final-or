@@ -366,7 +366,6 @@ index, repetition, mask, finor_cnts = pattern_producer_BXmask_test(0.5, 0.999, a
 indir = "Pattern_files"
 fname = indir + "/metadata/BXmask_test/algo_rep.txt"
 algo_data = np.vstack((index, repetition))
-print(algo_data)
 np.savetxt(fname, algo_data, fmt='%d')
 indir = "Pattern_files"
 fname = indir + "/metadata/BXmask_test/finor_counts.npy"
