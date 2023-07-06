@@ -515,14 +515,10 @@ begin
     d_rate_cnt_after_prescaler_preview <= rate_cnt_after_prescaler_preview(to_integer(unsigned(addr_rate_cntr)));
     d_rate_cnt_post_dead_time          <= rate_cnt_post_dead_time(to_integer(unsigned(addr_rate_cntr)));
 
-    CSR_regs : entity work.ipbus_ctrlreg_cdc_v
+    CSR_regs : entity work.ipbus_syncreg_v
         generic map(
-            N_CTRL         => N_CTRL,
-            N_STAT         => N_STAT,
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
+            N_CTRL => N_CTRL,
+            N_STAT => N_STAT
         )
         port map(
             clk     => clk,
@@ -533,7 +529,8 @@ begin
             d       => stat_reg,
             q       => ctrl_reg,
             qmask   => open,
-            stb     => ctrl_stb
+            stb     => ctrl_stb,
+            rstb    => open
         );
 
     strobe_loop : process(clk40)
@@ -855,14 +852,10 @@ begin
             counter_o       => veto_cnt
         );
 
-    Veto_cnt_regs : entity work.ipbus_ctrlreg_cdc_v
+    Veto_cnt_regs : entity work.ipbus_syncreg_v
         generic map(
-            N_CTRL         => 0,
-            N_STAT         => 1,
-            DEST_SYNC_FF   => 3,
-            INIT_SYNC_FF   => 0,
-            SIM_ASSERT_CHK => 0,
-            SRC_INPUT_REG  => 1
+            N_CTRL => 0,
+            N_STAT => 1
         )
         port map(
             clk     => clk,
@@ -873,7 +866,8 @@ begin
             d       => veto_stat_reg,
             q       => open,
             qmask   => open,
-            stb     => open
+            stb     => open,
+            rstb    => open
         );
 
     veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0) <= veto_cnt;
