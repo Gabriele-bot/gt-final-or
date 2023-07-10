@@ -35,7 +35,7 @@ args = parser.parse_args()
 
 # TODO maybe put this in a config file? Or directly parse the vhdl pkg?
 #Magic numbers, needs to be placed in a config file, better to parse the vhd package
-slr_algos = 576
+slr_algos = 512
 monitoring_slrs = 3
 
 unprescaled_low_bits_link = 4
