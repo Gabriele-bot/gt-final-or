@@ -57,7 +57,7 @@ architecture rtl of emp_payload is
     signal ctrs_debug : ttc_stuff_t;
 
     type SLR_ldata_t is array (N_MONITOR_SLR - 1 downto 0) of ldata(INPUT_LINKS_SLR - 1 downto 0);
-    signal d_ldata_slr : SLR_ldata_t;
+    signal d_ldata_slr     : SLR_ldata_t;
     signal d_ldata_slr_reg : SLR_ldata_t;
 
     -- Register object data at arrival in SLR, at departure, and several times in the middle.
@@ -123,14 +123,13 @@ begin
         d_ldata_slr(1)(i) <= d(SLRn1_INPUT_CHANNELS(i));
         d_ldata_slr(2)(i) <= d(SLRn2_INPUT_CHANNELS(i));
     end generate;
-    
+
     reg_link_data_p : process(clk_p)
     begin
         if rising_edge(clk_p) then
             d_ldata_slr_reg <= d_ldata_slr;
         end if;
     end process;
-    
 
     SLRn2_module : entity work.SLR_Monitoring_unit
         generic map(
@@ -260,6 +259,7 @@ begin
             ctrs             => ctrs(OUTPUT_QUAD),
             valid_in         => valid_in,
             start_of_orbit_i => start_of_orbit_regs(start_of_orbit_regs'high),
+            -- TODO change this to one line
             trgg_0           => trgg_regs(0)(trgg_regs(0)'high),
             trgg_1           => trgg_regs(1)(trgg_regs(1)'high),
             trgg_2           => trgg_regs(2)(trgg_regs(2)'high),

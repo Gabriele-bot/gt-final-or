@@ -171,14 +171,20 @@ if args.test == 'prescaler':
 
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
 
-    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark()
+    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark(0)
+    ls_prescale_preview_mark_before = HWtest.read_lumi_sec_prescale_mark(1)
 
-    HWtest.send_new_prescale_column_flag()
-    for i in range(20):
-        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark()
+    HWtest.send_new_prescale_column_flag(0)
+    HWtest.send_new_prescale_column_flag(1)
+    for i in range(10):
+        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark(0)
+        ls_prescale_preview_mark_after = HWtest.read_lumi_sec_prescale_mark(1)
     print(format_row.format('Prescaler SLR n0', ls_prescale_mark_before[0], ls_prescale_mark_after[0]))
     print(format_row.format('Prescaler SLR n1', ls_prescale_mark_before[1], ls_prescale_mark_after[1]))
     print(format_row.format('Prescaler SLR n2', ls_prescale_mark_before[2], ls_prescale_mark_after[2]))
+    print(format_row.format('Prescaler SLR n0', ls_prescale_preview_mark_before[0], ls_prescale_preview_mark_after[0]))
+    print(format_row.format('Prescaler SLR n1', ls_prescale_preview_mark_before[1], ls_prescale_preview_mark_after[1]))
+    print(format_row.format('Prescaler SLR n2', ls_prescale_preview_mark_before[2], ls_prescale_preview_mark_after[2]))
 
     # compute expected rate
     rate_before_theo = np.float64(np.zeros(slr_algos*3))
@@ -342,14 +348,20 @@ elif args.test == 'trigger_mask':
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
 
-    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark()
+    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark(0)
+    ls_prescale_preview_mark_before = HWtest.read_lumi_sec_prescale_mark(1)
 
-    HWtest.send_new_prescale_column_flag()
-    for i in range(20):
-        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark()
+    HWtest.send_new_prescale_column_flag(0)
+    HWtest.send_new_prescale_column_flag(1)
+    for i in range(10):
+        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark(0)
+        ls_prescale_preview_mark_after = HWtest.read_lumi_sec_prescale_mark(1)
     print(format_row.format('Prescaler SLR n0', ls_prescale_mark_before[0], ls_prescale_mark_after[0]))
     print(format_row.format('Prescaler SLR n1', ls_prescale_mark_before[1], ls_prescale_mark_after[1]))
     print(format_row.format('Prescaler SLR n2', ls_prescale_mark_before[2], ls_prescale_mark_after[2]))
+    print(format_row.format('Prescaler SLR n0', ls_prescale_preview_mark_before[0], ls_prescale_preview_mark_after[0]))
+    print(format_row.format('Prescaler SLR n1', ls_prescale_preview_mark_before[1], ls_prescale_preview_mark_after[1]))
+    print(format_row.format('Prescaler SLR n2', ls_prescale_preview_mark_before[2], ls_prescale_preview_mark_after[2]))
 
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
@@ -491,14 +503,20 @@ elif args.test == 'veto_mask':
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
 
-    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark()
+    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark(0)
+    ls_prescale_preview_mark_before = HWtest.read_lumi_sec_prescale_mark(1)
 
-    HWtest.send_new_prescale_column_flag()
-    for i in range(20):
-        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark()
+    HWtest.send_new_prescale_column_flag(0)
+    HWtest.send_new_prescale_column_flag(1)
+    for i in range(10):
+        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark(0)
+        ls_prescale_preview_mark_after = HWtest.read_lumi_sec_prescale_mark(1)
     print(format_row.format('Prescaler SLR n0', ls_prescale_mark_before[0], ls_prescale_mark_after[0]))
     print(format_row.format('Prescaler SLR n1', ls_prescale_mark_before[1], ls_prescale_mark_after[1]))
     print(format_row.format('Prescaler SLR n2', ls_prescale_mark_before[2], ls_prescale_mark_after[2]))
+    print(format_row.format('Prescaler SLR n0', ls_prescale_preview_mark_before[0], ls_prescale_preview_mark_after[0]))
+    print(format_row.format('Prescaler SLR n1', ls_prescale_preview_mark_before[1], ls_prescale_preview_mark_after[1]))
+    print(format_row.format('Prescaler SLR n2', ls_prescale_preview_mark_before[2], ls_prescale_preview_mark_after[2]))
 
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
@@ -663,14 +681,20 @@ elif args.test == 'BXmask':
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
 
-    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark()
+    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark(0)
+    ls_prescale_preview_mark_before = HWtest.read_lumi_sec_prescale_mark(1)
 
-    HWtest.send_new_prescale_column_flag()
-    for i in range(20):
-        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark()
+    HWtest.send_new_prescale_column_flag(0)
+    HWtest.send_new_prescale_column_flag(1)
+    for i in range(10):
+        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark(0)
+        ls_prescale_preview_mark_after = HWtest.read_lumi_sec_prescale_mark(1)
     print(format_row.format('Prescaler SLR n0', ls_prescale_mark_before[0], ls_prescale_mark_after[0]))
     print(format_row.format('Prescaler SLR n1', ls_prescale_mark_before[1], ls_prescale_mark_after[1]))
     print(format_row.format('Prescaler SLR n2', ls_prescale_mark_before[2], ls_prescale_mark_after[2]))
+    print(format_row.format('Prescaler SLR n0', ls_prescale_preview_mark_before[0], ls_prescale_preview_mark_after[0]))
+    print(format_row.format('Prescaler SLR n1', ls_prescale_preview_mark_before[1], ls_prescale_preview_mark_after[1]))
+    print(format_row.format('Prescaler SLR n2', ls_prescale_preview_mark_before[2], ls_prescale_preview_mark_after[2]))
 
     # compute expected rate
     rate_before_theo = np.float64(np.zeros(slr_algos*3))

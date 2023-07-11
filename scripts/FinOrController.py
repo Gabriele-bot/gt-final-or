@@ -59,17 +59,31 @@ class FinOrController:
             raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
 
-    def send_new_prescale_column_flag(self):
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-        time.sleep(0.01)
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+    def send_new_prescale_column_flag(self, sel):
+        if sel == 0:
+            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
+            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
+            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
+            time.sleep(0.01)
+            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+        elif sel == 1:
+            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
+            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
+            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
+            time.sleep(0.01)
+            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+        else:
+            raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
 
     def send_new_trigger_mask_flag(self):
@@ -98,10 +112,23 @@ class FinOrController:
         self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
         self.hw.dispatch()
 
-    def read_lumi_sec_prescale_mark(self):
-        mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
-        mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
-        mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
+    def read_lumi_sec_prescale_mark(self, sel):
+        if sel == 0:
+            mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
+            mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
+            mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
+        elif sel == 1:
+            mark_2 = self.hw.getNode(
+                "payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
+            mark_1 = self.hw.getNode(
+                "payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
+            mark_0 = self.hw.getNode(
+                "payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
+        else:
+            mark_2 = 0
+            mark_1 = 0
+            mark_0 = 0
+            raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
 
         return np.uint32(mark_0), np.uint32(mark_1), np.uint32(mark_2)
@@ -262,7 +289,6 @@ class FinOrController:
         ready_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.ready").read()
         ready_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.ready").read()
         self.hw.dispatch()
-
         return ready_0, ready_1, ready_2
 
     def read_cnt_arr(self, sel):
