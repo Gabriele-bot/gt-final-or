@@ -108,9 +108,45 @@ architecture rtl of top is
     signal ctrs                 : ttc_stuff_array(N_REGION - 1 downto 0);
     signal rst_loc, clken_loc   : std_logic_vector(N_REGION - 1 downto 0);
 
-
+    signal ext_bc0             : std_logic;
+    signal internal_bx_counter : integer range 0 to 3563 := 0;
+    signal ext_oc0             : std_logic;
+    signal oc0_sent : std_logic := '0';
+    signal internal_counter : integer range 0 to 8191 := 0;
 
 begin
+    
+    -- internal bco gen test
+    bc0_gen : process(clk40)
+    begin
+        if rising_edge(clk40) then
+            if internal_bx_counter = 3563 then
+                internal_bx_counter <= 0;
+                ext_bc0 <= '1';
+            else
+                internal_bx_counter <= internal_bx_counter + 1;
+                ext_bc0 <= '0';
+            end if;
+        end if;
+    end process;
+    
+    -- internal oco gen test
+    oc0_gen : process(clk40)
+    begin
+        if rising_edge(clk40) then
+            if internal_counter > 7000 then
+                if ext_oc0 = '0' and oc0_sent = '0' then
+                    ext_oc0 <= '1';
+                    oc0_sent  <= '1';
+                elsif ext_oc0 = '1' and oc0_sent = '1' then
+                    ext_oc0 <= '0';
+                end if;
+            else
+                internal_counter <= internal_counter + 1;
+                ext_oc0 <= '0';
+            end if;
+        end if;
+    end process;
 
     -- Infrastructure
 
@@ -191,7 +227,9 @@ begin
             orb_ctr      => open,
             oc_flag      => oc_flag,
             ec_flag      => ec_flag,
-            monclk       => clkmon
+            monclk       => clkmon,
+            ext_bc0_i    => ext_bc0,
+            ext_oc0_i    => ext_oc0
         );
 
     -- Datapath block
