@@ -14,7 +14,7 @@ import argparse
 
 
 class FinOrController:
-    def __init__(self, serenity, connection_file='my_connections.xml', device='x0', SLR_ALGOS=576, emp_flag=False):
+    def __init__(self, serenity, connection_file='my_connections.xml', device='x0', emp_flag=False):
         self.serenity = serenity
         self.connection_file = 'file://' + connection_file
         if self.serenity == 'Serenity3':
@@ -25,7 +25,16 @@ class FinOrController:
             self.part = 'vu9p'
         self.manager = uhal.ConnectionManager(self.connection_file)
         self.hw = self.manager.getDevice(device)
-        self.slr_algos = SLR_ALGOS
+        N_SLR = self.hw.getNode("payload.FINOR_ROREG.N_SLR").read()
+        self.hw.dispatch()
+        SLR_ALGOS = self.hw.getNode("payload.FINOR_ROREG.N_SLR_ALGOS").read()
+        self.hw.dispatch()
+        N_ALGOS   = self.hw.getNode("payload.FINOR_ROREG.N_ALGOS").read()
+        self.hw.dispatch()
+        N_TRIGGERS = self.hw.getNode("payload.FINOR_ROREG.N_TRIGG").read()
+        self.hw.dispatch()
+        self.slr_algos = np.uint32(SLR_ALGOS)
+        self.n_slr = N_SLR
         self.emp_flag = emp_flag
 
     def set_TimeOutPeriod(self, value):
@@ -48,121 +57,177 @@ class FinOrController:
         prsc_arr_576 = np.zeros((3, 576), dtype=np.uint32)
         prsc_arr_576[:3, :self.slr_algos] = prsc_arr
         if sel == 0:
-            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr_576[2])
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr_576[1])
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr_576[0])
+            for i in range(self.n_slr):
+                self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.prescale_factor" % i).writeBlock(prsc_arr_576[i])
+            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr_576[1])
+            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr_576[0])
         elif sel == 1:
-            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr_576[2])
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr_576[1])
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr_576[0])
+            for i in range(self.n_slr):
+                self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.prescale_factor_prvw" % i).writeBlock(prsc_arr_576[i])
+            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr_576[1])
+            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr_576[0])
         else:
             raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
 
     def send_new_prescale_column_flag(self, sel):
         if sel == 0:
-            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
+            for i in range(self.n_slr):
+                self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_prescale_column" % i).write(0)
+            for i in range(self.n_slr):
+                self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_prescale_column" % i).write(1)
             time.sleep(0.01)
-            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            for i in range(self.n_slr):
+                self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_prescale_column" % i).write(0)
+            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
+            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
+            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
+            #time.sleep(0.01)
+            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
+            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
         elif sel == 1:
-            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
+            for i in range(self.n_slr):
+                self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column" % i).write(0)
+            for i in range(self.n_slr):
+                self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column" % i).write(1)
             time.sleep(0.01)
-            self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            for i in range(self.n_slr):
+                self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column" % i).write(0)
+            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
+            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
+            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
+            #time.sleep(0.01)
+            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
+            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
         else:
             raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
 
     def send_new_trigger_mask_flag(self):
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_trigger_masks" % i).write(
+                0)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_trigger_masks" % i).write(
+                1)
         time.sleep(0.01)
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_trigger_masks" % i).write(
+                0)
+        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
+        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
+        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
+        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
+        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
+        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
+        #time.sleep(0.01)
+        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
+        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
+        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
         self.hw.dispatch()
 
     def send_new_veto_mask_flag(self):
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_veto_mask" % i).write(
+                0)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_veto_mask" % i).write(
+                1)
         time.sleep(0.01)
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_veto_mask" % i).write(
+                0)
+        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
+        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
+        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
+        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
+        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
+        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
+        #time.sleep(0.01)
+        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
+        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
+        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
         self.hw.dispatch()
 
     def read_lumi_sec_prescale_mark(self, sel):
+        mark = np.zeros(self.n_slr)
         if sel == 0:
-            mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
-            mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
-            mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
+            for i in range(self.n_slr):
+                mark_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark" % i).read()
+                self.hw.dispatch()
+                mark[i] = np.uint32(mark_temp)
+            #self.hw.dispatch()
+            #mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
+            #mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
+            #mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
         elif sel == 1:
-            mark_2 = self.hw.getNode(
-                "payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
-            mark_1 = self.hw.getNode(
-                "payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
-            mark_0 = self.hw.getNode(
-                "payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
+            for i in range(self.n_slr):
+                mark_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark" % i).read()
+                self.hw.dispatch()
+                mark[i] = np.uint32(mark_temp)
+            #mark_2 = self.hw.getNode(
+            #    "payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
+            #mark_1 = self.hw.getNode(
+            #    "payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
+            #mark_0 = self.hw.getNode(
+            #    "payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
         else:
-            mark_2 = 0
-            mark_1 = 0
-            mark_0 = 0
+            mark = np.zeros(self.n_slr)
             raise Exception("Selector is not in [0,1]")
-        self.hw.dispatch()
 
-        return np.uint32(mark_0), np.uint32(mark_1), np.uint32(mark_2)
+        return mark
 
     def read_lumi_sec_trigger_mask_mark(self):
-        mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-        mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-        mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-        self.hw.dispatch()
+        mark = np.zeros(self.n_slr)
+        for i in range(self.n_slr):
+            mark_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark" % i).read()
+            self.hw.dispatch()
+            mark[i] = np.uint32(mark_temp)
+        #mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
+        #mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
+        #mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
+        #self.hw.dispatch()
 
-        return np.uint32(mark_0), np.uint32(mark_1), np.uint32(mark_2)
+        return mark
 
     def read_lumi_sec_veto_mask_mark(self):
-        mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
-        mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
-        mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
-        self.hw.dispatch()
+        mark = np.zeros(self.n_slr)
+        for i in range(self.n_slr):
+            mark_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark" % i).read()
+            self.hw.dispatch()
+            mark[i] = np.uint32(mark_temp)
+        #mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
+        #mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
+        #mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
+        # self.hw.dispatch()
 
-        return np.uint32(mark_0), np.uint32(mark_1), np.uint32(mark_2)
+        return mark
 
     def load_mask_arr(self, mask_arr):
         trgg_mask_arr_576 = np.zeros((3, 144), dtype=np.uint32)
         trgg_mask_arr_576[0:3, :int(self.slr_algos/32*8)] = mask_arr
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.trgg_mask").writeBlock(trgg_mask_arr_576[2])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.trgg_mask").writeBlock(trgg_mask_arr_576[1])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.trgg_mask").writeBlock(trgg_mask_arr_576[0])
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.trgg_mask" % i).writeBlock(trgg_mask_arr_576[i])
+
+        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.trgg_mask").writeBlock(trgg_mask_arr_576[1])
+        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.trgg_mask").writeBlock(trgg_mask_arr_576[0])
         self.hw.dispatch()
 
     def load_veto_mask(self, veto_mask):
         veto_mask_576 = np.zeros((3, 18), dtype=np.uint32)
         veto_mask_576[:3, :int(self.slr_algos/32)] = veto_mask
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.veto_mask").writeBlock(veto_mask_576[2])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.veto_mask").writeBlock(veto_mask_576[1])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.veto_mask").writeBlock(veto_mask_576[0])
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.veto_mask" % i).writeBlock(veto_mask_576[i])
+        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.veto_mask").writeBlock(veto_mask_576[1])
+        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.veto_mask").writeBlock(veto_mask_576[0])
         self.hw.dispatch()
 
     def load_BXmask_arr(self, BXmask_arr):
@@ -239,81 +304,86 @@ class FinOrController:
         self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr_576[0][17])
         self.hw.dispatch()
 
-    def set_link_mask(self, link_mask_2, link_mask_1, link_mask_0):
-        self.hw.getNode("payload.SLRn2_monitor.CSR.ctrl.link_mask").write(link_mask_2)
-        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.link_mask").write(link_mask_1)
-        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.link_mask").write(link_mask_0)
+    def set_link_mask(self, link_mask):
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.link_mask" % i).write(link_mask[i])
         self.hw.dispatch()
         
     def read_ctrs_delay(self):
-        ctrs_delay_2 = self.hw.getNode("payload.SLRn2_monitor.CSR.stat.input_delay").read()
-        ctrs_delay_1 = self.hw.getNode("payload.SLRn1_monitor.CSR.stat.input_delay").read()
-        ctrs_delay_0 = self.hw.getNode("payload.SLRn0_monitor.CSR.stat.input_delay").read()
-        self.hw.dispatch()
+        ctrs_delay = np.zeros(self.n_slr)
+        for i in range(self.n_slr):
+            delay_temp = self.hw.getNode("payload.SLRn%d_monitor.CSR.stat.input_delay" % i).read()
+            self.hw.dispatch()
+            ctrs_delay[i] = np.uint32(delay_temp)
         
-        return ctrs_delay_0, ctrs_delay_1, ctrs_delay_2
+        return ctrs_delay
         
     def check_alignement_error(self):
-        err_2 = self.hw.getNode("payload.SLRn2_monitor.CSR.stat.align_err").read()
-        err_1 = self.hw.getNode("payload.SLRn1_monitor.CSR.stat.align_err").read()
-        err_0 = self.hw.getNode("payload.SLRn0_monitor.CSR.stat.align_err").read()
-        self.hw.dispatch()
+        align_err = np.zeros(self.n_slr)
+        for i in range(self.n_slr):
+            err_temp = self.hw.getNode("payload.SLRn%d_monitor.CSR.stat.align_err" % i).read()
+            self.hw.dispatch()
+            align_err = np.int32(err_temp)
 
-        return err_0, err_1, err_2
+        return align_err
 
     def reset_alignement_error(self):
-        self.hw.getNode("payload.SLRn2_monitor.CSR.ctrl.rst_align_err").write(1)
-        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.rst_align_err").write(1)
-        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.rst_align_err").write(1)
-        self.hw.getNode("payload.SLRn2_monitor.CSR.ctrl.rst_align_err").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.rst_align_err").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.rst_align_err").write(0)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.rst_align_err" % i).write(1)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.rst_align_err" % i).write(0)
         self.hw.dispatch()
 
     def load_latancy_delay(self, latency):
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").write(latency)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.l1_latency_delay" % i).write(latency)
         self.hw.dispatch()
 
     def read_latancy_delay(self):
-        latency_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
-        latency_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
-        latency_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.l1_latency_delay").read()
-        self.hw.dispatch()
+        latency = np.zeros(self.n_slr)
+        for i in range(self.n_slr):
+            latency_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.l1_latency_delay" % i).read()
+            self.hw.dispatch()
+            latency[i] = np.uint32(latency_temp)
 
-        return latency_0, latency_1, latency_2
+        return latency
 
     def check_counter_ready_flags(self):
-        ready_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.ready").read()
-        ready_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.ready").read()
-        ready_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.ready").read()
-        self.hw.dispatch()
-        return ready_0, ready_1, ready_2
+        ready = np.zeros(self.n_slr)
+        for i in range(self.n_slr):
+            ready_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.ready" % i).read()
+            self.hw.dispatch()
+            ready[i] = ready_temp
+        return ready
 
     def read_cnt_arr(self, sel):
+        cnt = np.zeros((3, self.slr_algos))
         if sel == 0:
-            cnt_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.cnt_rate_before_prsc").readBlock(self.slr_algos)
-            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_before_prsc").readBlock(self.slr_algos)
-            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_before_prsc").readBlock(self.slr_algos)
+            for i in range(self.n_slr):
+                cnt_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.cnt_rate_before_prsc" % i).readBlock(self.slr_algos)
+                self.hw.dispatch()
+                cnt[i] = cnt_temp
         elif sel == 1:
-            cnt_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.cnt_rate_after_prsc").readBlock(self.slr_algos)
-            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_after_prsc").readBlock(self.slr_algos)
-            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_after_prsc").readBlock(self.slr_algos)
+            for i in range(self.n_slr):
+                cnt_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.cnt_rate_after_prsc" % i).readBlock(self.slr_algos)
+                self.hw.dispatch()
+                cnt[i] = cnt_temp
         elif sel == 2:
-            cnt_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.cnt_rate_after_prsc_prvw").readBlock(self.slr_algos)
-            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_after_prsc_prvw").readBlock(self.slr_algos)
-            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_after_prsc_prvw").readBlock(self.slr_algos)
+            for i in range(self.n_slr):
+                cnt_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.cnt_rate_after_prsc_prvw" % i).readBlock(self.slr_algos)
+                self.hw.dispatch()
+                cnt[i] = cnt_temp
         elif sel == 3:
-            cnt_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.cnt_rate_pdt").readBlock(self.slr_algos)
-            cnt_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.cnt_rate_pdt").readBlock(self.slr_algos)
-            cnt_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.cnt_rate_pdt").readBlock(self.slr_algos)
+            for i in range(self.n_slr):
+                cnt_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.cnt_rate_pdt" % i).readBlock(self.slr_algos)
+                self.hw.dispatch()
+                cnt[i] = cnt_temp
         else:
             raise Exception("Selector is not in [0,1,2,3]")
         self.hw.dispatch()
-        cnt = np.vstack((cnt_0, cnt_1, cnt_2)).flatten()
+        cnt_out = cnt.flatten()
 
-        return np.array(cnt, dtype=np.uint32)
+        return np.array(cnt_out, dtype=np.uint32)
 
     def check_trigger_counter_ready_flag(self):
         ready = self.hw.getNode("payload.SLR_FINOR.CSR.stat.ready").read()
@@ -351,6 +421,8 @@ class FinOrController:
         return cnt
 
     def read_partial_veto_cnt(self, SLR):
+        if  self.n_slr  < SLR < 0:
+            raise Exception("SLR number not valid")
         if SLR == 0:
             cnt = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.Veto_reg.stat.Veto_cnt").read()
         elif SLR == 1:
@@ -362,10 +434,8 @@ class FinOrController:
         return cnt
 
     def ctrs_delay_resync(self):
-        self.hw.getNode("payload.SLRn2_monitor.CSR.ctrl.delay_resync").write(1)
-        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.delay_resync").write(1)
-        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.delay_resync").write(1)
-        self.hw.getNode("payload.SLRn2_monitor.CSR.ctrl.delay_resync").write(0)
-        self.hw.getNode("payload.SLRn1_monitor.CSR.ctrl.delay_resync").write(0)
-        self.hw.getNode("payload.SLRn0_monitor.CSR.ctrl.delay_resync").write(0)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.delay_resync" % i).write(1)
+        for i in range(self.n_slr):
+            self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.delay_resync" % i).write(0)
         self.hw.dispatch()

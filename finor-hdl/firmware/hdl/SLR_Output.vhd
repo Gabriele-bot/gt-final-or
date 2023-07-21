@@ -20,7 +20,7 @@ use work.P2GT_finor_pkg.all;
 
 entity SLR_Output is
     generic(
-        NR_TRIGGERS           : natural;
+        NR_TRIGGERS           : natural := N_TRIGG;
         BEGIN_LUMI_TOGGLE_BIT : natural := 18;
         MAX_DELAY             : natural := MAX_DELAY_PDT
     );
@@ -37,15 +37,9 @@ entity SLR_Output is
         ctrs             : in  ttc_stuff_t;
         valid_in         : in  std_logic;
         start_of_orbit_i : in  std_logic;
-        trgg_0           : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_1           : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_2           : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_prvw_0      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_prvw_1      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        trgg_prvw_2      : in  std_logic_vector(NR_TRIGGERS - 1 downto 0);
-        veto_0           : in  std_logic;
-        veto_1           : in  std_logic;
-        veto_2           : in  std_logic;
+        trgg             : in  trigger_array_t;
+        trgg_prvw        : in  trigger_array_t;
+        veto             : in  std_logic_vector(N_MONITOR_SLR - 1 downto 0);
         q                : out ldata(0 downto 0) -- data out
     );
 end entity SLR_Output;
@@ -345,12 +339,36 @@ begin
         end if;
     end process;
 
-    Final_OR         <= trgg_0 or trgg_1 or trgg_2;
-    Final_OR_preview <= trgg_prvw_0 or trgg_prvw_1 or trgg_prvw_2;
+    Finor_gen : case N_MONITOR_SLR generate
+        when 1 =>
+            Final_OR         <= trgg(0);
+            Final_OR_preview <= trgg_prvw(0);
+        when 2 =>
+            Final_OR         <= trgg(0) or trgg(1);
+            Final_OR_preview <= trgg_prvw(0) or trgg_prvw(1);
+        when 3 =>
+            Final_OR         <= trgg(0) or trgg(1) or trgg(2);
+            Final_OR_preview <= trgg_prvw(0) or trgg_prvw(1) or trgg_prvw(2);
+        when others =>
+            Final_OR         <= trgg(0) or trgg(1) or trgg(2);
+            Final_OR_preview <= trgg_prvw(0) or trgg_prvw(1) or trgg_prvw(2);
+    end generate;
 
-    Final_OR_with_veto_l : for i in 0 to NR_TRIGGERS - 1 generate
-        Final_OR_with_veto(i)         <= (trgg_0(i) or trgg_1(i) or trgg_2(i)) and not (veto_0 or veto_1 or veto_2);
-        Final_OR_preview_with_veto(i) <= (trgg_prvw_0(i) or trgg_prvw_1(i) or trgg_prvw_2(i)) and not (veto_0 or veto_1 or veto_2);
+    Finor_with_veto_l : for i in 0 to NR_TRIGGERS - 1 generate
+        Finor_with_veto_i_gen : case N_MONITOR_SLR generate
+            when 1 =>
+                Final_OR_with_veto(i)         <= trgg(0)(i) and not (or veto);
+                Final_OR_preview_with_veto(i) <= trgg_prvw(0)(i) and not (or veto);
+            when 2 =>
+                Final_OR_with_veto(i)         <= (trgg(0)(i) or trgg(1)(i)) and not (or veto);
+                Final_OR_preview_with_veto(i) <= (trgg_prvw(0)(i) or trgg_prvw(1)(i)) and not (or veto);
+            when 3 =>
+                Final_OR_with_veto(i)         <= (trgg(0)(i) or trgg(1)(i) or trgg(2)(i)) and not (or veto);
+                Final_OR_preview_with_veto(i) <= (trgg_prvw(0)(i) or trgg_prvw(1)(i) or trgg_prvw(2)(i)) and not (or veto);
+            when others =>
+                Final_OR_with_veto(i)         <= (trgg(0)(i) or trgg(1)(i) or trgg(2)(i)) and not (or veto);
+                Final_OR_preview_with_veto(i) <= (trgg_prvw(0)(i) or trgg_prvw(1)(i) or trgg_prvw(2)(i)) and not (or veto);
+        end generate;
     end generate;
 
     process(clk40)
@@ -419,7 +437,7 @@ begin
             delay     => l1a_latency_delay
         );
 
-    veto_out_s <= veto_0 or veto_1 or veto_2;
+    veto_out_s <= or veto;
 
     process(clk40)
     begin

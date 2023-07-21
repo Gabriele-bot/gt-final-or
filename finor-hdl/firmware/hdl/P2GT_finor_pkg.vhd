@@ -18,7 +18,7 @@ package P2GT_finor_pkg is
     -- =======================================================================================================
     constant N_BOARD                          : integer := 12;
     constant N_SLR_PER_BOARD                  : integer := 4;
-    constant N_MONITOR_SLR                    : integer := 3;
+    constant N_MONITOR_SLR                    : integer := 2;
     constant INPUT_R_LINKS_SLR                : integer := 12;
     constant INPUT_L_LINKS_SLR                : integer := 12;
     constant INPUT_LINKS_SLR                  : integer := INPUT_R_LINKS_SLR + INPUT_L_LINKS_SLR;
@@ -57,12 +57,12 @@ package P2GT_finor_pkg is
     -- =================================================================================
     -- OUTPUTS on the same SLR as the inputs
     -- =================================================================================
-    constant SLRn0_OUTPUT_CHANNELS : ChannelSystemMap(N_MONITOR_SLR - 1 downto 0) := (6, 5, 4);
-    constant SLRn1_OUTPUT_CHANNELS : ChannelSystemMap(N_MONITOR_SLR - 1 downto 0) := (42, 41, 40);
-    constant SLRn2_OUTPUT_CHANNELS : ChannelSystemMap(N_MONITOR_SLR - 1 downto 0) := (54, 53, 52);
-    constant SLRn0_OUTPUT_QUAD     : natural                                      := 1;
-    constant SLRn1_OUTPUT_QUAD     : natural                                      := 10;
-    constant SLRn2_OUTPUT_QUAD     : natural                                      := 13;
+    constant SLRn0_OUTPUT_CHANNELS : ChannelSystemMap(2 downto 0) := (6, 5, 4);
+    constant SLRn1_OUTPUT_CHANNELS : ChannelSystemMap(2 downto 0) := (42, 41, 40);
+    constant SLRn2_OUTPUT_CHANNELS : ChannelSystemMap(2 downto 0) := (54, 53, 52);
+    constant SLRn0_OUTPUT_QUAD     : natural                      := 1;
+    constant SLRn1_OUTPUT_QUAD     : natural                      := 10;
+    constant SLRn2_OUTPUT_QUAD     : natural                      := 13;
 
     -- =================================================================================
     -- OUTPUTS trigger bits
@@ -70,8 +70,12 @@ package P2GT_finor_pkg is
     constant OUTPUT_CHANNEL : natural := 99;
     constant OUTPUT_QUAD    : natural := 24;
 
+    -- =================================================================================
+    -- Types
+    -- =================================================================================
     type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(LWORD_WIDTH * 9 - 1 downto 0);
     type mask_arr is array (N_TRIGG - 1 downto 0) of std_logic_vector(N_SLR_ALGOS - 1 downto 0);
+    type trigger_array_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(N_TRIGG - 1 downto 0);
 
     -- ================= COUNTER TYPES ========================================================================
 

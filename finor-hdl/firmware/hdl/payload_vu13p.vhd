@@ -46,6 +46,11 @@ end emp_payload;
 
 architecture rtl of emp_payload is
 
+    constant RO_DATA       : std_logic_vector(31 downto 0) := (1 downto 0   => std_logic_vector(to_signed(N_MONITOR_SLR, 2)),
+                                                               11 downto 2  => std_logic_vector(to_signed(N_SLR_ALGOS, 10)),
+                                                               14 downto 12 => std_logic_vector(to_signed(N_TRIGG, 3)),
+                                                               26 downto 15 => std_logic_vector(to_signed(N_ALGOS, 12)),
+                                                               31 downto 27 => "00000");
     -- fabric signals        
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
     signal ipb_from_slaves : ipb_rbus_array(N_SLAVES - 1 downto 0);
@@ -65,9 +70,12 @@ architecture rtl of emp_payload is
     type SLRtrigg_t is array (N_MONITOR_SLR - 1 downto 0) of SLRCross_trigg_t;
     signal trgg_regs      : SLRtrigg_t := (others => (others => (others => '0')));
     signal trgg_prvw_regs : SLRtrigg_t := (others => (others => (others => '0')));
+    signal trgg_conc      : trigger_array_t;
+    signal trgg_prvw_conc : trigger_array_t;
 
     type SLRveto_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0);
     signal veto_regs : SLRveto_t := (others => (others => '0'));
+    signal veto_conc : std_logic_vector(N_MONITOR_SLR - 1 downto 0);
 
     signal start_of_orbit_regs : std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0) := (others => '0');
 
@@ -105,6 +113,14 @@ begin
     report "Selected number of algos per SLR is greater than 576"
     severity FAILURE;
 
+    assert N_MONITOR_SLR <= 3
+    report "Selected number Monoriting SLR is greater than 3"
+    severity FAILURE;
+
+    assert N_MONITOR_SLR /= 0
+    report "Selected number Monoriting SLR cannot be 0"
+    severity FAILURE;
+
     fabric_i : entity work.ipbus_fabric_sel
         generic map(
             NSLV      => N_SLAVES,
@@ -118,10 +134,23 @@ begin
             ipb_from_slaves => ipb_from_slaves
         );
 
-    d_SLR_ldata_fill_g : for i in 0 to INPUT_LINKS_SLR - 1 generate
-        d_ldata_slr(0)(i) <= d(SLRn0_INPUT_CHANNELS(i));
-        d_ldata_slr(1)(i) <= d(SLRn1_INPUT_CHANNELS(i));
-        d_ldata_slr(2)(i) <= d(SLRn2_INPUT_CHANNELS(i));
+    -- TODO this is suboptimal  
+    d_SLR_ldata_fill_l : for i in 0 to INPUT_LINKS_SLR - 1 generate
+        d_SLR_ldata_fill_g : case N_MONITOR_SLR generate
+            when 1 =>
+                d_ldata_slr(0)(i) <= d(SLRn0_INPUT_CHANNELS(i));
+            when 2 =>
+                d_ldata_slr(0)(i) <= d(SLRn0_INPUT_CHANNELS(i));
+                d_ldata_slr(1)(i) <= d(SLRn1_INPUT_CHANNELS(i));
+            when 3 =>
+                d_ldata_slr(0)(i) <= d(SLRn0_INPUT_CHANNELS(i));
+                d_ldata_slr(1)(i) <= d(SLRn1_INPUT_CHANNELS(i));
+                d_ldata_slr(2)(i) <= d(SLRn2_INPUT_CHANNELS(i));
+            when others =>
+                d_ldata_slr(0)(i) <= d(SLRn0_INPUT_CHANNELS(i));
+                d_ldata_slr(1)(i) <= d(SLRn1_INPUT_CHANNELS(i));
+                d_ldata_slr(2)(i) <= d(SLRn2_INPUT_CHANNELS(i));
+        end generate;
     end generate;
 
     reg_link_data_p : process(clk_p)
@@ -131,63 +160,88 @@ begin
         end if;
     end process;
 
-    SLRn2_module : entity work.SLR_Monitoring_unit
+    FinOR_ro_reg : entity work.ipbus_roreg_v
         generic map(
-            NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
-            NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
-            BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
-            MAX_DELAY             => MAX_DELAY_PDT
+            N_REG => 1,
+            DATA  => RO_DATA
         )
         port map(
-            clk                    => clk,
-            rst                    => rst,
-            ipb_in                 => ipb_to_slaves(N_SLV_SLRN2_MONITOR),
-            ipb_out                => ipb_from_slaves(N_SLV_SLRN2_MONITOR),
-            clk360                 => clk_p,
-            rst360_r               => rst_loc(SLRn2_INPUT_QUADS(0)),
-            rst360_l               => rst_loc(SLRn2_INPUT_QUADS(5)), --TODO need to get rid of the hard coding
-            clk40                  => clk_payload(2),
-            rst40                  => rst_payload(2),
-            ctrs                   => ctrs(SLRn2_INPUT_QUADS(0)),
-            d                      => d_ldata_slr_reg(2),
-            start_of_orbit_o       => open,
-            trigger_o              => trgg_regs(2)(0),
-            trigger_preview_o      => trgg_prvw_regs(2)(0),
-            trigger_valid_o        => valid_out_regs(2)(0),
-            veto_o                 => veto_regs(2)(0),
-            q_algos_o              => algos_link_regs(2)(0),
-            q_algos_after_bxmask_o => algos_bxmask_link_regs(2)(0),
-            q_algos_after_prscl_o  => algos_presc_link_regs(2)(0)
+            ipb_in  => ipb_to_slaves(N_SLV_FINOR_ROREG),
+            ipb_out => ipb_from_slaves(N_SLV_FINOR_ROREG)
         );
 
-    SLRn1_module : entity work.SLR_Monitoring_unit
-        generic map(
-            NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
-            NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
-            BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
-            MAX_DELAY             => MAX_DELAY_PDT
-        )
-        port map(
-            clk                    => clk,
-            rst                    => rst,
-            ipb_in                 => ipb_to_slaves(N_SLV_SLRN1_MONITOR),
-            ipb_out                => ipb_from_slaves(N_SLV_SLRN1_MONITOR),
-            clk360                 => clk_p,
-            rst360_r               => rst_loc(SLRn1_INPUT_QUADS(0)),
-            rst360_l               => rst_loc(SLRn1_INPUT_QUADS(5)), --TODO need to get rid of the hard coding
-            clk40                  => clk_payload(2),
-            rst40                  => rst_payload(2),
-            ctrs                   => ctrs(SLRn1_INPUT_QUADS(0)),
-            d                      => d_ldata_slr_reg(1),
-            start_of_orbit_o       => open,
-            trigger_o              => trgg_regs(1)(0),
-            trigger_preview_o      => trgg_prvw_regs(1)(0),
-            trigger_valid_o        => valid_out_regs(1)(0),
-            veto_o                 => veto_regs(1)(0),
-            q_algos_o              => algos_link_regs(1)(0),
-            q_algos_after_bxmask_o => algos_bxmask_link_regs(1)(0),
-            q_algos_after_prscl_o  => algos_presc_link_regs(1)(0)
-        );
+    monitoring_module_slr2_g : if N_MONITOR_SLR = 3 generate
+        SLRn2_module : entity work.SLR_Monitoring_unit
+            generic map(
+                NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
+                NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
+                BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
+                MAX_DELAY             => MAX_DELAY_PDT
+            )
+            port map(
+                clk                    => clk,
+                rst                    => rst,
+                ipb_in                 => ipb_to_slaves(N_SLV_SLRN2_MONITOR),
+                ipb_out                => ipb_from_slaves(N_SLV_SLRN2_MONITOR),
+                clk360                 => clk_p,
+                rst360_r               => rst_loc(SLRn2_INPUT_QUADS(0)),
+                rst360_l               => rst_loc(SLRn2_INPUT_QUADS(5)), --TODO need to get rid of the hard coding
+                clk40                  => clk_payload(2),
+                rst40                  => rst_payload(2),
+                ctrs                   => ctrs(SLRn2_INPUT_QUADS(0)),
+                d                      => d_ldata_slr_reg(2),
+                start_of_orbit_o       => open,
+                trigger_o              => trgg_regs(2)(0),
+                trigger_preview_o      => trgg_prvw_regs(2)(0),
+                trigger_valid_o        => valid_out_regs(2)(0),
+                veto_o                 => veto_regs(2)(0),
+                q_algos_o              => algos_link_regs(2)(0),
+                q_algos_after_bxmask_o => algos_bxmask_link_regs(2)(0),
+                q_algos_after_prscl_o  => algos_presc_link_regs(2)(0)
+            );
+    else generate
+        -- TODO remove this dirty hack
+        ipb_from_slaves(N_SLV_SLRN2_MONITOR).ipb_rdata <= (others => '0');
+        ipb_from_slaves(N_SLV_SLRN2_MONITOR).ipb_ack <= ipb_to_slaves(N_SLV_SLRN2_MONITOR).ipb_strobe;
+        ipb_from_slaves(N_SLV_SLRN2_MONITOR).ipb_err <= '0';
+    end generate;
+
+    monitoring_module_slr1_g : if N_MONITOR_SLR >= 2 generate
+        SLRn1_module : entity work.SLR_Monitoring_unit
+            generic map(
+                NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
+                NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
+                BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
+                MAX_DELAY             => MAX_DELAY_PDT
+            )
+            port map(
+                clk                    => clk,
+                rst                    => rst,
+                ipb_in                 => ipb_to_slaves(N_SLV_SLRN1_MONITOR),
+                ipb_out                => ipb_from_slaves(N_SLV_SLRN1_MONITOR),
+                clk360                 => clk_p,
+                rst360_r               => rst_loc(SLRn1_INPUT_QUADS(0)),
+                rst360_l               => rst_loc(SLRn1_INPUT_QUADS(5)), --TODO need to get rid of the hard coding
+                clk40                  => clk_payload(2),
+                rst40                  => rst_payload(2),
+                ctrs                   => ctrs(SLRn1_INPUT_QUADS(0)),
+                d                      => d_ldata_slr_reg(1),
+                start_of_orbit_o       => open,
+                trigger_o              => trgg_regs(1)(0),
+                trigger_preview_o      => trgg_prvw_regs(1)(0),
+                trigger_valid_o        => valid_out_regs(1)(0),
+                veto_o                 => veto_regs(1)(0),
+                q_algos_o              => algos_link_regs(1)(0),
+                q_algos_after_bxmask_o => algos_bxmask_link_regs(1)(0),
+                q_algos_after_prscl_o  => algos_presc_link_regs(1)(0)
+            );
+    else generate
+        --ipb_from_slaves(N_SLV_SLRN1_MONITOR) <= IPB_RBUS_NULL;
+        -- TODO remove this dirty hack
+        ipb_from_slaves(N_SLV_SLRN1_MONITOR).ipb_rdata <= (others => '0');
+        ipb_from_slaves(N_SLV_SLRN1_MONITOR).ipb_ack <= ipb_to_slaves(N_SLV_SLRN1_MONITOR).ipb_strobe;
+        ipb_from_slaves(N_SLV_SLRN1_MONITOR).ipb_err <= '0';
+    end generate;
 
     SLRn0_module : entity work.SLR_Monitoring_unit
         generic map(
@@ -230,6 +284,9 @@ begin
                 veto_regs(i)(veto_regs(i)'high downto 1) <= veto_regs(i)(veto_regs(i)'high - 1 downto 0);
             end if;
         end process;
+        trgg_conc(i)      <= trgg_regs(i)(trgg_regs(i)'high);
+        trgg_prvw_conc(i) <= trgg_prvw_regs(i)(trgg_prvw_regs(i)'high);
+        veto_conc(i)      <= veto_regs(i)(veto_regs(i)'high);
     end generate;
 
     soo_cross_SLR : process(clk_p)
@@ -239,7 +296,16 @@ begin
         end if;
     end process;
 
-    valid_in <= valid_out_regs(0)(valid_out_regs(0)'high) or valid_out_regs(1)(valid_out_regs(1)'high) or valid_out_regs(2)(valid_out_regs(2)'high);
+    valid_g : case N_MONITOR_SLR generate
+        when 1 =>
+            valid_in <= valid_out_regs(0)(valid_out_regs(0)'high);
+        when 2 =>
+            valid_in <= valid_out_regs(0)(valid_out_regs(0)'high) or valid_out_regs(1)(valid_out_regs(1)'high);
+        when 3 =>
+            valid_in <= valid_out_regs(0)(valid_out_regs(0)'high) or valid_out_regs(1)(valid_out_regs(1)'high) or valid_out_regs(2)(valid_out_regs(2)'high);
+        when others =>
+            valid_in <= valid_out_regs(0)(valid_out_regs(0)'high) or valid_out_regs(1)(valid_out_regs(1)'high) or valid_out_regs(2)(valid_out_regs(2)'high);
+    end generate;
 
     SLRout_FinalOR_or : entity work.SLR_Output
         generic map(
@@ -259,16 +325,9 @@ begin
             ctrs             => ctrs(OUTPUT_QUAD),
             valid_in         => valid_in,
             start_of_orbit_i => start_of_orbit_regs(start_of_orbit_regs'high),
-            -- TODO change this to one line
-            trgg_0           => trgg_regs(0)(trgg_regs(0)'high),
-            trgg_1           => trgg_regs(1)(trgg_regs(1)'high),
-            trgg_2           => trgg_regs(2)(trgg_regs(2)'high),
-            trgg_prvw_0      => trgg_prvw_regs(0)(trgg_prvw_regs(0)'high),
-            trgg_prvw_1      => trgg_prvw_regs(1)(trgg_prvw_regs(1)'high),
-            trgg_prvw_2      => trgg_prvw_regs(2)(trgg_prvw_regs(2)'high),
-            veto_0           => veto_regs(0)(veto_regs(0)'high),
-            veto_1           => veto_regs(1)(veto_regs(1)'high),
-            veto_2           => veto_regs(2)(veto_regs(2)'high),
+            trgg             => trgg_conc,
+            trgg_prvw        => trgg_prvw_conc,
+            veto             => veto_conc,
             q(0)             => q(OUTPUT_CHANNEL)
         );
 
@@ -292,12 +351,24 @@ begin
         end process;
     end generate;
 
-    q(SLRn2_OUTPUT_CHANNELS(0)) <= algos_link_regs(2)(algos_link_regs(2)'high);
-    q(SLRn2_OUTPUT_CHANNELS(1)) <= algos_bxmask_link_regs(2)(algos_bxmask_link_regs(2)'high);
-    q(SLRn2_OUTPUT_CHANNELS(2)) <= algos_presc_link_regs(2)(algos_presc_link_regs(2)'high);
-    q(SLRn1_OUTPUT_CHANNELS(0)) <= algos_link_regs(1)(algos_link_regs(1)'high);
-    q(SLRn1_OUTPUT_CHANNELS(1)) <= algos_bxmask_link_regs(1)(algos_bxmask_link_regs(1)'high);
-    q(SLRn1_OUTPUT_CHANNELS(2)) <= algos_presc_link_regs(1)(algos_presc_link_regs(1)'high);
+    gen_output_slr2 : if N_MONITOR_SLR >= 3 generate
+        q(SLRn2_OUTPUT_CHANNELS(0)) <= algos_link_regs(2)(algos_link_regs(2)'high);
+        q(SLRn2_OUTPUT_CHANNELS(1)) <= algos_bxmask_link_regs(2)(algos_bxmask_link_regs(2)'high);
+        q(SLRn2_OUTPUT_CHANNELS(2)) <= algos_presc_link_regs(2)(algos_presc_link_regs(2)'high);
+    else generate
+        q(SLRn2_OUTPUT_CHANNELS(0)) <= LWORD_NULL;
+        q(SLRn2_OUTPUT_CHANNELS(1)) <= LWORD_NULL;
+        q(SLRn2_OUTPUT_CHANNELS(2)) <= LWORD_NULL;
+    end generate;
+    gen_output_slr1 : if N_MONITOR_SLR >= 2 generate
+        q(SLRn1_OUTPUT_CHANNELS(0)) <= algos_link_regs(1)(algos_link_regs(1)'high);
+        q(SLRn1_OUTPUT_CHANNELS(1)) <= algos_bxmask_link_regs(1)(algos_bxmask_link_regs(1)'high);
+        q(SLRn1_OUTPUT_CHANNELS(2)) <= algos_presc_link_regs(1)(algos_presc_link_regs(1)'high);
+    else generate
+        q(SLRn1_OUTPUT_CHANNELS(0)) <= LWORD_NULL;
+        q(SLRn1_OUTPUT_CHANNELS(1)) <= LWORD_NULL;
+        q(SLRn1_OUTPUT_CHANNELS(2)) <= LWORD_NULL;
+    end generate;
     q(SLRn0_OUTPUT_CHANNELS(0)) <= algos_link_regs(0)(algos_link_regs(0)'high);
     q(SLRn0_OUTPUT_CHANNELS(1)) <= algos_bxmask_link_regs(0)(algos_bxmask_link_regs(0)'high);
     q(SLRn0_OUTPUT_CHANNELS(2)) <= algos_presc_link_regs(0)(algos_presc_link_regs(0)'high);

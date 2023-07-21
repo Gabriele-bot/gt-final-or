@@ -70,7 +70,8 @@ uhal.disableLogging()
 lumi_bit = args.lumisection
 
 if args.test != 'algo-out':
-    HWtest = FinOrController(serenity='Serenity3', connection_file=args.connections, device='x0', SLR_ALGOS=slr_algos, emp_flag=False)
+    HWtest = FinOrController(serenity='Serenity3', connection_file=args.connections, device='x0', emp_flag=False)
+    slr_algos = HWtest.slr_algos
 
     # EMPdevice = HWtest.get_device()
     # ttcNode   = EMPdevice.getTTC()
@@ -81,13 +82,12 @@ if args.test != 'algo-out':
     # Set the l1a-latency delay
     l1_latency_delay = int(300)
     HWtest.load_latancy_delay(l1_latency_delay)
-    HWtest.set_link_mask(0x00ffffff, 0x00ffffff, 0x00ffffff)
+    HWtest.set_link_mask((0x00ffffff, 0x00ffffff))
     time.sleep(2)
 
     delay = HWtest.read_ctrs_delay()
-    print("Delay SLR n2 = %d" % delay[2])
-    print("Delay SLR n1 = %d" % delay[1])
-    print("Delay SLR n0 = %d" % delay[0])
+    for i in range(HWtest.n_slr):
+        print("Delay SLR n%d = %d" % (i, delay[i]))
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------PRE-SCALER TEST-----------------------------------
@@ -125,9 +125,8 @@ if args.test == 'prescaler':
         ls_trigg_mark_after = HWtest.read_lumi_sec_trigger_mask_mark()
     format_row = "{:>20}" * 3
     print(format_row.format('', 'LS Mark Before', 'LS Mark After'))
-    print(format_row.format('Trigger mask SLR n0', ls_trigg_mark_before[0], ls_trigg_mark_after[0]))
-    print(format_row.format('Trigger mask SLR n1', ls_trigg_mark_before[1], ls_trigg_mark_after[1]))
-    print(format_row.format('Trigger mask SLR n2', ls_trigg_mark_before[2], ls_trigg_mark_after[2]))
+    for i in range(HWtest.n_slr):
+        print(format_row.format('Trigger mask SLR n%d' % i, ls_trigg_mark_before[i], ls_trigg_mark_after[i]))
 
     # Set the veto mask
     veto_mask = np.zeros((3, int(np.ceil(slr_algos / 32))), dtype=np.uint32)
@@ -138,9 +137,8 @@ if args.test == 'prescaler':
     HWtest.send_new_veto_mask_flag()
     for i in range(20):
         ls_veto_mark_after = HWtest.read_lumi_sec_veto_mask_mark()
-    print(format_row.format('Veto mask SLR n0', ls_veto_mark_before[0], ls_veto_mark_after[0]))
-    print(format_row.format('Veto mask SLR n1', ls_veto_mark_before[1], ls_veto_mark_after[1]))
-    print(format_row.format('Veto mask SLR n2', ls_veto_mark_before[2], ls_veto_mark_after[2]))
+    for i in range(HWtest.n_slr):
+        print(format_row.format('Veto mask SLR n%d' % i, ls_veto_mark_before[i], ls_veto_mark_after[i]))
 
     prsc_fct = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
     prsc_fct_prvw = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
@@ -179,12 +177,9 @@ if args.test == 'prescaler':
     for i in range(10):
         ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark(0)
         ls_prescale_preview_mark_after = HWtest.read_lumi_sec_prescale_mark(1)
-    print(format_row.format('Prescaler SLR n0', ls_prescale_mark_before[0], ls_prescale_mark_after[0]))
-    print(format_row.format('Prescaler SLR n1', ls_prescale_mark_before[1], ls_prescale_mark_after[1]))
-    print(format_row.format('Prescaler SLR n2', ls_prescale_mark_before[2], ls_prescale_mark_after[2]))
-    print(format_row.format('Prescaler SLR n0', ls_prescale_preview_mark_before[0], ls_prescale_preview_mark_after[0]))
-    print(format_row.format('Prescaler SLR n1', ls_prescale_preview_mark_before[1], ls_prescale_preview_mark_after[1]))
-    print(format_row.format('Prescaler SLR n2', ls_prescale_preview_mark_before[2], ls_prescale_preview_mark_after[2]))
+    for i in range(HWtest.n_slr):
+        print(format_row.format('Prescaler SLR n%d' % i, ls_prescale_mark_before[i], ls_prescale_mark_after[i]))
+        print(format_row.format('Prescaler preview SLR n%d' % i, ls_prescale_preview_mark_before[i], ls_prescale_preview_mark_after[i]))
 
     # compute expected rate
     rate_before_theo = np.float64(np.zeros(slr_algos*3))
@@ -221,7 +216,7 @@ if args.test == 'prescaler':
         o_ctr_temp = o_ctr
 
         ready = HWtest.check_counter_ready_flags()
-        while not (ready[2] and ready[1] and ready[0]):
+        while not (np.logical_or.reduce(ready, 0).astype(bool)):
             print("Counters are not ready to be read")
             time.sleep(5)
             ready = HWtest.check_counter_ready_flags()

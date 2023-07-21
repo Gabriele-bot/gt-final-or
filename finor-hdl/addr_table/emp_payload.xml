@@ -1,7 +1,13 @@
 <node description="Payload address table" fwinfo="endpoint;width=31">
-    <node id="SLRn2_monitor" module="file://SLR_Monitoring_unit.xml"   address="0x00000000" fwinfo="endpoint;width=19"/>
-	<node id="SLRn1_monitor" module="file://SLR_Monitoring_unit.xml"   address="0x00080000" fwinfo="endpoint;width=19"/>
-	<node id="SLRn0_monitor" module="file://SLR_Monitoring_unit.xml"   address="0x00100000" fwinfo="endpoint;width=20"/>
-	<node id="SLR_FINOR"     module="file://SLR_Output.xml"            address="0x00200000" fwinfo="endpoint;width=21"/>
+  <node id="SLRn2_monitor" module="file://SLR_Monitoring_unit.xml"   address="0x00000000" fwinfo="endpoint;width=19"/>
+  <node id="SLRn1_monitor" module="file://SLR_Monitoring_unit.xml"   address="0x00080000" fwinfo="endpoint;width=19"/>
+  <node id="SLRn0_monitor" module="file://SLR_Monitoring_unit.xml"   address="0x00100000" fwinfo="endpoint;width=20"/>
+  <node id="SLR_FINOR"     module="file://SLR_Output.xml"            address="0x00200000" fwinfo="endpoint;width=20"/>
+  <node id="FINOR_ROREG"   address="0x00300000" fwinfo="endpoint;width=20">
+    <node id="N_SLR"        mask="0x0000003"/>
+    <node id="N_SLR_ALGOS"  mask="0x0000ffc"/>
+    <node id="N_TRIGG"      mask="0x0007000"/>
+    <node id="N_ALGOS"      mask="0x7ff8000"/>
+    </node>
 </node>
 
