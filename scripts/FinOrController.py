@@ -12,7 +12,6 @@ import time
 import argparse
 
 
-
 class FinOrController:
     def __init__(self, serenity, connection_file='my_connections.xml', device='x0', emp_flag=False):
         self.serenity = serenity
@@ -55,17 +54,15 @@ class FinOrController:
     # ==============================READ_WRITE IPbus regs ==============================
     def load_prsc_in_RAM(self, prsc_arr, sel):
         prsc_arr_576 = np.zeros((3, 576), dtype=np.uint32)
-        prsc_arr_576[:3, :self.slr_algos] = prsc_arr
+        prsc_arr = np.reshape(prsc_arr, (3, self.slr_algos))
+        for i in range(self.n_slr):
+            prsc_arr_576[i, :self.slr_algos] = prsc_arr[i]
         if sel == 0:
             for i in range(self.n_slr):
                 self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.prescale_factor" % i).writeBlock(prsc_arr_576[i])
-            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr_576[1])
-            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor").writeBlock(prsc_arr_576[0])
         elif sel == 1:
             for i in range(self.n_slr):
                 self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.prescale_factor_prvw" % i).writeBlock(prsc_arr_576[i])
-            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr_576[1])
-            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.prescale_factor_prvw").writeBlock(prsc_arr_576[0])
         else:
             raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
@@ -79,16 +76,6 @@ class FinOrController:
             time.sleep(0.01)
             for i in range(self.n_slr):
                 self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_prescale_column" % i).write(0)
-            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(1)
-            #time.sleep(0.01)
-            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
-            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_column").write(0)
         elif sel == 1:
             for i in range(self.n_slr):
                 self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column" % i).write(0)
@@ -97,16 +84,6 @@ class FinOrController:
             time.sleep(0.01)
             for i in range(self.n_slr):
                 self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column" % i).write(0)
-            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
-            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
-            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(1)
-            #time.sleep(0.01)
-            #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
-            #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_prescale_preview_column").write(0)
         else:
             raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
@@ -122,16 +99,6 @@ class FinOrController:
         for i in range(self.n_slr):
             self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_trigger_masks" % i).write(
                 0)
-        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
-        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
-        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(1)
-        #time.sleep(0.01)
-        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
-        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_trigger_masks").write(0)
         self.hw.dispatch()
 
     def send_new_veto_mask_flag(self):
@@ -145,16 +112,6 @@ class FinOrController:
         for i in range(self.n_slr):
             self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.new_veto_mask" % i).write(
                 0)
-        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
-        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
-        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(1)
-        #time.sleep(0.01)
-        #self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
-        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.ctrl.new_veto_mask").write(0)
         self.hw.dispatch()
 
     def read_lumi_sec_prescale_mark(self, sel):
@@ -164,23 +121,12 @@ class FinOrController:
                 mark_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark" % i).read()
                 self.hw.dispatch()
                 mark[i] = np.uint32(mark_temp)
-            #self.hw.dispatch()
-            #mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
-            #mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
-            #mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_mark").read()
         elif sel == 1:
             for i in range(self.n_slr):
                 mark_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark" % i).read()
                 self.hw.dispatch()
                 mark[i] = np.uint32(mark_temp)
-            #mark_2 = self.hw.getNode(
-            #    "payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
-            #mark_1 = self.hw.getNode(
-            #    "payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
-            #mark_0 = self.hw.getNode(
-            #    "payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_prescaler_preview_mark").read()
         else:
-            mark = np.zeros(self.n_slr)
             raise Exception("Selector is not in [0,1]")
 
         return mark
@@ -191,10 +137,6 @@ class FinOrController:
             mark_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark" % i).read()
             self.hw.dispatch()
             mark[i] = np.uint32(mark_temp)
-        #mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-        #mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-        #mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_trigger_masks_mark").read()
-        #self.hw.dispatch()
 
         return mark
 
@@ -204,104 +146,33 @@ class FinOrController:
             mark_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark" % i).read()
             self.hw.dispatch()
             mark[i] = np.uint32(mark_temp)
-        #mark_2 = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
-        #mark_1 = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
-        #mark_0 = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.CSR.stat.lumi_sec_update_veto_mark").read()
-        # self.hw.dispatch()
 
         return mark
 
     def load_mask_arr(self, mask_arr):
         trgg_mask_arr_576 = np.zeros((3, 144), dtype=np.uint32)
+        mask_arr = np.reshape(mask_arr, (3, int(self.slr_algos/32*8)))
         trgg_mask_arr_576[0:3, :int(self.slr_algos/32*8)] = mask_arr
         for i in range(self.n_slr):
             self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.trgg_mask" % i).writeBlock(trgg_mask_arr_576[i])
-
-        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.trgg_mask").writeBlock(trgg_mask_arr_576[1])
-        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.trgg_mask").writeBlock(trgg_mask_arr_576[0])
         self.hw.dispatch()
 
     def load_veto_mask(self, veto_mask):
         veto_mask_576 = np.zeros((3, 18), dtype=np.uint32)
+        veto_mask = np.reshape(veto_mask, (3, int(self.slr_algos/32)))
         veto_mask_576[:3, :int(self.slr_algos/32)] = veto_mask
         for i in range(self.n_slr):
             self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.veto_mask" % i).writeBlock(veto_mask_576[i])
-        #self.hw.getNode("payload.SLRn1_monitor.monitoring_module.veto_mask").writeBlock(veto_mask_576[1])
-        #self.hw.getNode("payload.SLRn0_monitor.monitoring_module.veto_mask").writeBlock(veto_mask_576[0])
         self.hw.dispatch()
 
     def load_BXmask_arr(self, BXmask_arr):
         BXmask_arr_576 = np.zeros((3, 18, 4096), dtype=np.uint32)
+        BXmask_arr = np.reshape(BXmask_arr, (3, int(self.slr_algos/32), 4096))
         BXmask_arr_576[:3, :int(self.slr_algos/32), :4096] = BXmask_arr
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr_576[2][0])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_32_63").writeBlock(BXmask_arr_576[2][1])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_64_95").writeBlock(BXmask_arr_576[2][2])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_96_127").writeBlock(
-            BXmask_arr_576[2][3])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_128_159").writeBlock(
-            BXmask_arr_576[2][4])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_160_191").writeBlock(
-            BXmask_arr_576[2][5])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_192_223").writeBlock(
-            BXmask_arr_576[2][6])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_224_255").writeBlock(
-            BXmask_arr_576[2][7])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_256_287").writeBlock(
-            BXmask_arr_576[2][8])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_288_319").writeBlock(
-            BXmask_arr_576[2][9])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_320_351").writeBlock(
-            BXmask_arr_576[2][10])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_352_383").writeBlock(
-            BXmask_arr_576[2][11])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_384_415").writeBlock(
-            BXmask_arr_576[2][12])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_416_447").writeBlock(
-            BXmask_arr_576[2][13])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_448_479").writeBlock(
-            BXmask_arr_576[2][14])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_480_511").writeBlock(
-            BXmask_arr_576[2][15])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_512_543").writeBlock(
-            BXmask_arr_576[2][16])
-        self.hw.getNode("payload.SLRn2_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(
-            BXmask_arr_576[2][17])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr_576[1][0])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_32_63").writeBlock(BXmask_arr_576[1][1])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_64_95").writeBlock(BXmask_arr_576[1][2])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_96_127").writeBlock(BXmask_arr_576[1][3])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_128_159").writeBlock(BXmask_arr_576[1][4])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_160_191").writeBlock(BXmask_arr_576[1][5])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_192_223").writeBlock(BXmask_arr_576[1][6])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_224_255").writeBlock(BXmask_arr_576[1][7])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_256_287").writeBlock(BXmask_arr_576[1][8])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_288_319").writeBlock(BXmask_arr_576[1][9])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_320_351").writeBlock(BXmask_arr_576[1][10])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_352_383").writeBlock(BXmask_arr_576[1][11])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_384_415").writeBlock(BXmask_arr_576[1][12])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_416_447").writeBlock(BXmask_arr_576[1][13])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_448_479").writeBlock(BXmask_arr_576[1][14])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_480_511").writeBlock(BXmask_arr_576[1][15])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_512_543").writeBlock(BXmask_arr_576[1][16])
-        self.hw.getNode("payload.SLRn1_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr_576[1][17])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_0_31").writeBlock(BXmask_arr_576[0][0])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_32_63").writeBlock(BXmask_arr_576[0][1])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_64_95").writeBlock(BXmask_arr_576[0][2])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_96_127").writeBlock(BXmask_arr_576[0][3])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_128_159").writeBlock(BXmask_arr_576[0][4])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_160_191").writeBlock(BXmask_arr_576[0][5])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_192_223").writeBlock(BXmask_arr_576[0][6])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_224_255").writeBlock(BXmask_arr_576[0][7])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_256_287").writeBlock(BXmask_arr_576[0][8])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_288_319").writeBlock(BXmask_arr_576[0][9])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_320_351").writeBlock(BXmask_arr_576[0][10])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_352_383").writeBlock(BXmask_arr_576[0][11])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_384_415").writeBlock(BXmask_arr_576[0][12])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_416_447").writeBlock(BXmask_arr_576[0][13])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_448_479").writeBlock(BXmask_arr_576[0][14])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_480_511").writeBlock(BXmask_arr_576[0][15])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_512_543").writeBlock(BXmask_arr_576[0][16])
-        self.hw.getNode("payload.SLRn0_monitor.monitoring_module.algo_bx_masks.data_544_575").writeBlock(BXmask_arr_576[0][17])
+        for i in range(self.n_slr):
+            for j in range(18):
+                self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.algo_bx_masks.data_%d_%d" % (i, j*32, (j+1)*32-1)).writeBlock(
+                    BXmask_arr_576[i][j])
         self.hw.dispatch()
 
     def set_link_mask(self, link_mask):
@@ -421,14 +292,9 @@ class FinOrController:
         return cnt
 
     def read_partial_veto_cnt(self, SLR):
-        if  self.n_slr  < SLR < 0:
+        if self.n_slr  < SLR < 0:
             raise Exception("SLR number not valid")
-        if SLR == 0:
-            cnt = self.hw.getNode("payload.SLRn0_monitor.monitoring_module.Veto_reg.stat.Veto_cnt").read()
-        elif SLR == 1:
-            cnt = self.hw.getNode("payload.SLRn1_monitor.monitoring_module.Veto_reg.stat.Veto_cnt").read()
-        elif SLR == 2:
-            cnt = self.hw.getNode("payload.SLRn2_monitor.monitoring_module.Veto_reg.stat.Veto_cnt").read()
+        cnt = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.Veto_reg.stat.Veto_cnt" % int(SLR)).read()
         self.hw.dispatch()
 
         return cnt
