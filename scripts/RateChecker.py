@@ -34,9 +34,6 @@ parser.add_argument('-hl', '--HighLinks', type=str, default="36-47")
 args = parser.parse_args()
 
 # TODO maybe put this in a config file? Or directly parse the vhdl pkg?
-#Magic numbers, needs to be placed in a config file, better to parse the vhd package
-slr_algos = 512
-monitoring_slrs = 3
 
 unprescaled_low_bits_link = 4
 unprescaled_mid_bits_link = 40
@@ -82,7 +79,8 @@ if args.test != 'algo-out':
     # Set the l1a-latency delay
     l1_latency_delay = int(300)
     HWtest.load_latancy_delay(l1_latency_delay)
-    HWtest.set_link_mask((0x00ffffff, 0x00ffffff))
+    link_mask = np.uint32(np.ones(monitoring_slrs)*(2**24-1))
+    HWtest.set_link_mask(link_mask)
     time.sleep(2)
 
     delay = HWtest.read_ctrs_delay()
