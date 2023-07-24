@@ -3,7 +3,7 @@ set SLR_n2  SLR3
 set SLR_n1  SLR2
 set SLR_n0  SLR0
 set SLR_out SLR1
-set N_MONITOR_SLR 2
+set N_MONITOR_SLR 3
 
 create_pblock pblock_SLR_n2
 resize_pblock pblock_SLR_n2 -add $SLR_n2

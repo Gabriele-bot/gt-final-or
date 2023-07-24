@@ -18,7 +18,7 @@ package P2GT_finor_pkg is
     -- =======================================================================================================
     constant N_BOARD                          : integer := 12;
     constant N_SLR_PER_BOARD                  : integer := 4;
-    constant N_MONITOR_SLR                    : integer := 2;
+    constant N_MONITOR_SLR                    : integer := 3;
     constant INPUT_R_LINKS_SLR                : integer := 12;
     constant INPUT_L_LINKS_SLR                : integer := 12;
     constant INPUT_LINKS_SLR                  : integer := INPUT_R_LINKS_SLR + INPUT_L_LINKS_SLR;
