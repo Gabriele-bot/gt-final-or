@@ -62,7 +62,7 @@ test:serenity:
     - python3 -m pip install --upgrade click==8.0.4 click_didyoumean==0.3.0 pytest==7.0.1 python-dateutil==2.8.2 pyyaml==5.1.2 colorama==0.4.5
     - cd ${CI_PROJECT_DIR}/scripts
     # Generate pattern files
-    - export N_TEST_ALGOS="${N_MONITOR_SLR}*${N_SLR_ALGOS} - 50"
+    - export N_TEST_ALGOS=$((${N_MONITOR_SLR}*${N_SLR_ALGOS} - 50))
     - python3 PatternProducer.py -i ${N_TEST_ALGOS} -a ${N_SLR_ALGOS} -m ${N_MONITOR_SLR} -ll ${HARDWARE_TEST_INPUT_LOW_CHANNELS} -ml ${HARDWARE_TEST_INPUT_MID_CHANNELS}   -hl ${HARDWARE_TEST_INPUT_HIGH_CHANNELS} 
     - cd ${CI_PROJECT_DIR}
     # Extract bitfile & address tables
