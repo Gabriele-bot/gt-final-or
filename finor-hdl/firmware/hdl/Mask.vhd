@@ -27,7 +27,7 @@ architecture RTL of Mask is
 
     signal trigger_s : std_logic_vector(N_TRIGG - 1 downto 0) := (others => '0');
     signal valid_s   : std_logic;
-    signal masks_int : mask_arr;
+    signal masks_int : mask_arr  := (others  => (others => '0'));
 
 begin
 
@@ -41,13 +41,13 @@ begin
                 clk                  => clk,
                 request_update_pulse => request_masks_update_pulse,
                 update_pulse         => update_pulse,
-                data_i               => masks(i),
-                data_o               => masks_int(i)
+                data_i               => masks(i)(NR_ALGOS - 1 downto 0),
+                data_o               => masks_int(i)(NR_ALGOS - 1 downto 0)
             );
     end generate;
 
     trigger_out_l : for i in 0 to N_TRIGG - 1 generate
-        trigger_s(i) <= or (algos_in and masks_int(i));
+        trigger_s(i) <= or (algos_in and masks_int(i)(NR_ALGOS - 1 downto 0));
     end generate;
 
     valid_s <= valid_in;

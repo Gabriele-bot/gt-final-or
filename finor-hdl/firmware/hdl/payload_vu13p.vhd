@@ -46,11 +46,27 @@ end emp_payload;
 
 architecture rtl of emp_payload is
 
-    constant RO_DATA       : std_logic_vector(31 downto 0) := (1 downto 0   => std_logic_vector(to_signed(N_MONITOR_SLR, 2)),
-                                                               11 downto 2  => std_logic_vector(to_signed(N_SLR_ALGOS, 10)),
-                                                               14 downto 12 => std_logic_vector(to_signed(N_TRIGG, 3)),
-                                                               26 downto 15 => std_logic_vector(to_signed(N_ALGOS, 12)),
-                                                               31 downto 27 => "00000");
+    constant RO_DATA : std_logic_vector(31 downto 0) := (1 downto 0   => std_logic_vector(to_signed(N_MONITOR_SLR, 2)),
+                                                         11 downto 2  => std_logic_vector(to_signed(N_SLR_ALGOS, 10)),
+                                                         14 downto 12 => std_logic_vector(to_signed(N_TRIGG, 3)),
+                                                         26 downto 15 => std_logic_vector(to_signed(N_ALGOS, 12)),
+                                                         31 downto 27 => "00000");
+
+    constant RO_SLRn0OUT_DATA : std_logic_vector(31 downto 0) := (7 downto 0   => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(0), 8)),
+                                                                  15 downto 8  => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(1), 8)),
+                                                                  23 downto 16 => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(2), 8)),
+                                                                  31 downto 24 => X"00");
+
+    constant RO_SLRn1OUT_DATA : std_logic_vector(31 downto 0) := (7 downto 0   => std_logic_vector(to_signed(SLRn1_OUTPUT_CHANNELS(0), 8)),
+                                                                  15 downto 8  => std_logic_vector(to_signed(SLRn1_OUTPUT_CHANNELS(1), 8)),
+                                                                  23 downto 16 => std_logic_vector(to_signed(SLRn1_OUTPUT_CHANNELS(2), 8)),
+                                                                  31 downto 24 => X"00");
+
+    constant RO_SLRn2OUT_DATA : std_logic_vector(31 downto 0) := (7 downto 0   => std_logic_vector(to_signed(SLRn2_OUTPUT_CHANNELS(0), 8)),
+                                                                  15 downto 8  => std_logic_vector(to_signed(SLRn2_OUTPUT_CHANNELS(1), 8)),
+                                                                  23 downto 16 => std_logic_vector(to_signed(SLRn2_OUTPUT_CHANNELS(2), 8)),
+                                                                  31 downto 24 => X"00");
+
     -- fabric signals        
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
     signal ipb_from_slaves : ipb_rbus_array(N_SLAVES - 1 downto 0);
@@ -162,8 +178,11 @@ begin
 
     FinOR_ro_reg : entity work.ipbus_roreg_v
         generic map(
-            N_REG => 1,
-            DATA  => RO_DATA
+            N_REG               => 4,
+            DATA(31 downto 0)   => RO_DATA,
+            DATA(63 downto 32)  => RO_SLRn0OUT_DATA,
+            DATA(95 downto 64)  => RO_SLRn1OUT_DATA,
+            DATA(127 downto 96) => RO_SLRn2OUT_DATA
         )
         port map(
             ipb_in  => ipb_to_slaves(N_SLV_FINOR_ROREG),
@@ -202,8 +221,8 @@ begin
     else generate
         -- TODO remove this dirty hack
         ipb_from_slaves(N_SLV_SLRN2_MONITOR).ipb_rdata <= (others => '0');
-        ipb_from_slaves(N_SLV_SLRN2_MONITOR).ipb_ack <= ipb_to_slaves(N_SLV_SLRN2_MONITOR).ipb_strobe;
-        ipb_from_slaves(N_SLV_SLRN2_MONITOR).ipb_err <= '0';
+        ipb_from_slaves(N_SLV_SLRN2_MONITOR).ipb_ack   <= ipb_to_slaves(N_SLV_SLRN2_MONITOR).ipb_strobe;
+        ipb_from_slaves(N_SLV_SLRN2_MONITOR).ipb_err   <= '0';
     end generate;
 
     monitoring_module_slr1_g : if N_MONITOR_SLR >= 2 generate
@@ -239,8 +258,8 @@ begin
         --ipb_from_slaves(N_SLV_SLRN1_MONITOR) <= IPB_RBUS_NULL;
         -- TODO remove this dirty hack
         ipb_from_slaves(N_SLV_SLRN1_MONITOR).ipb_rdata <= (others => '0');
-        ipb_from_slaves(N_SLV_SLRN1_MONITOR).ipb_ack <= ipb_to_slaves(N_SLV_SLRN1_MONITOR).ipb_strobe;
-        ipb_from_slaves(N_SLV_SLRN1_MONITOR).ipb_err <= '0';
+        ipb_from_slaves(N_SLV_SLRN1_MONITOR).ipb_ack   <= ipb_to_slaves(N_SLV_SLRN1_MONITOR).ipb_strobe;
+        ipb_from_slaves(N_SLV_SLRN1_MONITOR).ipb_err   <= '0';
     end generate;
 
     SLRn0_module : entity work.SLR_Monitoring_unit

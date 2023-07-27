@@ -74,7 +74,7 @@ package P2GT_finor_pkg is
     -- Types
     -- =================================================================================
     type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(LWORD_WIDTH * 9 - 1 downto 0);
-    type mask_arr is array (N_TRIGG - 1 downto 0) of std_logic_vector(N_SLR_ALGOS - 1 downto 0);
+    type mask_arr is array (N_TRIGG - 1 downto 0) of std_logic_vector(N_SLR_ALGOS_MAX - 1 downto 0);
     type trigger_array_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(N_TRIGG - 1 downto 0);
 
     -- ================= COUNTER TYPES ========================================================================

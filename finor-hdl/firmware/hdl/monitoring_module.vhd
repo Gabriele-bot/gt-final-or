@@ -88,7 +88,8 @@ architecture rtl of monitoring_module is
     signal masks            : mask_arr                                                   := (others => (others => '1'));
 
     signal veto_ipbus_regs          : ipb_reg_v(N_SLR_ALGOS_MAX / 32 - 1 downto 0) := (others => (others => '0'));
-    signal veto_mask, veto_mask_int : std_logic_vector(NR_ALGOS - 1 downto 0)      := (others => '0');
+    signal veto_mask : std_logic_vector(N_SLR_ALGOS_MAX - 1 downto 0)      := (others => '0');
+    signal veto_mask_int : std_logic_vector(NR_ALGOS - 1 downto 0)      := (others => '0');
 
     signal request_factor_update         : std_logic;
     signal request_factor_preview_update : std_logic;
@@ -618,12 +619,12 @@ begin
     end process;
 
     mask_out_l : for i in NR_TRIGGERS - 1 downto 0 generate
-        mask_in_l : for j in NR_ALGOS / 32 - 1 downto 0 generate
+        mask_in_l : for j in N_SLR_ALGOS_MAX / 32 - 1 downto 0 generate
             process(clk40)
             begin
                 if rising_edge(clk40) then
                     if (ready_mask = '1' and ready_mask_1 = '0') then --rising edge
-                        masks(i)((j + 1) * 32 - 1 downto j * 32) <= masks_ipbus_regs(i * (NR_ALGOS / 32) + j);
+                        masks(i)((j + 1) * 32 - 1 downto j * 32) <= masks_ipbus_regs(i * (N_SLR_ALGOS_MAX / 32) + j);
                         --masks(i) <= (masks_ipbus_regs(i * 18 + 17), masks_ipbus_regs(i * 18 + 16),
                         --             masks_ipbus_regs(i * 18 + 15), masks_ipbus_regs(i * 18 + 14),
                         --             masks_ipbus_regs(i * 18 + 13), masks_ipbus_regs(i * 18 + 12),
@@ -670,7 +671,7 @@ begin
         end if;
     end process;
 
-    veto_reg_l : for j in NR_ALGOS / 32 - 1 downto 0 generate
+    veto_reg_l : for j in N_SLR_ALGOS_MAX / 32 - 1 downto 0 generate
         process(clk40)
         begin
             if rising_edge(clk40) then
@@ -700,7 +701,7 @@ begin
             clk                  => clk40,
             request_update_pulse => request_veto_update,
             update_pulse         => end_lumi_per,
-            data_i               => veto_mask,
+            data_i               => veto_mask(NR_ALGOS - 1 downto 0),
             data_o               => veto_mask_int
         );
 

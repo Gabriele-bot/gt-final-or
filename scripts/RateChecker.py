@@ -27,6 +27,8 @@ parser.add_argument('-ls', '--lumisection', metavar='N', type=int, default=18,
                     help='Luminosity section toggle bit (within the orbit counter)')
 parser.add_argument('-S', '--simulation', action='store_true',
                     help='Simulation flag')
+parser.add_argument('-E', '--EMPenable', action='store_true',
+                    help='EMP enable flag')
 parser.add_argument('-ll', '--LowLinks', type=str, default="0-11")
 parser.add_argument('-ml', '--MidLinks', type=str, default="48-59")
 parser.add_argument('-hl', '--HighLinks', type=str, default="36-47")
@@ -34,13 +36,14 @@ parser.add_argument('-hl', '--HighLinks', type=str, default="36-47")
 args = parser.parse_args()
 
 # TODO maybe put this in a config file? Or directly parse the vhdl pkg?
-#Magic numbers, needs to be placed in a config file, better to parse the vhd package
-slr_algos = 512
-monitoring_slrs = 3
 
 unprescaled_low_bits_link = 4
 unprescaled_mid_bits_link = 40
 unprescaled_high_bits_link = 52
+
+emp_flag = args.EMPenable
+if emp_flag:
+    import emp
 
 # from https://gitlab.cern.ch/cms-cactus/phase2/pyswatch/-/blob/master/src/swatch/config.py
 
@@ -70,11 +73,9 @@ uhal.disableLogging()
 lumi_bit = args.lumisection
 
 if args.test != 'algo-out':
-    HWtest = FinOrController(serenity='Serenity3', connection_file=args.connections, device='x0', emp_flag=False)
+    HWtest = FinOrController(connection_file=args.connections, device='x0', emp_flag=emp_flag)
     slr_algos = HWtest.slr_algos
     monitoring_slrs = HWtest.n_slr
-    # EMPdevice = HWtest.get_device()
-    # ttcNode   = EMPdevice.getTTC()
     # ttcNode.forceBCmd(0x24) #Send test enable command
 
     HWtest.set_TimeOutPeriod(5000)
@@ -82,7 +83,8 @@ if args.test != 'algo-out':
     # Set the l1a-latency delay
     l1_latency_delay = int(300)
     HWtest.load_latancy_delay(l1_latency_delay)
-    HWtest.set_link_mask((0x00ffffff, 0x00ffffff))
+    link_mask = np.uint32(np.ones(monitoring_slrs)*(2**24-1))
+    HWtest.set_link_mask(link_mask)
     time.sleep(2)
 
     delay = HWtest.read_ctrs_delay()
@@ -99,13 +101,11 @@ if args.test == 'prescaler':
 
     repetitions = algo_data[1]
 
-    o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-    HWtest.hw.dispatch()
+    o_ctr = HWtest.get_orbit_ctr()
     print("Current orbit counter = %d" % np.array(o_ctr))
 
-    # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
+    # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK buffer size)
     bxmask = np.zeros((3 * int(np.ceil(slr_algos/32)), 4096), dtype=np.uint32)
-    #bxmask[0:3, 0:int(np.ceil(slr_algos/32)), 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
     bxmask[ 0:3*int(np.ceil(slr_algos / 32)), 0:113] = np.ones_like(bxmask)[:, :113]*(2 ** 32 - 1)
 
     if args.simulation:
@@ -114,7 +114,7 @@ if args.test == 'prescaler':
         HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
-    trigger_mask = np.ones((3 * int(np.ceil(slr_algos / 32))*8), dtype=np.uint32) * 2 ** 32 - 1
+    trigger_mask = np.ones((8, 3, int(np.ceil(slr_algos / 32))), dtype=np.uint32) * 2 ** 32 - 1
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -180,13 +180,10 @@ if args.test == 'prescaler':
     rate_prvw_theo[np.uint32(index)] = np.uint32(
         repetitions * (2 ** lumi_bit) / prsc_fct_prvw[np.int16(index)] * 100)
 
-    # Wait for 2 lumi section, 1 to load the masks and 1 to let the counters actually count
-    o_ctr_0 = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+    o_ctr_0 = HWtest.get_orbit_ctr()
     o_ctr = o_ctr_0
-    HWtest.hw.dispatch()
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
-        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-        HWtest.hw.dispatch()
+        o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
 
@@ -199,8 +196,8 @@ if args.test == 'prescaler':
 
     for i in range(iteration):
         while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
-            o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-            HWtest.hw.dispatch()
+            time.sleep(0.05)
+            o_ctr = HWtest.get_orbit_ctr()
         o_ctr_temp = o_ctr
 
         ready = HWtest.check_counter_ready_flags()
@@ -214,13 +211,8 @@ if args.test == 'prescaler':
         cnt_prvw = HWtest.read_cnt_arr(2)
         # cnt_pdt = HWtest.read_cnt_arr(3)
 
-        # ttcStatus = ttcNode.readStatus()
         print("Current orbit counter = %d" % o_ctr)
 
-        # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        # os.system('clear')
-        # print("Current orbit counter = %d" % ttcStatus.orbitCount)
-        # o_ctr_temp = ttcStatus.orbitCount
         o_ctr_temp = o_ctr
 
         rate_before_exp = cnt_before
@@ -250,7 +242,6 @@ if args.test == 'prescaler':
                 print('Expected value %d, Value got= %d' % (rate_prvw_theo[current_i], rate_prvw_exp[current_i]))
                 print('Pre-scale value set = %d' % prsc_fct_prvw.flatten()[current_i])
 
-    # sys.stdout.flush()
 
     if error_cnt:
         raise Exception("Error found! Check the counters!")
@@ -266,9 +257,7 @@ elif args.test == 'trigger_mask':
     trigg_index = np.loadtxt('Pattern_files/metadata/Trigg_mask_test/trigg_index.txt')
     trigg_rep = np.loadtxt('Pattern_files/metadata/Trigg_mask_test/trigg_rep.txt')
 
-    # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
     bxmask = np.zeros((3 * int(np.ceil(slr_algos / 32)), 4096), dtype=np.uint32)
-    # bxmask[0:3, 0:int(np.ceil(slr_algos/32)), 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
     bxmask[0:3 * int(np.ceil(slr_algos / 32)), 0:113] = np.ones_like(bxmask)[:, :113] * (2 ** 32 - 1)
 
     if args.simulation:
@@ -277,13 +266,7 @@ elif args.test == 'trigger_mask':
         HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks to match trigg_index
-    trigger_mask = np.zeros((3 * int(np.ceil(slr_algos / 32))*8), dtype=np.uint32)
-    for mask_i, indeces in enumerate(trigg_index):
-        for index in indeces:
-            reg_index = np.uint16(np.floor(index / 32) + mask_i * int(slr_algos / 32))
-            trigger_mask[np.uint16(reg_index)] = trigger_mask[np.uint32(reg_index)] | (
-                    1 << np.uint32(index - 32 * np.floor(index / 32)))
-            # print(hex(trigger_mask[1][np.uint16(reg_index)]))
+    trigger_mask = HWtest.convert_index2mask(trigg_index, 8)
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -334,12 +317,10 @@ elif args.test == 'trigger_mask':
         trigg_rate_theo[i] = np.uint32(trigg_rep[i] * (2 ** lumi_bit))
 
         # Wait for 2 lumi section, 1 to load the masks and 1 to let the counters actually count
-    o_ctr_0 = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+    o_ctr_0 = HWtest.get_orbit_ctr()
     o_ctr = o_ctr_0
-    HWtest.hw.dispatch()
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
-        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-        HWtest.hw.dispatch()
+        o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
 
@@ -356,20 +337,14 @@ elif args.test == 'trigger_mask':
         print(format_row.format('Rate Counter', 'Trigger 0', 'Trigger 1', 'Trigger 2', 'Trigger 3', 'Trigger 4',
                                 'Trigger 5', 'Trigger 6', 'Trigger 7'))
         while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
-            o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-            HWtest.hw.dispatch()
+            time.sleep(0.05)
+            o_ctr = HWtest.get_orbit_ctr()
         o_ctr_temp = o_ctr
 
         ready = HWtest.check_trigger_counter_ready_flag()
         while not ready:
             time.sleep(5)
             ready = HWtest.check_trigger_counter_ready_flag()
-        # ttcStatus = ttcNode.readStatus()
-        # print("Current orbit counter = %d" % o_ctr)
-
-        # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        # print("Current orbit counter = %d" % ttcStatus.orbitCount)
-        # o_ctr_temp = ttcStatus.orbitCount
 
         trigg_cnt = HWtest.read_trigg_cnt(0)
         trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
@@ -383,7 +358,6 @@ elif args.test == 'trigger_mask':
 
         for trigg_index, cnt in enumerate(trigg_cnt):
             error_trgg = np.abs(trigg_rate_theo[trigg_index] - cnt)
-            # print('Trigger %d-th counter value = %d' % (trigg_index, cnt))
             if error_trgg > 0:
                 error_cnt += 1
                 print('Mismatch found on %d-th trigger rate, error= %d' % (trigg_index, error_trgg))
@@ -409,9 +383,7 @@ elif args.test == 'veto_mask':
 
     veto_indeces = np.loadtxt('Pattern_files/metadata/Veto_test/veto_indeces.txt')
 
-    # Set the bxmasks, mask everything that is not in the input window (set bt EMP FWK limitations)
     bxmask = np.zeros((3 * int(np.ceil(slr_algos / 32)), 4096), dtype=np.uint32)
-    # bxmask[0:3, 0:int(np.ceil(slr_algos/32)), 0:113] = (2 ** 32 - 1) * np.ones((16, 113), dtype=np.uint32)
     bxmask[:3 * int(np.ceil(slr_algos / 32)), 0:113] = np.ones_like(bxmask)[:, :113] * (2 ** 32 - 1)
 
     if args.simulation:
@@ -419,8 +391,8 @@ elif args.test == 'veto_mask':
     else:
         HWtest.load_BXmask_arr(bxmask)
 
-    # Set the masks to match trigg_index
-    trigger_mask = np.ones((3 * int(np.ceil(slr_algos / 32))*8), dtype=np.uint32) * 2 ** 32 - 1
+    # Set the trigger masks as a pass though
+    trigger_mask = np.ones((8, 3, int(np.ceil(slr_algos / 32))), dtype=np.uint32) * 2 ** 32 - 1
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -435,11 +407,7 @@ elif args.test == 'veto_mask':
         print(format_row.format('Trigger mask SLR n%d' % i, ls_trigg_mark_before[i], ls_trigg_mark_after[i]))
 
     # Set the veto mask
-    veto_mask = np.zeros((3 * int(np.ceil(slr_algos / 32))), dtype=np.uint32)
-    for index in veto_indeces:
-        reg_index = np.uint16(np.floor(index / 32))
-        veto_mask[np.uint16(reg_index)] = veto_mask[np.uint32(reg_index)] | (
-                1 << np.uint32(index - 32 * np.floor(index / 32)))
+    veto_mask = HWtest.convert_index2mask(veto_indeces, 1)
 
     HWtest.load_veto_mask(veto_mask)
 
@@ -479,12 +447,11 @@ elif args.test == 'veto_mask':
     veto_theo = veto_cnts * (2 ** lumi_bit)
 
     # Wait for 2 lumi section, 1 to load the masks and 1 to let the counters actually count
-    o_ctr_0 = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+    o_ctr_0 = HWtest.get_orbit_ctr()
     o_ctr = o_ctr_0
     HWtest.hw.dispatch()
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
-        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-        HWtest.hw.dispatch()
+        o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
 
@@ -501,19 +468,14 @@ elif args.test == 'veto_mask':
         print(format_row.format('Rate Counter', 'Trigger 0', 'Trigger 1', 'Trigger 2', 'Trigger 3', 'Trigger 4',
                                 'Trigger 5', 'Trigger 6', 'Trigger 7'))
         while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
-            o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-            HWtest.hw.dispatch()
+            time.sleep(0.05)
+            o_ctr = HWtest.get_orbit_ctr()
         o_ctr_temp = o_ctr
 
         ready = HWtest.check_trigger_counter_ready_flag()
         while not ready:
             time.sleep(5)
             ready = HWtest.check_trigger_counter_ready_flag()
-        # ttcStatus = ttcNode.readStatus()
-
-        # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        # print("Current orbit counter = %d" % ttcStatus.orbitCount)
-        # o_ctr_temp = ttcStatus.orbitCount
 
         trigg_cnt = HWtest.read_trigg_cnt(0)
         trigg_cnt_pdt = HWtest.read_trigg_cnt(1)
@@ -586,7 +548,7 @@ elif args.test == 'BXmask':
     HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
-    trigger_mask = np.ones((3 * int(np.ceil(slr_algos / 32))*8), dtype=np.uint32) * 2 ** 32 - 1
+    trigger_mask = np.ones((8, 3, int(np.ceil(slr_algos / 32))), dtype=np.uint32) * 2 ** 32 - 1
 
     HWtest.load_mask_arr(trigger_mask)
 
@@ -638,12 +600,11 @@ elif args.test == 'BXmask':
     rate_before_theo[np.uint32(indeces)] = np.uint32(repetitions * (2 ** lumi_bit))
 
     # Wait for 2 lumi section, 1 to load the masks and 1 to let the counters actually count
-    o_ctr_0 = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
+    o_ctr_0 = HWtest.get_orbit_ctr()
     o_ctr = o_ctr_0
-    HWtest.hw.dispatch()
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
-        o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-        HWtest.hw.dispatch()
+        time.sleep(0.05)
+        o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
 
@@ -656,8 +617,7 @@ elif args.test == 'BXmask':
 
     for i in range(iteration):
         while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
-            o_ctr = HWtest.hw.getNode("ttc.master.common.stat.orbit_ctr").read()
-            HWtest.hw.dispatch()
+            o_ctr = HWtest.get_orbit_ctr()
         o_ctr_temp = o_ctr
 
         ready = HWtest.check_counter_ready_flags()
@@ -668,11 +628,6 @@ elif args.test == 'BXmask':
 
         # ttcStatus = ttcNode.readStatus()
         print("Current orbit counter = %d" % o_ctr)
-
-        # if ((ttcStatus.orbitCount - o_ctr_temp) > (2 ** 18)):
-        # os.system('clear')
-        # print("Current orbit counter = %d" % ttcStatus.orbitCount)
-        # o_ctr_temp = ttcStatus.orbitCount
 
         cnt_before = HWtest.read_cnt_arr(0)
 
