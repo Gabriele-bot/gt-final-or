@@ -264,6 +264,7 @@ class FinOrController:
             ready_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.ready" % i).read()
             self.hw.dispatch()
             ready[i] = np.uint32(ready_temp)
+            
         return ready
 
     def read_cnt_arr(self, sel):
@@ -332,7 +333,7 @@ class FinOrController:
         cnt = self.hw.getNode("payload.SLR_FINOR.Veto_reg.stat.Veto_cnt").read()
         self.hw.dispatch()
 
-        return cnt
+        return np.uint32(cnt)
 
     def read_partial_veto_cnt(self, SLR):
         if self.n_slr < SLR < 0:
@@ -340,7 +341,7 @@ class FinOrController:
         cnt = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.Veto_reg.stat.Veto_cnt" % int(SLR)).read()
         self.hw.dispatch()
 
-        return cnt
+        return np.uint32(cnt)
 
     def ctrs_delay_resync(self):
         for i in range(self.n_slr):

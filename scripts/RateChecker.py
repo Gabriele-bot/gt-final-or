@@ -183,6 +183,7 @@ if args.test == 'prescaler':
     o_ctr_0 = HWtest.get_orbit_ctr()
     o_ctr = o_ctr_0
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        time.sleep(0.05)
         o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
@@ -320,6 +321,7 @@ elif args.test == 'trigger_mask':
     o_ctr_0 = HWtest.get_orbit_ctr()
     o_ctr = o_ctr_0
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        time.sleep(0.05)
         o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
@@ -451,6 +453,7 @@ elif args.test == 'veto_mask':
     o_ctr = o_ctr_0
     HWtest.hw.dispatch()
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        time.sleep(0.05)
         o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
@@ -617,6 +620,7 @@ elif args.test == 'BXmask':
 
     for i in range(iteration):
         while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
+            time.sleep(0.05)
             o_ctr = HWtest.get_orbit_ctr()
         o_ctr_temp = o_ctr
 
