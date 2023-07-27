@@ -73,12 +73,9 @@ uhal.disableLogging()
 lumi_bit = args.lumisection
 
 if args.test != 'algo-out':
-    HWtest = FinOrController(serenity='Serenity3', connection_file=args.connections, device='x0', emp_flag=emp_flag)
+    HWtest = FinOrController(connection_file=args.connections, device='x0', emp_flag=emp_flag)
     slr_algos = HWtest.slr_algos
     monitoring_slrs = HWtest.n_slr
-
-    # EMPdevice = HWtest.get_device()
-    # ttcNode   = EMPdevice.getTTC()
     # ttcNode.forceBCmd(0x24) #Send test enable command
 
     HWtest.set_TimeOutPeriod(5000)
@@ -199,6 +196,7 @@ if args.test == 'prescaler':
 
     for i in range(iteration):
         while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
+            time.sleep(0.05)
             o_ctr = HWtest.get_orbit_ctr()
         o_ctr_temp = o_ctr
 
@@ -268,16 +266,9 @@ elif args.test == 'trigger_mask':
         HWtest.load_BXmask_arr(bxmask)
 
     # Set the masks to match trigg_index
-    trigger_mask = np.zeros((8, 3 * int(np.ceil(slr_algos / 32))), dtype=np.uint32)
-    for mask_i, indeces in enumerate(trigg_index):
-        for index in indeces:
-            #reg_index = np.uint16(np.floor(index / 32) + mask_i * int(slr_algos / 32))
-            reg_index = np.uint16(np.floor(index / 32))
-            trigger_mask[mask_i][np.uint16(reg_index)] = trigger_mask[mask_i][np.uint32(reg_index)] | (
-                    1 << np.uint32(index - 32 * np.floor(index / 32)))
-            # print(hex(trigger_mask[1][np.uint16(reg_index)]))
+    trigger_mask = HWtest.convert_index2mask(trigg_index, 8)
 
-    HWtest.load_mask_arr(trigger_mask.reshape((8, 3, int(np.ceil(slr_algos / 32)))))
+    HWtest.load_mask_arr(trigger_mask)
 
     ls_trigg_mark_before = HWtest.read_lumi_sec_trigger_mask_mark()
 
@@ -346,6 +337,7 @@ elif args.test == 'trigger_mask':
         print(format_row.format('Rate Counter', 'Trigger 0', 'Trigger 1', 'Trigger 2', 'Trigger 3', 'Trigger 4',
                                 'Trigger 5', 'Trigger 6', 'Trigger 7'))
         while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
+            time.sleep(0.05)
             o_ctr = HWtest.get_orbit_ctr()
         o_ctr_temp = o_ctr
 
@@ -415,11 +407,7 @@ elif args.test == 'veto_mask':
         print(format_row.format('Trigger mask SLR n%d' % i, ls_trigg_mark_before[i], ls_trigg_mark_after[i]))
 
     # Set the veto mask
-    veto_mask = np.zeros((3 * int(np.ceil(slr_algos / 32))), dtype=np.uint32)
-    for index in veto_indeces:
-        reg_index = np.uint16(np.floor(index / 32))
-        veto_mask[np.uint16(reg_index)] = veto_mask[np.uint32(reg_index)] | (
-                1 << np.uint32(index - 32 * np.floor(index / 32)))
+    veto_mask = HWtest.convert_index2mask(veto_indeces, 1)
 
     HWtest.load_veto_mask(veto_mask)
 
@@ -480,6 +468,7 @@ elif args.test == 'veto_mask':
         print(format_row.format('Rate Counter', 'Trigger 0', 'Trigger 1', 'Trigger 2', 'Trigger 3', 'Trigger 4',
                                 'Trigger 5', 'Trigger 6', 'Trigger 7'))
         while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
+            time.sleep(0.05)
             o_ctr = HWtest.get_orbit_ctr()
         o_ctr_temp = o_ctr
 
@@ -614,6 +603,7 @@ elif args.test == 'BXmask':
     o_ctr_0 = HWtest.get_orbit_ctr()
     o_ctr = o_ctr_0
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        time.sleep(0.05)
         o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0

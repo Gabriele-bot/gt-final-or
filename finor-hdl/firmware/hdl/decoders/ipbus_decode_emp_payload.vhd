@@ -17,7 +17,7 @@ package ipbus_decode_emp_payload is
   subtype ipbus_sel_t is std_logic_vector(IPBUS_SEL_WIDTH - 1 downto 0);
   function ipbus_sel_emp_payload(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
 
--- START automatically generated VHDL (Fri Jul 21 15:56:38 2023)
+-- START automatically generated VHDL (Thu Jul 27 09:35:08 2023)
   constant N_SLV_SLRN2_MONITOR: integer := 0;
   constant N_SLV_SLRN1_MONITOR: integer := 1;
   constant N_SLV_SLRN0_MONITOR: integer := 2;
@@ -35,7 +35,7 @@ package body ipbus_decode_emp_payload is
     variable sel: ipbus_sel_t;
   begin
 
--- START automatically generated VHDL (Fri Jul 21 15:56:38 2023)
+-- START automatically generated VHDL (Thu Jul 27 09:35:08 2023)
     if    std_match(addr, "----------000-------------------") then
       sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN2_MONITOR, IPBUS_SEL_WIDTH)); -- SLRn2_monitor / base 0x00000000 / mask 0x00380000
     elsif std_match(addr, "----------001-------------------") then

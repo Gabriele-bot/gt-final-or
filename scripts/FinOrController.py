@@ -8,15 +8,9 @@ import time
 
 
 class FinOrController:
-    def __init__(self, serenity, connection_file='my_connections.xml', device='x0', emp_flag=False):
-        self.serenity = serenity
+    def __init__(self, connection_file='my_connections.xml', device='x0', emp_flag=False):
         self.connection_file = 'file://' + connection_file
-        if self.serenity == 'Serenity3':
-            self.SLRs = [0, 2]
-            self.part = 'vu13p'
-        elif self.serenity == 'Serenity2':
-            self.SLRs = [0, 2]
-            self.part = 'vu9p'
+        self.SLRs = [0, 2, 3]
         self.manager = uhal.ConnectionManager(self.connection_file)
         self.hw = self.manager.getDevice(device)
         # Get device information
@@ -174,6 +168,22 @@ class FinOrController:
             mark[i] = np.uint32(mark_temp)
 
         return mark
+
+    def convert_index2mask(self, algo_indeces, dim=1):
+        mask = np.zeros((dim, 3 * int(np.ceil(self.slr_algos / 32))), dtype=np.uint32)
+        if dim == 1:
+            for index in algo_indeces:
+                reg_index = np.uint16(np.floor(index / 32))
+                mask[0][np.uint16(reg_index)] = mask[0][np.uint32(reg_index)] | (
+                            1 << np.uint32(index - 32 * np.floor(index / 32)))
+        else:
+            for mask_i, indeces in enumerate(algo_indeces):
+                for index in indeces:
+                    reg_index = np.uint16(np.floor(index / 32))
+                    mask[mask_i][np.uint16(reg_index)] = mask[mask_i][np.uint32(reg_index)] | (
+                            1 << np.uint32(index - 32 * np.floor(index / 32)))
+
+        return mask.reshape((dim, 3,  int(np.ceil(self.slr_algos / 32))))
 
     def load_mask_arr(self, mask_arr):
         trgg_mask_arr_576 = np.zeros((3, 144), dtype=np.uint32)
