@@ -50,22 +50,19 @@ architecture rtl of emp_payload is
                                                          11 downto 2  => std_logic_vector(to_signed(N_SLR_ALGOS, 10)),
                                                          14 downto 12 => std_logic_vector(to_signed(N_TRIGG, 3)),
                                                          26 downto 15 => std_logic_vector(to_signed(N_ALGOS, 12)),
-                                                         31 downto 27 => "00000");
+                                                         31 downto 27 => "00000"); --Reserved
 
-    constant RO_SLRn0OUT_DATA : std_logic_vector(31 downto 0) := (7 downto 0   => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(0), 8)),
-                                                                  15 downto 8  => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(1), 8)),
-                                                                  23 downto 16 => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(2), 8)),
-                                                                  31 downto 24 => X"00");
-
-    constant RO_SLRn1OUT_DATA : std_logic_vector(31 downto 0) := (7 downto 0   => std_logic_vector(to_signed(SLRn1_OUTPUT_CHANNELS(0), 8)),
-                                                                  15 downto 8  => std_logic_vector(to_signed(SLRn1_OUTPUT_CHANNELS(1), 8)),
-                                                                  23 downto 16 => std_logic_vector(to_signed(SLRn1_OUTPUT_CHANNELS(2), 8)),
-                                                                  31 downto 24 => X"00");
-
-    constant RO_SLRn2OUT_DATA : std_logic_vector(31 downto 0) := (7 downto 0   => std_logic_vector(to_signed(SLRn2_OUTPUT_CHANNELS(0), 8)),
-                                                                  15 downto 8  => std_logic_vector(to_signed(SLRn2_OUTPUT_CHANNELS(1), 8)),
-                                                                  23 downto 16 => std_logic_vector(to_signed(SLRn2_OUTPUT_CHANNELS(2), 8)),
-                                                                  31 downto 24 => X"00");
+    constant RO_CHANNEL_DATA : std_logic_vector(95 downto 0) := (7 downto 0   => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(0), 8)),
+                                                                 15 downto 8  => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(1), 8)),
+                                                                 23 downto 16 => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(2), 8)),
+                                                                 31 downto 24 => std_logic_vector(to_signed(SLRn1_OUTPUT_CHANNELS(0), 8)),
+                                                                 39 downto 32 => std_logic_vector(to_signed(SLRn1_OUTPUT_CHANNELS(1), 8)),
+                                                                 47 downto 40 => std_logic_vector(to_signed(SLRn1_OUTPUT_CHANNELS(2), 8)),
+                                                                 55 downto 48 => std_logic_vector(to_signed(SLRn2_OUTPUT_CHANNELS(0), 8)),
+                                                                 63 downto 56 => std_logic_vector(to_signed(SLRn2_OUTPUT_CHANNELS(1), 8)),
+                                                                 71 downto 64 => std_logic_vector(to_signed(SLRn2_OUTPUT_CHANNELS(2), 8)),
+                                                                 79 downto 72 => std_logic_vector(to_signed(OUTPUT_CHANNEL, 8)),
+                                                                 95 downto 80 => X"0000"); --Reserved
 
     -- fabric signals        
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
@@ -125,7 +122,7 @@ architecture rtl of emp_payload is
 
 begin
 
-    assert N_SLR_ALGOS <= 576
+    assert N_SLR_ALGOS <= N_SLR_ALGOS_MAX
     report "Selected number of algos per SLR is greater than 576"
     severity FAILURE;
 
@@ -180,9 +177,7 @@ begin
         generic map(
             N_REG               => 4,
             DATA(31 downto 0)   => RO_DATA,
-            DATA(63 downto 32)  => RO_SLRn0OUT_DATA,
-            DATA(95 downto 64)  => RO_SLRn1OUT_DATA,
-            DATA(127 downto 96) => RO_SLRn2OUT_DATA
+            DATA(127 downto 32) => RO_CHANNEL_DATA
         )
         port map(
             ipb_in  => ipb_to_slaves(N_SLV_FINOR_ROREG),

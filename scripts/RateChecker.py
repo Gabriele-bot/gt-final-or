@@ -37,9 +37,6 @@ args = parser.parse_args()
 
 # TODO maybe put this in a config file? Or directly parse the vhdl pkg?
 
-unprescaled_low_bits_link = 4
-unprescaled_mid_bits_link = 40
-unprescaled_high_bits_link = 52
 
 emp_flag = args.EMPenable
 if emp_flag:
@@ -72,21 +69,26 @@ uhal.disableLogging()
 
 lumi_bit = args.lumisection
 
+
+HWtest = FinOrController(connection_file=args.connections, device='x0', emp_flag=emp_flag)
+slr_algos = HWtest.slr_algos
+monitoring_slrs = HWtest.n_slr
+# ttcNode.forceBCmd(0x24) #Send test enable command
+
+HWtest.set_TimeOutPeriod(5000)
+
+# Set the l1a-latency delay
+l1_latency_delay = int(300)
+HWtest.load_latancy_delay(l1_latency_delay)
+link_mask = np.uint32(np.ones(monitoring_slrs)*(2**24-1))
+HWtest.set_link_mask(link_mask)
+time.sleep(2)
+
+unprescaled_low_bits_link = HWtest.get_output_ch_number(0)[0]
+unprescaled_mid_bits_link = HWtest.get_output_ch_number(1)[0]
+unprescaled_high_bits_link = HWtest.get_output_ch_number(2)[0]
+
 if args.test != 'algo-out':
-    HWtest = FinOrController(connection_file=args.connections, device='x0', emp_flag=emp_flag)
-    slr_algos = HWtest.slr_algos
-    monitoring_slrs = HWtest.n_slr
-    # ttcNode.forceBCmd(0x24) #Send test enable command
-
-    HWtest.set_TimeOutPeriod(5000)
-
-    # Set the l1a-latency delay
-    l1_latency_delay = int(300)
-    HWtest.load_latancy_delay(l1_latency_delay)
-    link_mask = np.uint32(np.ones(monitoring_slrs)*(2**24-1))
-    HWtest.set_link_mask(link_mask)
-    time.sleep(2)
-
     delay = HWtest.read_ctrs_delay()
     for i in range(HWtest.n_slr):
         print("Delay SLR n%d = %d" % (i, delay[i]))
@@ -183,6 +185,7 @@ if args.test == 'prescaler':
     o_ctr_0 = HWtest.get_orbit_ctr()
     o_ctr = o_ctr_0
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        time.sleep(0.05)
         o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
@@ -320,6 +323,7 @@ elif args.test == 'trigger_mask':
     o_ctr_0 = HWtest.get_orbit_ctr()
     o_ctr = o_ctr_0
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        time.sleep(0.05)
         o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
@@ -451,6 +455,7 @@ elif args.test == 'veto_mask':
     o_ctr = o_ctr_0
     HWtest.hw.dispatch()
     while (o_ctr - o_ctr_0) < 2 ** (lumi_bit + 1):
+        time.sleep(0.05)
         o_ctr = HWtest.get_orbit_ctr()
 
     o_ctr_temp = 0
@@ -617,6 +622,7 @@ elif args.test == 'BXmask':
 
     for i in range(iteration):
         while ((o_ctr >> lumi_bit) == (o_ctr_temp >> lumi_bit)):
+            time.sleep(0.05)
             o_ctr = HWtest.get_orbit_ctr()
         o_ctr_temp = o_ctr
 
