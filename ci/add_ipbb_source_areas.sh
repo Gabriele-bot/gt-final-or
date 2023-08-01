@@ -1,7 +1,7 @@
 #! /bin/env bash
 
 
-ipbb add git https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/p2-xware/firmware/emp-fwk.git -b v0.8.0
+ipbb add git https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/p2-xware/firmware/emp-fwk.git -b v0.7.6
 ipbb add git https://gitlab.cern.ch/ttc/legacy_ttc.git -b v2.1
 ipbb add git https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/cms-tcds/cms-tcds2-firmware.git -b v0_1_1
 ipbb add git https://gitlab.cern.ch/HPTD/tclink.git -r fda0bcf
