@@ -1,9 +1,10 @@
-<node id="SLR_FinOR_unit" fwinfo="endpoint;width=19">
+<node id="SLR_Monitoring_unit" fwinfo="endpoint;width=19">
   <node id="monitoring_module" module="file://monitoring_module.xml"   address="0x00000" fwinfo="endpoint;width=18"/>
   <node id="CSR" address="0x40000" fwinfo="endpoint;width=2">
     <node id="ctrl" address="0x00000">
       <node id="link_mask" />
       <node id="rst_align_err" address="0x1" mask="0x1" />
+      <node id="delay_resync"  address="0x1" mask="0x2" />
     </node>
     <node id="stat" mode="single" address="0x00002">
       <node id="align_err"    mask="0x1"/>

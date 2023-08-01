@@ -7,7 +7,7 @@ use work.emp_ttc_decl.all;
 use work.P2GT_finor_pkg.all;
 use work.math_pkg.all;
 
-entity BX_nr_producer is
+entity CTRS_BX_nr_producer is
     port(
         clk360         : in std_logic;
         rst360         : in std_logic;
@@ -20,9 +20,9 @@ entity BX_nr_producer is
         bx_nr_40       : out bctr_t;
         bx_nr_360      : out bctr_t
     );
-end entity BX_nr_producer;
+end entity CTRS_BX_nr_producer;
 
-architecture RTL of BX_nr_producer is
+architecture RTL of CTRS_BX_nr_producer is
 
     type state_t is (idle, running);
     signal state      : state_t := idle;
@@ -87,7 +87,7 @@ begin
         end if;
     end process bctr_p;
 
-    bx_nr_360  <= std_logic_vector(bx_nr_int);
+    bx_nr_360  <= std_logic_vector(to_unsigned(0,12)) when metadata = "1101" else std_logic_vector(bx_nr_int);
 
     process(clk40)
     begin

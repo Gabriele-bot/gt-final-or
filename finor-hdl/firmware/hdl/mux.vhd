@@ -94,7 +94,8 @@ begin
     begin
         s_out        <=  input_360_reg(64*(frame_cntr_d+1)-1  downto 64*(frame_cntr_d));
     end process;
-
+    
+    output_link_reg.strobe         <= not rst360;
     output_link_reg.valid          <= valid_360_reg;
     output_link_reg.start          <= '1'   when frame_cntr_d = 0 and valid_360_reg = '1' else '0';
     output_link_reg.last           <= '1'   when frame_cntr_d = 8 and valid_360_reg = '1' else '0';

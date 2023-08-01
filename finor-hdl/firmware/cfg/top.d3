@@ -3,6 +3,7 @@ src -c ipbus-firmware:components/ipbus_core ipbus_fabric_sel.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_reg_types.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_ctrlreg_v.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_syncreg_v.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_roreg_v.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_dpram.vhd
 src --vhdl2008 -c emp-fwk:components/links/slink emp_slink_types.vhd
 
@@ -10,21 +11,26 @@ src --vhdl2008 math_pkg.vhd
 src --vhdl2008 P2GT_finor_pkg.vhd
 
 src --vhdl2008 decoders/ipbus_decode_emp_payload.vhd
-src --vhdl2008 decoders/ipbus_decode_SLR_FinOR_unit.vhd
+src --vhdl2008 decoders/ipbus_decode_SLR_Monitoring_unit.vhd
 src --vhdl2008 decoders/ipbus_decode_monitoring_module.vhd
 src --vhdl2008 decoders/ipbus_decode_ipbus_dpram_4096x576.vhd
-src --vhdl2008 decoders/ipbus_decode_Output_SLR.vhd
+src --vhdl2008 decoders/ipbus_decode_SLR_Output.vhd
 
 src --vhdl2008 ipbus/ipbus_initialized_dpram.vhd
+src --vhdl2008 ipbus/ipbus_file_init_dpram.vhd
 src --vhdl2008 ipbus/ipbus_dpram_4096x576.vhd
 src --vhdl2008 ipbus/ipbus_ctrlreg_cdc_v.vhd
 
+src RAM_init_files/bxmask_113bx_window.mif
+
+src --vhdl2008 BGO_sync.vhd
 src --vhdl2008 Counter_module.vhd
 src --vhdl2008 update_process.vhd
 src --vhdl2008 algo_pre_scaler.vhd
 src --vhdl2008 algo_rate_counter.vhd
 src --vhdl2008 algo_rate_counter_pdt.vhd 
 src --vhdl2008 algo_slice.vhd
+src --vhdl2008 SDPRAM_wrapper.vhd
 src --vhdl2008 delay_element_ringbuffer.vhd
 src --vhdl2008 Mask.vhd
 src --vhdl2008 read_FSM.vhd
@@ -34,13 +40,15 @@ src --vhdl2008 Link_merger.vhd
 src --vhdl2008 Link_deserializer.vhd
 src --vhdl2008 mux.vhd
 src --vhdl2008 CTRS_fixed_alignment.vhd
-src --vhdl2008 BX_nr_producer.vhd
-src --vhdl2008 BX_delay_alignment.vhd
-src --vhdl2008 SLR_FinOR_unit.vhd
-src --vhdl2008 Output_SLR.vhd
+src --vhdl2008 CTRS_BX_nr_producer.vhd
+src --vhdl2008 CTRS_delay_producer.vhd
+src --vhdl2008 algobits_out.vhd
+src --vhdl2008 SLR_Monitoring_unit.vhd
+src --vhdl2008 SLR_Output.vhd
 
 addrtab -c gt-final-or:finor-hdl emp_payload.xml
-addrtab -c gt-final-or:finor-hdl SLR_FinOR_unit.xml
+addrtab -c gt-final-or:finor-hdl SLR_Monitoring_unit.xml
 addrtab -c gt-final-or:finor-hdl monitoring_module.xml
 addrtab -c gt-final-or:finor-hdl ipbus_dpram_4096x576.xml
-addrtab -c gt-final-or:finor-hdl Output_SLR.xml
+addrtab -c gt-final-or:finor-hdl SLR_Output.xml
+

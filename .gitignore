@@ -7,3 +7,4 @@ FSM.statemachine
 scripts/.idea/
 scripts/test.py
 scripts/test.txt
+scripts/Pattern_files*

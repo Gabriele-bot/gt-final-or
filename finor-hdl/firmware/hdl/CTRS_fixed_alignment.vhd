@@ -13,14 +13,12 @@ entity CTRS_fixed_alignment is
         DELAY_OFFSET    : integer := 0
     );
     port(
-        clk360     : in  std_logic;
-        rst360     : in  std_logic;
-        clk40      : in  std_logic;
-        rst40      : in  std_logic;
-        
+        clk360         : in  std_logic;
+        rst360         : in  std_logic;
+        clk40          : in  std_logic;
+        rst40          : in  std_logic;
         ctrs_delay_lkd : in  std_logic;
         ctrs_delay_val : in  std_logic_vector(log2c(MAX_LATENCY_360) - 1 downto 0);
-
         ctrs_in        : in  ttc_stuff_t;
         ctrs_out       : out ttc_stuff_t
     );
@@ -43,22 +41,24 @@ architecture RTL of CTRS_fixed_alignment is
     --    
     --    ctrs_out <= ctrs_del_arr(to_integer(unsigned(ctrs_delay_val)) + DELAY_OFFSET);
 
-    signal ctrs_in_flatten  : std_logic_vector(8+1+12+4 - 1 downto 0);
-    signal ctrs_out_flatten : std_logic_vector(8+1+12+4 - 1 downto 0);
+    constant CTRS_FLATTEN_WIDTH : integer := ttc_cmd_t'length + 1 + bctr_t'length + pctr_t'length; --BCMD, L1A, BX counter, p counter==
+
+    signal ctrs_in_flatten  : std_logic_vector(CTRS_FLATTEN_WIDTH - 1 downto 0);
+    signal ctrs_out_flatten : std_logic_vector(CTRS_FLATTEN_WIDTH - 1 downto 0);
     signal delay            : std_logic_vector(log2c(MAX_LATENCY_360 + DELAY_OFFSET) - 1 downto 0);
 
 begin
 
-    ctrs_in_flatten <= ctrs_in.ttc_cmd & ctrs_in.l1a & ctrs_in.bctr & ctrs_in.pctr;
-    
-    delay <= std_logic_vector(resize(unsigned(ctrs_delay_val), log2c(MAX_LATENCY_360 + DELAY_OFFSET)) + to_unsigned(DELAY_OFFSET, log2c(MAX_LATENCY_360 + DELAY_OFFSET)) - 1);
-    -- minus 1 is due to the ring buffer delay element that will register the output resulting in an increased delay value
-    
+    ctrs_in_flatten <= (ctrs_in.ttc_cmd, ctrs_in.l1a, ctrs_in.bctr, ctrs_in.pctr);
+
+    delay <= std_logic_vector(resize(unsigned(ctrs_delay_val), log2c(MAX_LATENCY_360 + DELAY_OFFSET)) + to_unsigned(DELAY_OFFSET, log2c(MAX_LATENCY_360 + DELAY_OFFSET)));
+
     delay_line_i : entity work.delay_element_ringbuffer
         generic map(
-            DATA_WIDTH         => 8+1+12+4,
+            DATA_WIDTH         => CTRS_FLATTEN_WIDTH,
             MAX_DELAY          => MAX_LATENCY_360 + DELAY_OFFSET,
-            RESET_WITH_NEW_DEL => FALSE
+            RESET_WITH_NEW_DEL => FALSE,
+            STYLE              => "block"
         )
         port map(
             clk       => clk360,
@@ -68,12 +68,12 @@ begin
             delay_lkd => ctrs_delay_lkd,
             delay     => delay
         );
-        
-    ctrs_out.ttc_cmd  <= ctrs_out_flatten(8+1+12+4 - 1 downto 1+12+4);
-    ctrs_out.l1a      <= ctrs_out_flatten(12+4                      );
-    ctrs_out.bctr     <= ctrs_out_flatten(12+4     - 1 downto 4     );
-    ctrs_out.pctr     <= ctrs_out_flatten(4        - 1 downto 0     );
-    
 
+    --ctrs_out.ttc_cmd <= ctrs_out_flatten(8 + 1 + 12 + 4 - 1 downto 1 + 12 + 4);
+    --ctrs_out.l1a     <= ctrs_out_flatten(12 + 4);
+    --ctrs_out.bctr    <= ctrs_out_flatten(12 + 4 - 1 downto 4);
+    --ctrs_out.pctr    <= ctrs_out_flatten(4 - 1 downto 0);
+
+    (ctrs_out.ttc_cmd, ctrs_out.l1a, ctrs_out.bctr, ctrs_out.pctr) <= ctrs_out_flatten;
 
 end architecture RTL;
