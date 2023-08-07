@@ -44,7 +44,6 @@ class FinOrController:
     def get_nr_slr_algos(self):
         return self.slr_algos
 
-    # ==============================READ_WRITE IPbus regs ==============================
     def get_bunch_ctr(self):
         if self.emp_flag:
             ttcStatus = self.read_ttcStatus()
@@ -63,6 +62,7 @@ class FinOrController:
             self.hw.dispatch()
         return o_ctr
 
+    # ==============================READ_WRITE IPbus regs ==============================
     def load_prsc_in_RAM(self, prsc_arr, sel):
         prsc_arr_576 = np.zeros((3, 576), dtype=np.uint32)
         prsc_arr = np.reshape(prsc_arr, (3, self.slr_algos))
@@ -79,6 +79,23 @@ class FinOrController:
         else:
             raise Exception("Selector is not in [0,1]")
         self.hw.dispatch()
+
+    def get_output_ch_number(self, SLR=0):
+        if self.n_slr < SLR < 0:
+            raise Exception("SLR number not valid")
+        uprescaled_ch = self.hw.getNode("payload.FINOR_ROREG.SLRn%d_unprescaled_algo_ch" % SLR).read()
+        afterxmask_ch = self.hw.getNode("payload.FINOR_ROREG.SLRn%d_afterbxmask_algo_ch" % SLR).read()
+        prescaled_ch = self.hw.getNode("payload.FINOR_ROREG.SLRn%d_prescaled_algo_ch" % SLR).read()
+        self.hw.dispatch()
+        channels = np.array((uprescaled_ch, afterxmask_ch, prescaled_ch), dtype=np.uint32)
+
+        return channels
+
+    def get_finor_output_ch_number(self):
+        ch = self.hw.getNode("payload.FINOR_ROREG.Output_ch").read()
+        self.hw.dispatch()
+
+        return np.uint32(ch)
 
     def send_new_prescale_column_flag(self, sel):
         if sel == 0:
@@ -175,7 +192,7 @@ class FinOrController:
             for index in algo_indeces:
                 reg_index = np.uint16(np.floor(index / 32))
                 mask[0][np.uint16(reg_index)] = mask[0][np.uint32(reg_index)] | (
-                            1 << np.uint32(index - 32 * np.floor(index / 32)))
+                        1 << np.uint32(index - 32 * np.floor(index / 32)))
         else:
             for mask_i, indeces in enumerate(algo_indeces):
                 for index in indeces:
@@ -183,13 +200,14 @@ class FinOrController:
                     mask[mask_i][np.uint16(reg_index)] = mask[mask_i][np.uint32(reg_index)] | (
                             1 << np.uint32(index - 32 * np.floor(index / 32)))
 
-        return mask.reshape((dim, 3,  int(np.ceil(self.slr_algos / 32))))
+        return mask.reshape((dim, 3, int(np.ceil(self.slr_algos / 32))))
 
     def load_mask_arr(self, mask_arr):
         trgg_mask_arr_576 = np.zeros((3, 144), dtype=np.uint32)
         for j in range(8):
             for i in range(self.n_slr):
-                trgg_mask_arr_576[i, (18 * j):(18 * j + int(np.ceil(self.slr_algos / 32)))] = mask_arr[j, i, :int(np.ceil(self.slr_algos / 32))]
+                trgg_mask_arr_576[i, (18 * j):(18 * j + int(np.ceil(self.slr_algos / 32)))] = mask_arr[j, i, :int(
+                    np.ceil(self.slr_algos / 32))]
         for i in range(self.n_slr):
             self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.trgg_mask" % i).writeBlock(trgg_mask_arr_576[i])
         self.hw.dispatch()
@@ -209,7 +227,7 @@ class FinOrController:
         for i in range(self.n_slr):
             for j in range(18):
                 self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.algo_bx_masks.data_%d_%d" % (
-                i, j * 32, (j + 1) * 32 - 1)).writeBlock(
+                    i, j * 32, (j + 1) * 32 - 1)).writeBlock(
                     BXmask_arr_576[i][j])
         self.hw.dispatch()
 
@@ -264,7 +282,7 @@ class FinOrController:
             ready_temp = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.stat.ready" % i).read()
             self.hw.dispatch()
             ready[i] = np.uint32(ready_temp)
-            
+
         return ready
 
     def read_cnt_arr(self, sel):
