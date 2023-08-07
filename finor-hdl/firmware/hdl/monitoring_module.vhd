@@ -69,6 +69,8 @@ architecture rtl of monitoring_module is
     signal algos_after_prescaler         : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
     signal algos_after_prescaler_preview : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
+    signal valid_algos_delayed : std_logic;
+
     -- prescale factor ipb regs
     signal prscl_fct      : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
     signal prscl_fct_prvw : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
@@ -87,9 +89,9 @@ architecture rtl of monitoring_module is
     signal masks_ipbus_regs : ipb_reg_v(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS - 1 downto 0) := (others => (others => '1'));
     signal masks            : mask_arr                                                   := (others => (others => '1'));
 
-    signal veto_ipbus_regs          : ipb_reg_v(N_SLR_ALGOS_MAX / 32 - 1 downto 0) := (others => (others => '0'));
-    signal veto_mask : std_logic_vector(N_SLR_ALGOS_MAX - 1 downto 0)      := (others => '0');
-    signal veto_mask_int : std_logic_vector(NR_ALGOS - 1 downto 0)      := (others => '0');
+    signal veto_ipbus_regs : ipb_reg_v(N_SLR_ALGOS_MAX / 32 - 1 downto 0)   := (others => (others => '0'));
+    signal veto_mask       : std_logic_vector(N_SLR_ALGOS_MAX - 1 downto 0) := (others => '0');
+    signal veto_mask_int   : std_logic_vector(NR_ALGOS - 1 downto 0)        := (others => '0');
 
     signal request_factor_update         : std_logic;
     signal request_factor_preview_update : std_logic;
@@ -728,19 +730,20 @@ begin
 
         );
 
-    delay_element_i : entity work.delay_element_ringbuffer
+    delay_element_algos_i : entity work.delay_element_ringbuffer
         generic map(
-            DATA_WIDTH => NR_ALGOS,
+            DATA_WIDTH => NR_ALGOS + 1,
             MAX_DELAY  => MAX_DELAY,
             STYLE      => "block"
         )
         port map(
-            clk       => clk40,
-            rst       => rst40,
-            data_i    => algos_after_prescaler,
-            data_o    => algos_delayed,
-            delay_lkd => '1',
-            delay     => l1a_latency_delay
+            clk                           => clk40,
+            rst                           => rst40,
+            data_i                        => algos_after_prescaler & valid_algos_in,
+            data_o(NR_ALGOS - 1 downto 0) => algos_delayed,
+            data_o(NR_ALGOS)              => valid_algos_delayed,
+            delay_lkd                     => '1',
+            delay                         => l1a_latency_delay
         );
 
     ----------------------------------------------------------------------------------
@@ -783,8 +786,8 @@ begin
                 request_update_factor_preview_pulse => request_factor_preview_update,
                 begin_lumi_per                      => begin_lumi_per,
                 end_lumi_per                        => end_lumi_per,
-                algo_i                              => algos_in(i),
-                algo_after_prscl_del_i              => algos_delayed(i),
+                algo_i                              => algos_in(i) and valid_algos_in,
+                algo_after_prscl_del_i              => algos_delayed(i) and valid_algos_delayed,
                 prescale_factor                     => prscl_fct(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
                 prescale_factor_preview             => prscl_fct_prvw(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
                 algo_bx_mask                        => algo_bx_mask_mem_out(i),
