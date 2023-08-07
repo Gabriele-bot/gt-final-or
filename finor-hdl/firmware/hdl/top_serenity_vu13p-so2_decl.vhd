@@ -27,43 +27,43 @@ package emp_project_decl is
     );
 
     constant REGION_CONF : region_conf_array_t := (
-        -------------------- SLR0 LEFT -------------------- 
+        -------------------- SLR0 RIGHT -------------------- 
         0      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR0
         1      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25),     --input algo-bits links SLR0 & output algo-bits SLR0
         2      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR0
         3      => kDummyRegion,         -- Not Used
-        -------------------- SLR1 LEFT --------------------
+        -------------------- SLR1 RIGHT --------------------
         4      => kDummyRegion,         -- HighSpeedBus
         5      => kDummyRegion,         -- PCIe, AXI & TCDS
         6      => (mgt_i_kind => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25), -- output algo-bits SLR0
         7      => (mgt_i_kind => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25), -- output algo-bits SLR2
-        -------------------- SLR2 LEFT --------------------
+        -------------------- SLR2 RIGHT --------------------
         8      => kDummyRegion,         -- Not used
         9      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2
         10     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25),     --input algo-bits links SLR2 & output algo-bits SLR2
         11     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2
-        -------------------- SLR3 LEFT --------------------
+        -------------------- SLR3 RIGHT --------------------
         12     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR3
         13     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25),     --input algo-bits links SLR3 & output algo-bits SLR3
         14     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR3
         15     => kDummyRegion,         -- Unconnected
         -- Cross-chip------------------------------------------
-        -------------------- SLR3 RIGHT --------------------
+        -------------------- SLR3 LEFT --------------------
         16     => kDummyRegion,         -- Unconnected
         17     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR3
         18     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR3
         19     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR3
-        -------------------- SLR2 RIGHT --------------------
+        -------------------- SLR2 LEFT --------------------
         20     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2
         21     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2
         22     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2
         23     => kDummyRegion,         -- Not Used
-        -------------------- SLR1 RIGHT --------------------
+        -------------------- SLR1 LEFT --------------------
         24     => (mgt_i_kind => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25), --output trigger-bits link SLR1
         25     => kDummyRegion,         -- Not Used 
         26     => kDummyRegion,         -- Unconnected
         27     => kDummyRegion,         -- HighSpeedBus
-        -------------------- SLR0 RIGHT --------------------
+        -------------------- SLR0 LEFT --------------------
         28     => kDummyRegion,         -- Not Used
         29     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR0
         30     => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR0
