@@ -7,8 +7,11 @@
       <node id="delay_resync"  address="0x1" mask="0x2" />
     </node>
     <node id="stat" mode="single" address="0x00002">
-      <node id="align_err"    mask="0x1"/>
-      <node id="input_delay"  mask="0x3FE"/>
+      <node id="input_delay"     mask="0x01FF"/>
+      <node id="align_err_left"  mask="0x0200"/>
+      <node id="align_err_right" mask="0x0400"/>
+      <node id="align_err_last"  mask="0x0800"/>
+      <node id="frame_err"       mask="0x1000"/>
     </node>
   </node>  
 </node>
