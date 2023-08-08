@@ -80,8 +80,13 @@ HWtest.set_TimeOutPeriod(5000)
 # Set the l1a-latency delay
 l1_latency_delay = int(300)
 HWtest.load_latancy_delay(l1_latency_delay)
+# set link mask to enable all links in all SLRs
 link_mask = np.uint32(np.ones(monitoring_slrs)*(2**24-1))
 HWtest.set_link_mask(link_mask)
+time.sleep(2)
+
+# reset aligment errors
+HWtest.reset_alignement_error()
 time.sleep(2)
 
 unprescaled_low_bits_link = HWtest.get_output_ch_number(0)[0]
@@ -92,6 +97,14 @@ if args.test != 'algo-out':
     delay = HWtest.read_ctrs_delay()
     for i in range(HWtest.n_slr):
         print("Delay SLR n%d = %d" % (i, delay[i]))
+
+    # get errors
+    Link_error = HWtest.check_links_error()
+    for i in range(HWtest.n_slr):
+        print("Align error left link on SLRn%d = %i " % (i, Link_error[i, 0]))
+        print("Align error rigth link on SLRn%d = %i " % (i, Link_error[i, 1]))
+        print("Align error merge on SLRn%d = %i " % (i, Link_error[i, 2]))
+        print("Frame error on SLRn%d = %i " % (i, Link_error[i, 3]))
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------PRE-SCALER TEST-----------------------------------
