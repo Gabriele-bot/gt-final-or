@@ -236,8 +236,9 @@ begin
 
     deser_i : entity work.Link_deserializer
         generic map(
-            OUT_WIDTH => N_SLR_ALGOS,
-            OUT_REG   => DESER_OUT_REG
+            OUT_WIDTH   => N_SLR_ALGOS,
+            OUT_REG     => DESER_OUT_REG,
+            TMUX2_CHECK => TRUE
         )
         port map(
             clk360       => clk360,

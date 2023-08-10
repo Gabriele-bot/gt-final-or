@@ -87,7 +87,13 @@ time.sleep(2)
 
 # reset aligment errors
 HWtest.reset_alignement_error()
-time.sleep(2)
+if args.simulation:
+    for i in range(10):
+        Link_error = HWtest.check_links_error()
+        time.sleep(0.1)
+    time.sleep(10)
+else:
+    time.sleep(1)
 
 unprescaled_low_bits_link = HWtest.get_output_ch_number(0)[0]
 unprescaled_mid_bits_link = HWtest.get_output_ch_number(1)[0]
