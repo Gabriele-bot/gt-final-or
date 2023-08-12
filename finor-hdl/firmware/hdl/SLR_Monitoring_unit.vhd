@@ -82,9 +82,12 @@ architecture RTL of SLR_Monitoring_unit is
 
     signal ctrs_first_align : ttc_stuff_array(4 downto 0);
 
-    signal link_mask       : std_logic_vector(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0);
-    signal rst_align_error : std_logic;
-    signal align_error     : std_logic;
+    signal link_mask        : std_logic_vector(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0);
+    signal rst_error        : std_logic;
+    signal align_error_l    : std_logic;
+    signal align_error_r    : std_logic;
+    signal align_error_last : std_logic;
+    signal frame_error      : std_logic;
 
     signal ctrs_complete_align  : ttc_stuff_t;
     signal ctrs_align_output    : ttc_stuff_t;
@@ -168,25 +171,29 @@ begin
         end if;
     end process;
 
-    link_mask       <= ctrl_reg_stb(0)(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0);
-    rst_align_error <= ctrl_reg(1)(0) and ctrl_stb(1);
-    delay_resync    <= ctrl_reg(1)(1) and ctrl_stb(1);
+    link_mask    <= ctrl_reg_stb(0)(NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 downto 0);
+    rst_error    <= ctrl_reg(1)(0) and ctrl_stb(1);
+    delay_resync <= ctrl_reg(1)(1) and ctrl_stb(1);
 
-    stat_reg(0)(0)                                       <= align_error;
-    stat_reg(0)(log2c(MAX_CTRS_DELAY_360) downto 1)      <= delay_measured;
-    stat_reg(0)(31 downto log2c(MAX_CTRS_DELAY_360) + 1) <= (others => '0');
+    stat_reg(0)(log2c(MAX_CTRS_DELAY_360) - 1 downto 0)  <= delay_measured;
+    stat_reg(0)(log2c(MAX_CTRS_DELAY_360))               <= align_error_l;
+    stat_reg(0)(log2c(MAX_CTRS_DELAY_360) + 1)           <= align_error_r;
+    stat_reg(0)(log2c(MAX_CTRS_DELAY_360) + 2)           <= align_error_last;
+    stat_reg(0)(log2c(MAX_CTRS_DELAY_360) + 3)           <= frame_error;
+    stat_reg(0)(31 downto log2c(MAX_CTRS_DELAY_360) + 4) <= (others => '0');
 
     Right_merge : entity work.Link_merger
         generic map(
             NR_LINKS => NR_RIGHT_LINKS
         )
         port map(
-            clk360    => clk360,
-            rst360    => rst360_r,
-            link_mask => link_mask(NR_RIGHT_LINKS - 1 downto 0),
-            --d         => d_reg(NR_RIGHT_LINKS - 1 downto 0),
-            d         => d(NR_RIGHT_LINKS - 1 downto 0),
-            q         => d_right_reg(0)
+            clk360      => clk360,
+            rst360      => rst360_r,
+            link_mask   => link_mask(NR_RIGHT_LINKS - 1 downto 0),
+            rst_err     => rst_error,
+            align_err_o => align_error_r,
+            d           => d(NR_RIGHT_LINKS - 1 downto 0),
+            q           => d_right_reg(0)
         );
 
     Left_merge : entity work.Link_merger
@@ -194,12 +201,13 @@ begin
             NR_LINKS => NR_LEFT_LINKS
         )
         port map(
-            clk360    => clk360,
-            rst360    => rst360_l,
-            link_mask => link_mask(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
-            --d         => d_reg(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
-            d         => d(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
-            q         => d_left_reg(0)
+            clk360      => clk360,
+            rst360      => rst360_l,
+            link_mask   => link_mask(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
+            rst_err     => rst_error,
+            align_err_o => align_error_l,
+            d           => d(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
+            q           => d_left_reg(0)
         );
 
     process(clk360)
@@ -215,12 +223,15 @@ begin
             NR_LINKS => 2
         )
         port map(
-            clk360    => clk360,
-            rst360    => rst360,
-            link_mask => (others => '1'),
-            d(0)      => d_right_reg(1),
-            d(1)      => d_left_reg(1),
-            q         => d_res
+            clk360      => clk360,
+            rst360      => rst360,
+            link_mask(0)   => or link_mask(NR_RIGHT_LINKS - 1 downto 0),
+            link_mask(1)   => or link_mask(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
+            rst_err     => rst_error,
+            align_err_o => align_error_last,
+            d(0)        => d_right_reg(1),
+            d(1)        => d_left_reg(1),
+            q           => d_res
         );
 
     deser_i : entity work.Link_deserializer
@@ -234,8 +245,8 @@ begin
             clk40        => clk40,
             rst40        => rst40,
             lane_data_in => d_res,
-            rst_err      => rst_align_error,
-            align_err_o  => align_error,
+            rst_err      => rst_error,
+            frame_err_o  => frame_error,
             demux_data_o => algos_int,
             valid_out    => valid_deser_out
         );

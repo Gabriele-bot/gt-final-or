@@ -17,11 +17,13 @@ entity Link_merger is
         NR_LINKS : natural := 3
     );
     port(
-        clk360    : in  std_logic;
-        rst360    : in  std_logic;
-        link_mask : in  std_logic_vector(NR_LINKS - 1 downto 0);
-        d         : in  ldata(NR_LINKS - 1 downto 0); -- data in
-        q         : out lword                         -- data out
+        clk360      : in  std_logic;
+        rst360      : in  std_logic;
+        link_mask   : in  std_logic_vector(NR_LINKS - 1 downto 0);
+        rst_err     : in  std_logic;
+        align_err_o : out std_logic;
+        d           : in  ldata(NR_LINKS - 1 downto 0); -- data in
+        q           : out lword         -- data out
     );
 end entity Link_merger;
 
@@ -38,16 +40,10 @@ architecture RTL of Link_merger is
     signal data_mapped       : data_trnsp_t;
     signal q_int             : lword;
 
-    --signal valid_error             : std_logic;
-    --signal start_of_orbit_error    : std_logic;
-    --signal start_error             : std_logic;
-    --signal last_error              : std_logic;
-    --signal allign_error            : std_logic;
-
-    signal or_valid          : std_logic;
-    signal or_start_of_orbit : std_logic;
-    signal or_start          : std_logic;
-    signal or_last           : std_logic;
+    signal valid_error          : std_logic;
+    signal start_of_orbit_error : std_logic;
+    signal start_error          : std_logic;
+    signal last_error           : std_logic;
 
 begin
 
@@ -60,13 +56,63 @@ begin
         d_strobes(i)         <= d(i).strobe;
     end generate;
 
-    -- TODO what to do if a link is masked??
-    --valid_error <= xor d_valids;
-    --start_of_orbit_error <= xor d_starts_of_orbit;
-    --start_error <= xor d_starts;
-    --last_error  <= xor d_lasts;
+    --valid check
+    valid_align_check_i : entity work.Link_align_check
+        generic map(
+            NR_LINKS => NR_LINKS
+        )
+        port map(
+            clk360      => clk360,
+            rst360      => rst360,
+            link_mask   => link_mask,
+            metadata    => d_valids,
+            rst_err     => rst_err,
+            align_err_o => valid_error
+        );
 
-    --allign_error <= valid_error or start_of_orbit_error or start_error or last_error;
+    --start of orbit check
+    soo_align_check_i : entity work.Link_align_check
+        generic map(
+            NR_LINKS => NR_LINKS
+        )
+        port map(
+            clk360      => clk360,
+            rst360      => rst360,
+            link_mask   => link_mask,
+            metadata    => d_starts_of_orbit,
+            rst_err     => rst_err,
+            align_err_o => start_of_orbit_error
+        );
+
+    --start check
+    start_align_check_i : entity work.Link_align_check
+        generic map(
+            NR_LINKS => NR_LINKS
+        )
+        port map(
+            clk360      => clk360,
+            rst360      => rst360,
+            link_mask   => link_mask,
+            metadata    => d_starts,
+            rst_err     => rst_err,
+            align_err_o => start_error
+        );
+
+    --last check
+    last_align_check_i : entity work.Link_align_check
+        generic map(
+            NR_LINKS => NR_LINKS
+        )
+        port map(
+            clk360      => clk360,
+            rst360      => rst360,
+            link_mask   => link_mask,
+            metadata    => d_lasts,
+            rst_err     => rst_err,
+            align_err_o => last_error
+        );
+
+    align_err_o <= valid_error or start_of_orbit_error or start_error or last_error;
 
     mapping_i : for i in 0 to LWORD_WIDTH - 1 generate
         mapping_j : for j in 0 to NR_LINKS - 1 generate
@@ -78,11 +124,11 @@ begin
     Merge_i : for k in 0 to LWORD_WIDTH - 1 generate
         q_int.data(k) <= or (data_mapped(k));
     end generate;
-    q_int.valid          <= or (d_valids          and link_mask);
+    q_int.valid          <= or (d_valids and link_mask);
     q_int.start_of_orbit <= or (d_starts_of_orbit and link_mask);
-    q_int.start          <= or (d_starts          and link_mask);
-    q_int.last           <= or (d_lasts           and link_mask);
-    q_int.strobe         <= or (d_strobes         and link_mask);
+    q_int.start          <= or (d_starts and link_mask);
+    q_int.last           <= or (d_lasts and link_mask);
+    q_int.strobe         <= or (d_strobes and link_mask);
 
     process(clk360)
     begin

@@ -69,7 +69,8 @@ architecture rtl of monitoring_module is
     signal algos_after_prescaler         : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
     signal algos_after_prescaler_preview : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
-    signal valid_algos_delayed : std_logic;
+    signal algos_delayed_with_valid : std_logic_vector(NR_ALGOS downto 0) := (others => '0');
+    signal valid_algos_delayed      : std_logic;
 
     -- prescale factor ipb regs
     signal prscl_fct      : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
@@ -737,14 +738,16 @@ begin
             STYLE      => "block"
         )
         port map(
-            clk                           => clk40,
-            rst                           => rst40,
-            data_i                        => algos_after_prescaler & valid_algos_in,
-            data_o(NR_ALGOS - 1 downto 0) => algos_delayed,
-            data_o(NR_ALGOS)              => valid_algos_delayed,
-            delay_lkd                     => '1',
-            delay                         => l1a_latency_delay
+            clk       => clk40,
+            rst       => rst40,
+            data_i    => algos_after_prescaler & valid_algos_in,
+            data_o    => algos_delayed_with_valid,
+            delay_lkd => '1',
+            delay     => l1a_latency_delay
         );
+
+    algos_delayed       <= algos_delayed_with_valid(NR_ALGOS - 1 downto 0);
+    valid_algos_delayed <= algos_delayed_with_valid(NR_ALGOS);
 
     ----------------------------------------------------------------------------------
     ---------------Suppress Trigger during Calibration--------------------------------
