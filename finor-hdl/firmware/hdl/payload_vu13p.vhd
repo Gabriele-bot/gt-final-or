@@ -48,9 +48,9 @@ architecture rtl of emp_payload is
 
     constant RO_DATA : std_logic_vector(31 downto 0) := (1 downto 0   => std_logic_vector(to_signed(N_MONITOR_SLR, 2)),
                                                          11 downto 2  => std_logic_vector(to_signed(N_SLR_ALGOS, 10)),
-                                                         14 downto 12 => std_logic_vector(to_signed(N_TRIGG, 3)),
-                                                         26 downto 15 => std_logic_vector(to_signed(N_ALGOS, 12)),
-                                                         31 downto 27 => "00000"); --Reserved
+                                                         15 downto 12 => std_logic_vector(to_signed(N_TRIGG, 4)),
+                                                         27 downto 16 => std_logic_vector(to_signed(N_ALGOS, 12)),
+                                                         31 downto 28 => X"0"); --Reserved
 
     constant RO_CHANNEL_DATA : std_logic_vector(95 downto 0) := (7 downto 0   => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(0), 8)),
                                                                  15 downto 8  => std_logic_vector(to_signed(SLRn0_OUTPUT_CHANNELS(1), 8)),
