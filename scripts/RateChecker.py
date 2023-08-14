@@ -11,6 +11,7 @@ import argparse
 import re
 from patternfiles import *
 
+
 from FinOrController import FinOrController
 
 parser = argparse.ArgumentParser(description='GT-Final OR board Rate Checker')
@@ -100,17 +101,10 @@ unprescaled_mid_bits_link = HWtest.get_output_ch_number(1)[0]
 unprescaled_high_bits_link = HWtest.get_output_ch_number(2)[0]
 
 if args.test != 'algo-out':
-    delay = HWtest.read_ctrs_delay()
-    for i in range(HWtest.n_slr):
-        print("Delay SLR n%d = %d" % (i, delay[i]))
+    HWtest.print_link_mesured_delay()
 
-    # get errors
-    Link_error = HWtest.check_links_error()
-    for i in range(HWtest.n_slr):
-        print("Align error left link on SLRn%d = %i " % (i, Link_error[i, 0]))
-        print("Align error rigth link on SLRn%d = %i " % (i, Link_error[i, 1]))
-        print("Align error merge on SLRn%d = %i " % (i, Link_error[i, 2]))
-        print("Frame error on SLRn%d = %i " % (i, Link_error[i, 3]))
+    # Print errors
+    HWtest.print_link_info()
 
 # -------------------------------------------------------------------------------------
 # -----------------------------------PRE-SCALER TEST-----------------------------------
@@ -136,59 +130,33 @@ if args.test == 'prescaler':
 
     # Set the trigger masks as a pass though
     trigger_mask = np.ones((8, 3, int(np.ceil(slr_algos / 32))), dtype=np.uint32) * 2 ** 32 - 1
-
     HWtest.load_mask_arr(trigger_mask)
-
-    ls_trigg_mark_before = HWtest.read_lumi_sec_trigger_mask_mark()
-
     HWtest.send_new_trigger_mask_flag()
-    for i in range(20):
-        ls_trigg_mark_after = HWtest.read_lumi_sec_trigger_mask_mark()
-    format_row = "{:>20}" * 3
-    print(format_row.format('', 'LS Mark Before', 'LS Mark After'))
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Trigger mask SLR n%d' % i, ls_trigg_mark_before[i], ls_trigg_mark_after[i]))
 
     # Set the veto mask
     veto_mask = np.zeros((3 * int(np.ceil(slr_algos / 32))), dtype=np.uint32)
-
     HWtest.load_veto_mask(veto_mask)
-
-    ls_veto_mark_before = HWtest.read_lumi_sec_veto_mask_mark()
     HWtest.send_new_veto_mask_flag()
-    for i in range(20):
-        ls_veto_mark_after = HWtest.read_lumi_sec_veto_mask_mark()
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Veto mask SLR n%d' % i, ls_veto_mark_before[i], ls_veto_mark_after[i]))
 
+    # Set prescale factors
     prsc_fct = np.uint32(100 * np.ones((3 * slr_algos)))  # 1.00
     prsc_fct_prvw = np.uint32(100 * np.ones((3 * slr_algos)))  # 1.00
-
     if args.ps_column == "random":
         prsc_fct[np.int16(index)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index)))
     elif args.ps_column == "linear":
         prsc_fct[np.int16(index)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index)))
-
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
-
     if args.ps_column == "random":
         prsc_fct_prvw[np.int16(index)] = np.uint32(np.random.randint(100, 2 ** 24 - 101, len(index)))
     elif args.ps_column == "linear":
         prsc_fct_prvw[np.int16(index)] = np.int32(np.linspace(100, 2 ** 24 - 101, len(index)))
-
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
-
-    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark(0)
-    ls_prescale_preview_mark_before = HWtest.read_lumi_sec_prescale_mark(1)
-
     HWtest.send_new_prescale_column_flag(0)
     HWtest.send_new_prescale_column_flag(1)
-    for i in range(10):
-        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark(0)
-        ls_prescale_preview_mark_after = HWtest.read_lumi_sec_prescale_mark(1)
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Prescaler SLR n%d' % i, ls_prescale_mark_before[i], ls_prescale_mark_after[i]))
-        print(format_row.format('Prescaler prvw SLR n%d' % i, ls_prescale_preview_mark_before[i], ls_prescale_preview_mark_after[i]))
+
+    time.sleep(2)
+
+    HWtest.print_lumisection_mark()
 
     # compute expected rate
     rate_before_theo = np.float64(np.zeros(slr_algos*3))
@@ -289,49 +257,24 @@ elif args.test == 'trigger_mask':
 
     # Set the masks to match trigg_index
     trigger_mask = HWtest.convert_index2mask(trigg_index, 8)
-
     HWtest.load_mask_arr(trigger_mask)
-
-    ls_trigg_mark_before = HWtest.read_lumi_sec_trigger_mask_mark()
-
     HWtest.send_new_trigger_mask_flag()
-    for i in range(20):
-        ls_trigg_mark_after = HWtest.read_lumi_sec_trigger_mask_mark()
-    format_row = "{:>20}" * 3
-    print(format_row.format('', 'LS Mark Before', 'LS Mark After'))
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Trigger mask SLR n%d' % i, ls_trigg_mark_before[i], ls_trigg_mark_after[i]))
 
     veto_mask = np.zeros((3 * int(np.ceil(slr_algos / 32))), dtype=np.uint32)
-
     HWtest.load_veto_mask(veto_mask)
-
-    ls_veto_mark_before = HWtest.read_lumi_sec_veto_mask_mark()
     HWtest.send_new_veto_mask_flag()
-    for i in range(20):
-        ls_veto_mark_after = HWtest.read_lumi_sec_veto_mask_mark()
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Veto mask SLR n%d' % i, ls_veto_mark_before[i], ls_veto_mark_after[i]))
 
     # Set pre-scaler factors
     prsc_fct = np.uint32(100 * np.ones((3 * slr_algos)))  # 1.00
     prsc_fct_prvw = np.uint32(100 * np.ones((3 * slr_algos)))  # 1.00
-
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
-
-    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark(0)
-    ls_prescale_preview_mark_before = HWtest.read_lumi_sec_prescale_mark(1)
-
     HWtest.send_new_prescale_column_flag(0)
     HWtest.send_new_prescale_column_flag(1)
-    for i in range(10):
-        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark(0)
-        ls_prescale_preview_mark_after = HWtest.read_lumi_sec_prescale_mark(1)
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Prescaler SLR n%d' % i, ls_prescale_mark_before[i], ls_prescale_mark_after[i]))
-        print(format_row.format('Prescaler prvw SLR n%d' % i, ls_prescale_preview_mark_before[i],
-                                ls_prescale_preview_mark_after[i]))
+
+    time.sleep(2)
+
+    HWtest.print_lumisection_mark()
 
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
@@ -416,50 +359,25 @@ elif args.test == 'veto_mask':
 
     # Set the trigger masks as a pass though
     trigger_mask = np.ones((8, 3, int(np.ceil(slr_algos / 32))), dtype=np.uint32) * 2 ** 32 - 1
-
     HWtest.load_mask_arr(trigger_mask)
-
-    ls_trigg_mark_before = HWtest.read_lumi_sec_trigger_mask_mark()
-
     HWtest.send_new_trigger_mask_flag()
-    for i in range(20):
-        ls_trigg_mark_after = HWtest.read_lumi_sec_trigger_mask_mark()
-    format_row = "{:>20}" * 3
-    print(format_row.format('', 'LS Mark Before', 'LS Mark After'))
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Trigger mask SLR n%d' % i, ls_trigg_mark_before[i], ls_trigg_mark_after[i]))
 
     # Set the veto mask
     veto_mask = HWtest.convert_index2mask(veto_indeces, 1)
-
     HWtest.load_veto_mask(veto_mask)
-
-    ls_veto_mark_before = HWtest.read_lumi_sec_veto_mask_mark()
     HWtest.send_new_veto_mask_flag()
-    for i in range(20):
-        ls_veto_mark_after = HWtest.read_lumi_sec_veto_mask_mark()
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Veto mask SLR n%d' % i, ls_veto_mark_before[i], ls_veto_mark_after[i]))
 
     # Set pre-scaler factors
     prsc_fct = np.uint32(100 * np.ones((3 * slr_algos)))  # 1.00
     prsc_fct_prvw = np.uint32(100 * np.ones((3 * slr_algos)))  # 1.00
-
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
-
-    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark(0)
-    ls_prescale_preview_mark_before = HWtest.read_lumi_sec_prescale_mark(1)
-
     HWtest.send_new_prescale_column_flag(0)
     HWtest.send_new_prescale_column_flag(1)
-    for i in range(10):
-        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark(0)
-        ls_prescale_preview_mark_after = HWtest.read_lumi_sec_prescale_mark(1)
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Prescaler SLR n%d' % i, ls_prescale_mark_before[i], ls_prescale_mark_after[i]))
-        print(format_row.format('Prescaler prvw SLR n%d' % i, ls_prescale_preview_mark_before[i],
-                                ls_prescale_preview_mark_after[i]))
+
+    time.sleep(2)
+
+    HWtest.print_lumisection_mark()
 
     # compute expected rate
     trigg_rate_theo = np.float64(np.zeros(8))
@@ -559,65 +477,37 @@ elif args.test == 'BXmask':
     repetitions = algo_data[1]
 
     BX_mask = np.load('Pattern_files/metadata/BXmask_test/BX_mask.npy')
-
     bxmask = np.zeros((3 * int(np.ceil(slr_algos / 32)), 4096), dtype=np.uint32)
-
     # set the BX mask accordingly
     for BX_nr in range(np.shape(BX_mask)[1]):
         for index, mask in enumerate(BX_mask[:, BX_nr]):
             reg_index = np.uint16(np.floor(index / 32))
             bit_pos = np.uint16(index - reg_index * 32)
             bxmask[reg_index, BX_nr] = (bxmask[reg_index, BX_nr]) | (np.uint32(mask) << bit_pos)
-
     HWtest.load_BXmask_arr(bxmask)
 
     # Set the trigger masks as a pass though
     trigger_mask = np.ones((8, 3, int(np.ceil(slr_algos / 32))), dtype=np.uint32) * 2 ** 32 - 1
-
     HWtest.load_mask_arr(trigger_mask)
-
-    ls_trigg_mark_before = HWtest.read_lumi_sec_trigger_mask_mark()
-
     HWtest.send_new_trigger_mask_flag()
-    for i in range(20):
-        ls_trigg_mark_after = HWtest.read_lumi_sec_trigger_mask_mark()
-    format_row = "{:>20}" * 3
-    print(format_row.format('', 'LS Mark Before', 'LS Mark After'))
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Trigger mask SLR n%d' % i, ls_trigg_mark_before[i], ls_trigg_mark_after[i]))
 
     # Set the veto mask
     veto_mask = np.zeros((3, int(np.ceil(slr_algos / 32))), dtype=np.uint32)
-
     HWtest.load_veto_mask(veto_mask)
-
-    ls_veto_mark_before = HWtest.read_lumi_sec_veto_mask_mark()
     HWtest.send_new_veto_mask_flag()
-    for i in range(20):
-        ls_veto_mark_after = HWtest.read_lumi_sec_veto_mask_mark()
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Veto mask SLR n%d' % i, ls_veto_mark_before[i], ls_veto_mark_after[i]))
 
     # Set pre-scaler factors
     prsc_fct = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
     prsc_fct_prvw = np.uint32(100 * np.ones((3, slr_algos)))  # 1.00
-
     HWtest.load_prsc_in_RAM(prsc_fct, 0)
     HWtest.load_prsc_in_RAM(prsc_fct_prvw, 1)
-
-    ls_prescale_mark_before = HWtest.read_lumi_sec_prescale_mark(0)
-    ls_prescale_preview_mark_before = HWtest.read_lumi_sec_prescale_mark(1)
-
     HWtest.send_new_prescale_column_flag(0)
     HWtest.send_new_prescale_column_flag(1)
-    for i in range(10):
-        ls_prescale_mark_after = HWtest.read_lumi_sec_prescale_mark(0)
-        ls_prescale_preview_mark_after = HWtest.read_lumi_sec_prescale_mark(1)
-    for i in range(HWtest.n_slr):
-        print(format_row.format('Prescaler SLR n%d' % i, ls_prescale_mark_before[i], ls_prescale_mark_after[i]))
-        print(format_row.format('Prescaler prvw SLR n%d' % i, ls_prescale_preview_mark_before[i],
-                                ls_prescale_preview_mark_after[i]))
 
+    time.sleep(2)
+
+    HWtest.print_lumisection_mark()
+    
     # compute expected rate
     rate_before_theo = np.float64(np.zeros(slr_algos*3))
 

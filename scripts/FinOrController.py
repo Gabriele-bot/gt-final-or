@@ -6,6 +6,9 @@ import numpy as np
 import uhal
 import time
 
+from click_texttable import Texttable
+from click import echo, secho
+
 
 class FinOrController:
     def __init__(self, connection_file='my_connections.xml', device='x0', emp_flag=False):
@@ -62,6 +65,58 @@ class FinOrController:
             self.hw.dispatch()
         return o_ctr
 
+    def print_link_info(self):
+
+        Link_error = self.check_links_error()
+        Link_mask = self.read_link_mask()
+        Table_header = [["SLR", "Link mask", "Align error Right", "Align error Left", "Align error Merged", "Frame error"]]
+
+        tableData = Table_header
+        for i in range(self.n_slr):
+            tableData += [["n%d" % i, hex(Link_mask[i]), Link_error[i, 0], Link_error[i, 1], Link_error[i, 2], Link_error[i, 3]]]
+
+        table = Texttable()
+        table.set_deco(Texttable.HEADER | Texttable.VLINES)
+        table.set_cols_dtype(['t', 'a', 'a', 'a', 'a', 'a'])
+        table.add_rows(tableData)
+        echo('    ' + table.draw().replace('\n', '\n    '))
+        echo()
+
+    def print_link_mesured_delay(self):
+
+        delay = self.read_ctrs_delay()
+        Table_header = [["SLR", "Max delay [360MHz]", "Measured delay[360MHz]"]]
+
+        tableData = Table_header
+        for i in range(self.n_slr):
+            tableData += [["n%d" % i, 486, delay[i]]]
+
+        table = Texttable()
+        table.set_deco(Texttable.HEADER | Texttable.VLINES)
+        table.set_cols_dtype(['t', 'a', 'a'])
+        table.add_rows(tableData)
+        echo('    ' + table.draw().replace('\n', '\n    '))
+        echo()
+
+    def print_lumisection_mark(self):
+
+        ls_trigg_mark = self.read_lumi_sec_trigger_mask_mark()
+        ls_veto_mark  = self.read_lumi_sec_veto_mask_mark()
+        ls_prscl_mark = self.read_lumi_sec_prescale_mark(0)
+        ls_prscl_prvw_mark = self.read_lumi_sec_prescale_mark(1)
+
+        Table_header = [["SLR", "Trigger masks", "Veto Mask", "Pre-scaler factors", "Pre-scaler preview factors"]]
+        tableData = Table_header
+        for i in range(self.n_slr):
+            tableData += [["n%d" % i, ls_trigg_mark[i], ls_veto_mark[i], ls_prscl_mark[i], ls_prscl_prvw_mark[i]]]
+
+        table = Texttable()
+        table.set_deco(Texttable.HEADER | Texttable.VLINES)
+        table.set_cols_dtype(['t', 'i', 'i', 'i', 'i'])
+        table.add_rows(tableData)
+        echo('    ' + table.draw().replace('\n', '\n    '))
+        echo()
+
     # ==============================READ_WRITE IPbus regs ==============================
     def load_prsc_in_RAM(self, prsc_arr, sel):
         prsc_arr_576 = np.zeros((3, 576), dtype=np.uint32)
@@ -97,6 +152,15 @@ class FinOrController:
 
         return np.uint32(ch)
 
+    def read_link_mask(self):
+        link_mask = np.zeros(self.n_slr, dtype=np.uint32)
+        for i in range(self.n_slr):
+            mask_temp = self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.link_mask" % i).read()
+            self.hw.dispatch()
+            link_mask[i] = mask_temp
+
+        return link_mask
+
     def read_lumi_sec_prescale_mark(self, sel):
         mark = np.zeros(self.n_slr)
         if sel == 0:
@@ -115,7 +179,6 @@ class FinOrController:
             raise Exception("Selector is not in [0,1]")
 
         return mark
-
 
     def read_lumi_sec_trigger_mask_mark(self):
         mark = np.zeros(self.n_slr)
@@ -137,7 +200,6 @@ class FinOrController:
 
         return mark
 
-
     def read_ctrs_delay(self):
         ctrs_delay = np.zeros(self.n_slr)
         for i in range(self.n_slr):
@@ -155,7 +217,8 @@ class FinOrController:
             align_err_last_temp = self.hw.getNode("payload.SLRn%d_monitor.CSR.stat.align_err_last" % i).read()
             frame_err_temp = self.hw.getNode("payload.SLRn%d_monitor.CSR.stat.frame_err" % i).read()
             self.hw.dispatch()
-            link_err[i] = np.array((align_err_l_temp,align_err_r_temp,align_err_last_temp,frame_err_temp), dtype=np.uint32)
+            link_err[i] = np.array((align_err_l_temp, align_err_r_temp, align_err_last_temp, frame_err_temp),
+                                   dtype=np.uint32)
 
         return link_err
 
@@ -320,7 +383,6 @@ class FinOrController:
                 0)
         self.hw.dispatch()
 
-
     def load_mask_arr(self, mask_arr):
         trgg_mask_arr_576 = np.zeros((3, 144), dtype=np.uint32)
         for j in range(8):
@@ -355,7 +417,6 @@ class FinOrController:
             self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.link_mask" % i).write(link_mask[i])
         self.hw.dispatch()
 
-
     def reset_alignement_error(self):
         for i in range(self.n_slr):
             self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.rst_align_err" % i).write(1)
@@ -368,13 +429,9 @@ class FinOrController:
             self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.CSR.ctrl.l1_latency_delay" % i).write(latency)
         self.hw.dispatch()
 
-
     def ctrs_delay_resync(self):
         for i in range(self.n_slr):
             self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.delay_resync" % i).write(1)
         for i in range(self.n_slr):
             self.hw.getNode("payload.SLRn%d_monitor.CSR.ctrl.delay_resync" % i).write(0)
         self.hw.dispatch()
-
-
-
