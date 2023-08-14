@@ -36,6 +36,7 @@ src --vhdl2008 Mask.vhd
 src --vhdl2008 read_FSM.vhd
 src --vhdl2008 write_FSM.vhd
 src --vhdl2008 monitoring_module.vhd
+src --vhdl2008 Link_align_check.vhd
 src --vhdl2008 Link_merger.vhd
 src --vhdl2008 Link_deserializer.vhd
 src --vhdl2008 mux.vhd

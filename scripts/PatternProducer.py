@@ -17,6 +17,8 @@ parser.add_argument('-a', '--slr_algos', metavar='N', type=int, default=576,
                     help='Number of algos per SLR')
 parser.add_argument('-m', '--Monitoring_slr', metavar='N', type=int, default=2,
                     help='Number of algos per SLR')
+parser.add_argument('-T', '--TMUX2',action='store_true',
+                    help='Enable TMUX2 pattern file')
 parser.add_argument('-ll', '--LowLinks', type=str, default="0-11")
 parser.add_argument('-ml', '--MidLinks', type=str, default="36-47")
 parser.add_argument('-hl', '--HighLinks', type=str, default="48-59")
@@ -24,6 +26,7 @@ parser.add_argument('-hl', '--HighLinks', type=str, default="48-59")
 args = parser.parse_args()
 
 board = 'vu13p'
+max_BXs = 112
 
 #################################### Channel Parser #######################################
 
@@ -83,13 +86,13 @@ def get_algo_indeces(N_slr_algos, N_monitoring_slr):
         Possibile_indeces = list(np.hstack((range(N_slr_algos), range(576, 576 + N_slr_algos, 1))))
 
     return Possibile_indeces
-def extract_random_indexes(n_algo_bits, N_slr_algos, N_monitoring_slr, max_rep=113, low_rep=True, debug=False):
+def extract_random_indexes(n_algo_bits, N_slr_algos, N_monitoring_slr, max_rep=max_BXs, low_rep=True, debug=False):
     Possibile_indeces = get_algo_indeces(N_slr_algos, N_monitoring_slr)
     Possibile_rep = range(int(max_rep))
 
     indeces = random.sample(Possibile_indeces, n_algo_bits)
     end_point = 25
-    p = np.exp(-np.arange(0, end_point, end_point / 112.0))
+    p = np.exp(-np.arange(0, end_point, end_point / (max_BXs - 1)))
     p = np.insert(p, 0, 0)
     p_norm = p / p.sum()
 
@@ -141,9 +144,9 @@ def merge_indeces(indeces, N_slr_algos):
 
 def pattern_data_producer(indeces, positions, file_name, Links, debug):
     print(Links.shape[0])
-    X_input_low = np.zeros((1017, len(Links[0])), dtype=np.uint64)
-    X_input_mid = np.zeros((1017, len(Links[1])), dtype=np.uint64)
-    X_input_high = np.zeros((1017, len(Links[2])), dtype=np.uint64)
+    X_input_low = np.zeros((max_BXs*9, len(Links[0])), dtype=np.uint64)
+    X_input_mid = np.zeros((max_BXs*9, len(Links[1])), dtype=np.uint64)
+    X_input_high = np.zeros((max_BXs*9, len(Links[2])), dtype=np.uint64)
 
     for i in range(len(indeces)):
         if indeces[i] < 576:
@@ -179,12 +182,12 @@ def pattern_data_producer(indeces, positions, file_name, Links, debug):
             print(f.readlines()[row])
 
 
-def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False):
-    X_input_low = np.zeros((1017, len(Links[0])), dtype=np.uint64)
-    X_input_mid = np.zeros((1017, len(Links[1])), dtype=np.uint64)
-    X_input_high = np.zeros((1017, len(Links[2])), dtype=np.uint64)
+def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, TMUX2=False):
+    X_input_low = np.zeros((max_BXs*9, len(Links[0])), dtype=np.uint64)
+    X_input_mid = np.zeros((max_BXs*9, len(Links[1])), dtype=np.uint64)
+    X_input_high = np.zeros((max_BXs*9, len(Links[2])), dtype=np.uint64)
 
-    Possibile_rep = np.array(range(int(1024 / 9)))
+    Possibile_rep = np.array(range(max_BXs))
     Possibile_indeces = np.array(get_algo_indeces(576, args.Monitoring_slr))
     index_mask = np.logical_or.reduce(algo_matrix, 1).astype(bool)
     indeces = Possibile_indeces[index_mask]
@@ -212,15 +215,23 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False
     data_bitstring_padded = prep_bitstring_data(X_test_chunk)
 
     metadata = np.ones_like(X_test_chunk, dtype=np.uint8) * 1
-    metadata[0, :] = 13
-    for i in range(113):
-        if i != 0:
-            metadata[i * 9, :] = 5
+    metadata[0, :] = 13     # start of orbit, start and valid
+    if TMUX2:
+        for i in range(int(max_BXs/2)):
+            if i != 0:
+                metadata[i * 18, :] = 5
+            else:
+                metadata[i, :] = 13
+            metadata[i * 18 + 17, :] = 3
+    else:
+        for i in range(max_BXs):
+            if i != 0:
+                metadata[i * 9, :] = 5
         else:
-            metadata[i * 9, :] = 13
+            metadata[i, :] = 13
         metadata[i * 9 + 8, :] = 3
 
-    metadata[1017:1024, :] = 0
+    metadata[max_BXs*9:1024, :] = 0
     metadata_bitstring = prep_bitstring_metadata(metadata)
 
     links = np.vstack((Links[0], Links[1], Links[2]))
@@ -236,11 +247,11 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, for_sim=False
 
 
 def pattern_producer_prescale_test(n_algo_bits, N_slr_algos=args.slr_algos, N_Monitoring_slr=args.Monitoring_slr, debug=False):
-    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, N_slr_algos, N_Monitoring_slr, 113, False, debug)
+    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, N_slr_algos, N_Monitoring_slr, max_BXs, False, debug)
     Available_links = get_Available_links(args)
 
     pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_prescaler_test.txt", Available_links, debug,
-                             for_sim=True)
+                             TMUX2=True)
 
     new_indeces = merge_indeces(indeces, args.slr_algos)
 
@@ -248,7 +259,7 @@ def pattern_producer_prescale_test(n_algo_bits, N_slr_algos=args.slr_algos, N_Mo
 
 
 def pattern_producer_trggmask_test(debug=False):
-    Possible_rep = range(int(113))
+    Possible_rep = range(int(max_BXs))
     N_trigg_masks = 8
     Algos_per_trigg = int(args.slr_algos*args.Monitoring_slr / N_trigg_masks)
     Possible_indeces = get_algo_indeces(args.slr_algos, args.Monitoring_slr)
@@ -258,7 +269,7 @@ def pattern_producer_trggmask_test(debug=False):
 
     indeces = []
     positions = []
-    algo_matrix = np.zeros((576*args.Monitoring_slr, 113), bool)
+    algo_matrix = np.zeros((576*args.Monitoring_slr, max_BXs), bool)
 
     for i in range(N_trigg_masks):
         algos_position = np.random.choice(Possible_rep, size=rep_per_trigg[i], replace=False)
@@ -279,7 +290,7 @@ def pattern_producer_trggmask_test(debug=False):
     Available_links = get_Available_links(args)
 
     # pattern_data_producer(indeces, positions, "Finor_input_pattern_trigg_test.txt", Available_links, debug)
-    pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_trigg_test.txt", Available_links, debug, False)
+    pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_trigg_test.txt", Available_links, debug, True)
 
     new_algo_subset = np.copy(algo_subset)
 
@@ -294,10 +305,10 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, debug=False):
         raise Exception(
             "n_algo_bits must be larger than n_veto_bits, \nvalues got %d and %d" % (n_algo_bits, n_veto_bits))
 
-    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, args.slr_algos, args.Monitoring_slr, 113, True, debug)
+    algo_matrix, indeces, repetitions = extract_random_indexes(n_algo_bits, args.slr_algos, args.Monitoring_slr, max_BXs, True, debug)
     algo_matrix_veto = np.copy(algo_matrix)
     veto_indeces = np.random.choice(indeces, size=n_veto_bits, replace=False)
-    veto_matrix = np.zeros((n_veto_bits, 113), bool)
+    veto_matrix = np.zeros((n_veto_bits, max_BXs), bool)
 
     for i, index in enumerate(veto_indeces):
         veto_matrix[i, :] = algo_matrix[index, :]
@@ -315,7 +326,7 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, debug=False):
 
     Available_links = get_Available_links(args)
 
-    pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_veto_test.txt", Available_links, debug)
+    pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_veto_test.txt", Available_links, debug, True)
 
     new_veto_indeces = merge_indeces(veto_indeces, args.slr_algos)
 
@@ -323,8 +334,8 @@ def pattern_producer_veto_test(n_algo_bits, n_veto_bits, debug=False):
 
 
 def pattern_producer_BXmask_test(p_algo, p_mask, N_slr_algos=args.slr_algos, N_Monitoring_slr=args.Monitoring_slr, debug=False):
-    BX_mask = np.random.choice(a=[False, True], size=(576*N_Monitoring_slr, 113), p=[p_mask, 1 - p_mask])
-    algo_matrix = np.random.choice(a=[False, True], size=(576*N_Monitoring_slr, 113), p=[p_algo, 1 - p_algo])
+    BX_mask = np.random.choice(a=[False, True], size=(576*N_Monitoring_slr, max_BXs), p=[p_mask, 1 - p_mask])
+    algo_matrix = np.random.choice(a=[False, True], size=(576*N_Monitoring_slr, max_BXs), p=[p_algo, 1 - p_algo])
     algo_matrix[N_slr_algos:576] = False
     BX_mask[N_slr_algos:576] = False
     if N_Monitoring_slr >= 2:
@@ -338,12 +349,12 @@ def pattern_producer_BXmask_test(p_algo, p_mask, N_slr_algos=args.slr_algos, N_M
 
 
 
-    BX_mask_new = np.zeros(shape=(N_slr_algos * N_Monitoring_slr, 113))
-    BX_mask_new[:N_slr_algos, :113] = BX_mask[:N_slr_algos, :113]
+    BX_mask_new = np.zeros(shape=(N_slr_algos * N_Monitoring_slr, max_BXs))
+    BX_mask_new[:N_slr_algos, :max_BXs] = BX_mask[:N_slr_algos, :max_BXs]
     if N_Monitoring_slr >= 2:
-        BX_mask_new[N_slr_algos:N_slr_algos * 2, :113] = BX_mask[576:576 + N_slr_algos, :113]
+        BX_mask_new[N_slr_algos:N_slr_algos * 2, :max_BXs] = BX_mask[576:576 + N_slr_algos, :max_BXs]
     if N_Monitoring_slr >= 3:
-        BX_mask_new[N_slr_algos * 2:N_slr_algos * 3, :113] = BX_mask[1152:1152 + N_slr_algos, :113]
+        BX_mask_new[N_slr_algos * 2:N_slr_algos * 3, :max_BXs] = BX_mask[1152:1152 + N_slr_algos, :max_BXs]
 
     algo_matrix_masked = np.logical_and(algo_matrix, BX_mask).astype(bool)
 
@@ -356,7 +367,7 @@ def pattern_producer_BXmask_test(p_algo, p_mask, N_slr_algos=args.slr_algos, N_M
 
     Available_links = get_Available_links(args)
 
-    pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_BXmask_test.txt", Available_links, debug)
+    pattern_data_producer_v2(algo_matrix, "Finor_input_pattern_BXmask_test.txt", Available_links, debug, True)
 
     new_indeces = merge_indeces(indeces, args.slr_algos)
 
