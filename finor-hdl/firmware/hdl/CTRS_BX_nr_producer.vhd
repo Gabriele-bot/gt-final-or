@@ -1,3 +1,9 @@
+--=================================================================
+--CTRS BX nr producer
+--Bunch number counter, resets when start of orbit is received
+--Two outputs, 40 or 360 MHz sychronous
+--=================================================================
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -87,7 +93,7 @@ begin
         end if;
     end process bctr_p;
 
-    bx_nr_360  <= std_logic_vector(to_unsigned(0,12)) when metadata = "1101" else std_logic_vector(bx_nr_int);
+    bx_nr_360  <= std_logic_vector(to_unsigned(0,12)) when metadata = "1101" else std_logic_vector(bx_nr_int); -- trick to not loose a clk cycle
 
     process(clk40)
     begin

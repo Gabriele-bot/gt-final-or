@@ -1,9 +1,9 @@
--- Description:
--- SYNC BGOs module.
-
--- Created by Gabriele Bortolato 3-05-2023
--- Code based on the MP7 GT firmware (https://github.com/cms-l1-globaltrigger/mp7_ugt_legacy/tree/master/firmware) 
-
+--=================================================================
+--SYNC BGOs module.
+--Created by Gabriele Bortolato 3-05-2023
+--Code based on the MP7 GT firmware (https://github.com/cms-l1-globaltrigger/mp7_ugt_legacy/tree/master/firmware) 
+--Sync ec0, oc0, resync and start signals to bc0 signal (synchronous to 360 clock)
+--=================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

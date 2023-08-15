@@ -1,3 +1,10 @@
+--=================================================================
+--Counter modulemodule.
+--Outputs LHC counters: Bx nr, Orbit nr, Event nr, Lumi-section nr
+--Useful signals begin/end lumi-section
+--Test enable out is latched until the end of the orbit
+--=================================================================
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -25,7 +32,7 @@ entity Counter_module is
         lumi_sec_nr    : out p2gt_lsctr_t;
         begin_lumi_sec : out std_logic;
         end_lumi_sec   : out std_logic;
-        test_en_o      : out std_logic --up from BX 3285 to BX 3563
+        test_en_o      : out std_logic --up from BX 3285(is it still the case?) to BX 3563
     );
 end entity Counter_module;
 
@@ -44,13 +51,6 @@ architecture RTL of Counter_module is
 
 begin
 
-    --process(clk40)
-    --begin
-    --    if rising_edge(clk40) then
-    --        l1a    <= ctrs_in.l1a;
-    --        bx_ctr <= ctrs_in.bctr;     --TODO check clk cross here (the signals is 360 synchronous, yet I'm using it at 40...)
-    --    end if;
-    --end process;
     l1a    <= l1a_i;
     bx_ctr <= bx_nr_i;
 
@@ -76,7 +76,7 @@ begin
         end if;
     end process;
 
-    o_ctrbls <= o_ctr(BEGIN_LUMI_BIT);
+    o_ctrbls <= o_ctr(BEGIN_LUMI_BIT); -- lumisection bit 
 
     process(clk40)
     begin
@@ -95,7 +95,7 @@ begin
         ls_ctr <= (o_ctr'high - BEGIN_LUMI_BIT downto 0 => o_ctr(o_ctr'high downto BEGIN_LUMI_BIT), others => '0');
     end generate;
 
-    begin_lumi_sec_int <= '1' when o_ctrbls_temp /= o_ctrbls else '0';
+    begin_lumi_sec_int <= '1' when o_ctrbls_temp /= o_ctrbls else '0'; -- '1' when it toggles
 
     --process(o_ctr, bx_ctr)
     --begin
@@ -106,6 +106,7 @@ begin
     --    end if;
     --end process;
 
+    -- TODO check this
     process(clk40)
     begin
         if rising_edge(clk40) then
@@ -117,6 +118,7 @@ begin
         end if;
     end process;
 
+    -- test enable out latch
     process(clk40)
     begin
         if rising_edge(clk40) then

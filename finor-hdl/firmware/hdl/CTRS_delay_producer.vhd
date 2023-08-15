@@ -1,3 +1,9 @@
+--=================================================================
+--CTRS delay producer
+--Counts number of 360 MHz clk cycles between ttc.bx_nr and reference bx_nr
+--Delay resync can be asserted to recompute the delay value
+--=================================================================
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

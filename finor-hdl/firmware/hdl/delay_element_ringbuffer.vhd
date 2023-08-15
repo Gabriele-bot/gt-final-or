@@ -1,7 +1,8 @@
--- Based on the code that can be found out here https://vhdlwhiz.com/ring-buffer-fifo/ 
--- 1 is the minimum dalay that can be set, note that the output is delayed further by 1 clock cycle due to the last process (register)
--- First values could not be forwarded to the output if the delay value comes late than the actual input
-
+--=================================================================
+--Delay element ringbuffer
+--Based on the code that can be found out here https://vhdlwhiz.com/ring-buffer-fifo/ 
+--First values could not be forwarded to the output if the delay value comes late than the actual input (or not locked)
+--=================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -148,15 +149,15 @@ begin
     PROC_OUT : process(delay, data_out_s, delay_lkd, data_i, data_in_reg)
     begin
         if delay_lkd = '1' then
-            if unsigned(delay) = 0 then
+            if unsigned(delay) = 0 then -- if delay is 0, pass-through
                 data_o <= data_i;
-            elsif unsigned(delay) = 1 then
+            elsif unsigned(delay) = 1 then -- if delay is 1, use the registered input
                 data_o <= data_in_reg;
-            else
+            else                           -- else use the output of the RAM
                 data_o <= data_out_s;
             end if;
         else
-            data_o <= (others => '0');
+            data_o <= (others => '0');  -- outputs 0 if delay is not locked
         end if;
     end process;
 

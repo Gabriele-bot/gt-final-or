@@ -43,7 +43,8 @@ begin
     assert OUT_WIDTH <= 9 * LWORD_WIDTH
     report "Deserializer output witdh cannot be greater than 576"
     severity FAILURE;
-
+    
+    -- valid shift register
     data_in_valid_del_arr(0) <= lane_data_in.valid;
     del_valid_p : process (clk360)
     begin
@@ -55,7 +56,7 @@ begin
 
     frame_counter_p : process (clk360)
     begin
-        if rising_edge(clk360) then     -- rising clock edge
+        if rising_edge(clk360) then     
             if lane_data_in.valid = '0' then
                 frame_cntr <= 0;
             elsif frame_cntr < 8 then
@@ -66,7 +67,8 @@ begin
             end if;
         end if;
     end process frame_counter_p;
-
+    
+    -- auxiliary frame counter, it is needed when the data stream is stopped i the middle of the packet
     frame_counter_temp_p : process (clk360)
     begin
         if rising_edge(clk360) then
@@ -82,8 +84,8 @@ begin
 
     load_data_p : process (clk360)
     begin
-        if rising_edge(clk360) then     -- rising clock edge
-            if frame_cntr_temp = 8 and frame_cntr /= 8 then
+        if rising_edge(clk360) then     
+            if frame_cntr_temp = 8 and frame_cntr /= 8 then -- when data stream in interrupted, last packet is considered bad (tied to 0) 
                 data_deserialized <= (others => '0');
             elsif frame_cntr = 8 then
                 data_deserialized(frame_cntr * LWORD_WIDTH + LWORD_WIDTH-1 downto frame_cntr * 64) <= lane_data_in.data;
@@ -111,8 +113,11 @@ begin
         valid_out    <= data_in_valid_del_arr(9);
     end generate;
 
-
-    align_check_p : process(clk360)
+    
+    -----------------------------------------------------------------------------------
+    ---------------PACKET FRAMING CHECK------------------------------------------------
+    -----------------------------------------------------------------------------------
+    frame_struct_check_p : process(clk360)
     begin
         if rising_edge(clk360) then
             if frame_err = '1' then
@@ -139,7 +144,7 @@ begin
                 end case;
             end if;
         end if;
-    end process align_check_p;
+    end process frame_struct_check_p;
 
     frame_err_o <= frame_err;
 

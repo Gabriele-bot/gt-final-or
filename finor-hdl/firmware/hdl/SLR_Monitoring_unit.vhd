@@ -309,7 +309,7 @@ begin
             delay_val    => delay_measured
         );
 
-    CTRS_align_i : entity work.CTRS_fixed_alignment
+    CTRS_align_i : entity work.CTRS_fixed_align
         generic map(
             MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
             DELAY_OFFSET    => 0
@@ -325,7 +325,7 @@ begin
             ctrs_out       => ctrs_complete_align
         );
 
-    CTRS_align_output_i : entity work.CTRS_fixed_alignment
+    CTRS_align_output_i : entity work.CTRS_fixed_align
         generic map(
             MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
             DELAY_OFFSET    => 9        -- deserializer

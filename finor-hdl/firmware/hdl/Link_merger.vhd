@@ -46,7 +46,7 @@ architecture RTL of Link_merger is
     signal last_error           : std_logic;
 
 begin
-
+    
     data_fill_i : for i in 0 to NR_LINKS - 1 generate
         d_data(i)            <= d(i).data;
         d_valids(i)          <= d(i).valid;
@@ -55,6 +55,10 @@ begin
         d_lasts(i)           <= d(i).last;
         d_strobes(i)         <= d(i).strobe;
     end generate;
+    
+    -----------------------------------------------------------------------------------
+    ---------------METADATA CHECKS-----------------------------------------------------
+    -----------------------------------------------------------------------------------
 
     --valid check
     valid_align_check_i : entity work.Link_align_check
@@ -113,6 +117,10 @@ begin
         );
 
     align_err_o <= valid_error or start_of_orbit_error or start_error or last_error;
+    
+    ------------------------------------------------------------
+    ---------------MERGE----------------------------------------
+    ------------------------------------------------------------
 
     mapping_i : for i in 0 to LWORD_WIDTH - 1 generate
         mapping_j : for j in 0 to NR_LINKS - 1 generate
@@ -129,7 +137,8 @@ begin
     q_int.start          <= or (d_starts and link_mask);
     q_int.last           <= or (d_lasts and link_mask);
     q_int.strobe         <= or (d_strobes and link_mask);
-
+    
+    -- output register
     process(clk360)
     begin
         if rising_edge(clk360) then

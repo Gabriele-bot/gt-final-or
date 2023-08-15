@@ -193,7 +193,7 @@ begin
             delay_lkd    => delay_lkd,
             delay_val    => delay_measured
         );
-    ctrs_align_i : entity work.CTRS_fixed_alignment
+    ctrs_align_i : entity work.CTRS_fixed_align
         generic map(
             MAX_LATENCY_360 => MAX_CTRS_DELAY_360,
             DELAY_OFFSET    => 0

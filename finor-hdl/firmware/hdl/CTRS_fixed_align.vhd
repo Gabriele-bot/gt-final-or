@@ -1,3 +1,9 @@
+--=================================================================
+--CTRS fixed align
+--Delay TTC stream by a fixed number of 360 MHZ clock cycles, the value can be modified at runtime
+--Dualport RAM used as ring buffer
+--=================================================================
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -7,7 +13,7 @@ use work.emp_ttc_decl.all;
 use work.P2GT_finor_pkg.all;
 use work.math_pkg.all;
 
-entity CTRS_fixed_alignment is
+entity CTRS_fixed_align is
     generic(
         MAX_LATENCY_360 : integer := 255;
         DELAY_OFFSET    : integer := 0
@@ -22,9 +28,9 @@ entity CTRS_fixed_alignment is
         ctrs_in        : in  ttc_stuff_t;
         ctrs_out       : out ttc_stuff_t
     );
-end entity CTRS_fixed_alignment;
+end entity CTRS_fixed_align;
 
-architecture RTL of CTRS_fixed_alignment is
+architecture RTL of CTRS_fixed_align is
 
     --    signal ctrs_del_arr : ttc_stuff_array(MAX_LATENCY_360 + DELAY_OFFSET downto 0) := (others => TTC_STUFF_NULL);
     --    
@@ -41,7 +47,7 @@ architecture RTL of CTRS_fixed_alignment is
     --    
     --    ctrs_out <= ctrs_del_arr(to_integer(unsigned(ctrs_delay_val)) + DELAY_OFFSET);
 
-    constant CTRS_FLATTEN_WIDTH : integer := ttc_cmd_t'length + 1 + bctr_t'length + pctr_t'length; --BCMD, L1A, BX counter, p counter==
+    constant CTRS_FLATTEN_WIDTH : integer := ttc_cmd_t'length + 1 + bctr_t'length + pctr_t'length; --BCMD, L1A, BX counter, p counter
 
     signal ctrs_in_flatten  : std_logic_vector(CTRS_FLATTEN_WIDTH - 1 downto 0);
     signal ctrs_out_flatten : std_logic_vector(CTRS_FLATTEN_WIDTH - 1 downto 0);
@@ -51,6 +57,7 @@ begin
 
     ctrs_in_flatten <= (ctrs_in.ttc_cmd, ctrs_in.l1a, ctrs_in.bctr, ctrs_in.pctr);
 
+    -- convert to standard logic vector the value: ctrs_delay_val + DELAY_OFFSET
     delay <= std_logic_vector(resize(unsigned(ctrs_delay_val), log2c(MAX_LATENCY_360 + DELAY_OFFSET)) + to_unsigned(DELAY_OFFSET, log2c(MAX_LATENCY_360 + DELAY_OFFSET)));
 
     delay_line_i : entity work.delay_element_ringbuffer
