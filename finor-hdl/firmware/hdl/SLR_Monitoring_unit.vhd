@@ -1,3 +1,12 @@
+--=================================================================
+-- Single SLR Phase-2 GT monitoring module
+-- It features pre-scaling, rate-monitoring local trigger bits evaluation of up to 576 (64*9) algos
+-- Configurable via IPBus
+-- Links are divided to left and right based on their EMP-region
+-- Only a single TTC_stuff signal (Packet and Bunch numbers, L1A, TTC_BCMD) is required
+-- Output local veto e trigger bits 
+-- Outputs algobits ready to be sent to the Tx buffers
+--=================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -20,10 +29,10 @@ use work.math_pkg.all;
 
 entity SLR_Monitoring_unit is
     generic(
-        NR_RIGHT_LINKS        : natural := INPUT_R_LINKS_SLR;
+        NR_RIGHT_LINKS        : natural := INPUT_R_LINKS_SLR;  
         NR_LEFT_LINKS         : natural := INPUT_L_LINKS_SLR;
         BEGIN_LUMI_TOGGLE_BIT : natural := BEGIN_LUMI_SEC_BIT;
-        MAX_DELAY             : natural := MAX_DELAY_PDT
+        MAX_DELAY             : natural := MAX_DELAY_PDT 
     );
     port(
         clk                    : in  std_logic;
@@ -125,7 +134,7 @@ begin
             ipb_to_slaves   => ipb_to_slaves,
             ipb_from_slaves => ipb_from_slaves
         );
-
+    
     link_valid_gen_l : for i in 0 to NR_RIGHT_LINKS + NR_LEFT_LINKS - 1 generate
         links_valids(i) <= d(i).valid;
     end generate;
@@ -138,7 +147,10 @@ begin
     --        d_reg <= d;
     --    end if;
     --end process;
-
+    
+    -----------------------------------------------------------------------------------
+    ---------------CONTROL AND STATUS REGISTERS----------------------------------------
+    -----------------------------------------------------------------------------------
     CSR_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
             N_CTRL         => N_CTRL_REGS,
@@ -181,7 +193,11 @@ begin
     stat_reg(0)(log2c(MAX_CTRS_DELAY_360) + 2)           <= align_error_last;
     stat_reg(0)(log2c(MAX_CTRS_DELAY_360) + 3)           <= frame_error;
     stat_reg(0)(31 downto log2c(MAX_CTRS_DELAY_360) + 4) <= (others => '0');
-
+    
+    
+    -----------------------------------------------------------------------------------
+    ---------------LINKS MERGE AND DESERIALIZATION--------------------------------------
+    -----------------------------------------------------------------------------------
     Right_merge : entity work.Link_merger
         generic map(
             NR_LINKS => NR_RIGHT_LINKS
@@ -252,7 +268,7 @@ begin
         );
 
     -----------------------------------------------------------------------------------
-    ---------------COUNTERS ALIGN------------------------------------------------------
+    ---------------TTC COUNTERS ALIGN--------------------------------------------------
     -----------------------------------------------------------------------------------
 
     ctrs_first_align(0) <= ctrs;
@@ -324,6 +340,10 @@ begin
             ctrs_in        => ctrs_first_align(ctrs_first_align'high),
             ctrs_out       => ctrs_align_output
         );
+        
+    -----------------------------------------------------------------------------------
+    ---------------MONITORING LOGIC----------------------------------------------------
+    -----------------------------------------------------------------------------------    
 
     monitoring_module : entity work.monitoring_module
         generic map(
@@ -354,7 +374,11 @@ begin
             start_of_orbit_o        => start_of_orbit_o,
             resync_o                => ttc_resync
         );
-
+    
+    
+    -----------------------------------------------------------------------------------
+    ---------------PREPARE OUTPUT ALGOBITS---------------------------------------------
+    -----------------------------------------------------------------------------------
     deser_reg_out_g : if DESER_OUT_REG generate
         process(clk40)
         begin
@@ -381,7 +405,10 @@ begin
             q_algos_after_bxmask => q_algos_after_bxmask_o,
             q_algos_after_prscl  => q_algos_after_prscl_o
         );
-
+    
+    -----------------------------------------------------------------------------------
+    ---------------LOCAL VETO AND TRIGGER BITS------------------------------------------------------
+    -----------------------------------------------------------------------------------
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;
     veto_o            <= veto_out;

@@ -1,3 +1,9 @@
+--=================================================================
+-- Trigger bits evaluation
+-- Comput N trigger bits starting from an algobits vector and N trigger masks,
+-- the i-th mask selects which algobits contribute to the i-th trigger
+-- The masks are updated only at the start of lumisection if the request update is asserted 
+--=================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -27,10 +33,12 @@ architecture RTL of Mask is
 
     signal trigger_s : std_logic_vector(N_TRIGG - 1 downto 0) := (others => '0');
     signal valid_s   : std_logic;
-    signal masks_int : mask_arr  := (others  => (others => '0'));
-
+    signal masks_int : mask_arr  := (others  => (others => '0')); -- array of N_TRIGG standard logic vector
 begin
-
+    
+    -----------------------------------------------------------------------------------
+    ---------------MASK UPDATE---------------------------------------------------------
+    -----------------------------------------------------------------------------------
     gen_masks_update_l : for i in 0 to N_TRIGG - 1 generate
         masks_update_i : entity work.update_process
             generic map(
@@ -45,7 +53,10 @@ begin
                 data_o               => masks_int(i)(NR_ALGOS - 1 downto 0)
             );
     end generate;
-
+    
+    -----------------------------------------------------------------------------------
+    ---------------TRIGGERS EVALUATION-------------------------------------------------
+    -----------------------------------------------------------------------------------
     trigger_out_l : for i in 0 to N_TRIGG - 1 generate
         trigger_s(i) <= or (algos_in and masks_int(i)(NR_ALGOS - 1 downto 0));
     end generate;
