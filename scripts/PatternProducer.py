@@ -219,17 +219,17 @@ def pattern_data_producer_v2(algo_matrix, file_name, Links, debug, TMUX2=False):
     if TMUX2:
         for i in range(int(max_BXs/2)):
             if i != 0:
-                metadata[i * 18, :] = 5
+                metadata[i * 18, :] = 5  # start and valid
             else:
-                metadata[i, :] = 13
-            metadata[i * 18 + 17, :] = 3
+                metadata[i, :] = 13  # start of orbit, start and valid
+            metadata[i * 18 + 17, :] = 3  # last and valid
     else:
         for i in range(max_BXs):
             if i != 0:
-                metadata[i * 9, :] = 5
-        else:
-            metadata[i, :] = 13
-        metadata[i * 9 + 8, :] = 3
+                metadata[i * 9, :] = 5  # start and valid
+            else:
+                metadata[i, :] = 13  # start of orbit, start and valid
+            metadata[i * 9 + 8, :] = 3  # last and valid
 
     metadata[max_BXs*9:1024, :] = 0
     metadata_bitstring = prep_bitstring_metadata(metadata)
