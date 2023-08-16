@@ -75,8 +75,13 @@ begin
             end if;
         end if;
     end process;
-
-    o_ctrbls <= o_ctr(BEGIN_LUMI_BIT); -- lumisection bit 
+    
+    -----------------------------------------------------------------------------------
+    ---------------BEGIN/END LUMI-SECTION SIGNALS GENERATION---------------------------
+    -----------------------------------------------------------------------------------
+    -- Lumi-secion last for exactly 2**18 orbits, which means that every time that the 18th bit of the orbit counter toggles
+    -- a new lumi-section starts
+    o_ctrbls <= o_ctr(BEGIN_LUMI_BIT);   
 
     process(clk40)
     begin
@@ -88,12 +93,6 @@ begin
             end if;
         end if;
     end process;
-
-    ls_ctr_resize_g : if o_ctr'high - BEGIN_LUMI_BIT >= 31 generate
-        ls_ctr <= o_ctr(BEGIN_LUMI_BIT + 31 downto BEGIN_LUMI_BIT);
-    else generate
-        ls_ctr <= (o_ctr'high - BEGIN_LUMI_BIT downto 0 => o_ctr(o_ctr'high downto BEGIN_LUMI_BIT), others => '0');
-    end generate;
 
     begin_lumi_sec_int <= '1' when o_ctrbls_temp /= o_ctrbls else '0'; -- '1' when it toggles
 
@@ -117,6 +116,12 @@ begin
             end if;
         end if;
     end process;
+    
+    ls_ctr_resize_g : if o_ctr'high - BEGIN_LUMI_BIT >= 31 generate
+        ls_ctr <= o_ctr(BEGIN_LUMI_BIT + 31 downto BEGIN_LUMI_BIT);
+    else generate
+        ls_ctr <= (o_ctr'high - BEGIN_LUMI_BIT downto 0 => o_ctr(o_ctr'high downto BEGIN_LUMI_BIT), others => '0');
+    end generate;
 
     -- test enable out latch
     process(clk40)

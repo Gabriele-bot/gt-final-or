@@ -1,6 +1,6 @@
 --=================================================================
 --Data Link Deserializer
---Transalte 64 bit@360 MHz data stream into 576 bit @ 40MHz data stream
+--Translate LWORD_WIDTH bit@360 MHz data stream into LWORD_WIDTH*9 bit @ 40MHz data stream
 --Alignemnt check is performed at the very last comparing the metadata against the expected values
 --=================================================================
 library ieee;
@@ -68,7 +68,7 @@ begin
         end if;
     end process frame_counter_p;
     
-    -- auxiliary frame counter, it is needed when the data stream is stopped i the middle of the packet
+    -- auxiliary frame counter, it is needed when the data stream is stopped in the middle of the packet
     frame_counter_temp_p : process (clk360)
     begin
         if rising_edge(clk360) then
@@ -85,10 +85,10 @@ begin
     load_data_p : process (clk360)
     begin
         if rising_edge(clk360) then     
-            if frame_cntr_temp = 8 and frame_cntr /= 8 then -- when data stream in interrupted, last packet is considered bad (tied to 0) 
+            if frame_cntr_temp = 8 and frame_cntr /= 8 then -- when data stream is interrupted, last packet is considered bad (tied to 0) 
                 data_deserialized <= (others => '0');
             elsif frame_cntr = 8 then
-                data_deserialized(frame_cntr * LWORD_WIDTH + LWORD_WIDTH-1 downto frame_cntr * 64) <= lane_data_in.data;
+                data_deserialized(frame_cntr * LWORD_WIDTH + LWORD_WIDTH-1 downto frame_cntr * LWORD_WIDTH) <= lane_data_in.data;
                 data_deserialized((frame_cntr-1) * LWORD_WIDTH + LWORD_WIDTH-1 downto 0) <= data_deserialized_temp((frame_cntr-1) * LWORD_WIDTH + LWORD_WIDTH-1 downto 0);
             end if;
         end if;
