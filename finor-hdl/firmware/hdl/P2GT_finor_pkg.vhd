@@ -18,7 +18,7 @@ package P2GT_finor_pkg is
     -- =======================================================================================================
     constant N_BOARD                          : integer := 12;
     constant N_SLR_PER_BOARD                  : integer := 4;
-    constant N_MONITOR_SLR                    : integer := 3;
+    constant N_MONITOR_SLR                    : integer := 2;
     constant INPUT_R_LINKS_SLR                : integer := 12;
     constant INPUT_L_LINKS_SLR                : integer := 12;
     constant INPUT_LINKS_SLR                  : integer := INPUT_R_LINKS_SLR + INPUT_L_LINKS_SLR;
@@ -30,7 +30,7 @@ package P2GT_finor_pkg is
     constant MAX_CTRS_DELAY_360               : integer := 486; -- corresponding to ~1.35  us  (360 MHz domain) (511-12-9-4)
     constant SLR_CROSSING_LATENCY_TRIGGERBITS : integer := 13;
     constant OUTPUT_LATENCY_ALGOBITS          : integer := 4;
-    constant N_SLR_ALGOS                      : integer := 512;
+    constant N_SLR_ALGOS                      : integer := 576;
     constant N_SLR_ALGOS_MAX                  : integer := LWORD_WIDTH * 9;
     constant N_ALGOS                          : integer := N_SLR_ALGOS * N_MONITOR_SLR;
     constant DESER_OUT_REG                    : boolean := TRUE;
