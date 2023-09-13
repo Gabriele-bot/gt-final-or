@@ -1,4 +1,4 @@
-set N_MONITOR_SLR 3
+set N_MONITOR_SLR 2
 
 set_multicycle_path 9 -setup -start -from [get_clocks -filter {NAME =~ clk_payload* }] -to [get_clocks -filter {NAME =~ clks_aux_u_2* }]
 set_multicycle_path 8 -hold -from [get_clocks -filter {NAME =~ clk_payload* }] -to [get_clocks -filter {NAME =~ clks_aux_u_2* }]
