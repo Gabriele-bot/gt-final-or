@@ -19,6 +19,7 @@ add_cells_to_pblock [get_pblock payload] payload
 
 set_property USER_SLR_ASSIGNMENT $SLR_n0  [get_cells -hierarchical -filter {NAME =~ *SLRn0_module}]
 set_property USER_SLR_ASSIGNMENT $SLR_out [get_cells payload/SLRout_FinalOR_or]
+set_property USER_SLR_ASSIGNMENT $SLR_out [get_cells payload/Menu_ROM]
 if {$N_MONITOR_SLR > 1} {
 	set_property USER_SLR_ASSIGNMENT $SLR_n1  [get_cells -hierarchical -filter {NAME =~ *SLRn1_module}]
 }

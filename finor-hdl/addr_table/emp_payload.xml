@@ -7,7 +7,7 @@
     <node id="N_SLR"        mask="0x0000003"/>
     <node id="N_SLR_ALGOS"  mask="0x0000ffc"/>
     <node id="N_TRIGG"      mask="0x000f000"/>
-    <node id="N_ALGOS"      mask="0xfff000"/>
+    <node id="N_ALGOS"      mask="0xfff0000"/>
     <node id="SLRn0_unprescaled_algo_ch" address="0x01"  mask="0x000000ff"/>
     <node id="SLRn0_afterbxmask_algo_ch" address="0x01"  mask="0x0000ff00"/>
     <node id="SLRn0_prescaled_algo_ch"   address="0x01"  mask="0x00ff0000"/>
@@ -19,5 +19,6 @@
     <node id="SLRn2_prescaled_algo_ch"   address="0x03"  mask="0x000000ff"/>
     <node id="Output_ch"                 address="0x03"  mask="0x0000ff00"/>
     </node>
+  <node id="ALGO_NAMES"   mode="block"  address="0x00400000"  size="24576"  fwinfo="endpoint;width=20"/>
 </node>
 

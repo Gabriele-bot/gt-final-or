@@ -22,7 +22,7 @@ parser.add_argument('-t', '--test', metavar='N', type=str, default='prescaler',
                          '\ntrigger_mask --> start a trigger mask test '
                          '\nveto_mask    --> start a veto mask test '
                          '\nBXmask       --> start a BXmask test ')
-parser.add_argument('-c', '--connections', metavar='N', type=str, default='my_connection.xml',
+parser.add_argument('-c', '--connections', metavar='N', type=str, default='my_connections.xml',
                     help='connections xml file')
 parser.add_argument('-ls', '--lumisection', metavar='N', type=int, default=18,
                     help='Luminosity section toggle bit (within the orbit counter)')

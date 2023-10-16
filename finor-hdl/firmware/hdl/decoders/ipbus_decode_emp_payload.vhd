@@ -17,13 +17,14 @@ package ipbus_decode_emp_payload is
   subtype ipbus_sel_t is std_logic_vector(IPBUS_SEL_WIDTH - 1 downto 0);
   function ipbus_sel_emp_payload(addr : in std_logic_vector(31 downto 0)) return ipbus_sel_t;
 
--- START automatically generated VHDL (Thu Jul 27 09:35:08 2023)
+-- START automatically generated VHDL (Fri Oct 13 16:57:14 2023)
   constant N_SLV_SLRN2_MONITOR: integer := 0;
   constant N_SLV_SLRN1_MONITOR: integer := 1;
   constant N_SLV_SLRN0_MONITOR: integer := 2;
   constant N_SLV_SLR_FINOR: integer := 3;
   constant N_SLV_FINOR_ROREG: integer := 4;
-  constant N_SLAVES: integer := 5;
+  constant N_SLV_ALGO_NAMES: integer := 5;
+  constant N_SLAVES: integer := 6;
 -- END automatically generated VHDL
 
     
@@ -35,17 +36,19 @@ package body ipbus_decode_emp_payload is
     variable sel: ipbus_sel_t;
   begin
 
--- START automatically generated VHDL (Thu Jul 27 09:35:08 2023)
-    if    std_match(addr, "----------000-------------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN2_MONITOR, IPBUS_SEL_WIDTH)); -- SLRn2_monitor / base 0x00000000 / mask 0x00380000
-    elsif std_match(addr, "----------001-------------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN1_MONITOR, IPBUS_SEL_WIDTH)); -- SLRn1_monitor / base 0x00080000 / mask 0x00380000
-    elsif std_match(addr, "----------010-------------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN0_MONITOR, IPBUS_SEL_WIDTH)); -- SLRn0_monitor / base 0x00100000 / mask 0x00380000
-    elsif std_match(addr, "----------100-------------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_SLR_FINOR, IPBUS_SEL_WIDTH)); -- SLR_FINOR / base 0x00200000 / mask 0x00380000
-    elsif std_match(addr, "----------11--------------------") then
-      sel := ipbus_sel_t(to_unsigned(N_SLV_FINOR_ROREG, IPBUS_SEL_WIDTH)); -- FINOR_ROREG / base 0x00300000 / mask 0x00300000
+-- START automatically generated VHDL (Fri Oct 13 16:57:14 2023)
+    if    std_match(addr, "---------0000-------------------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN2_MONITOR, IPBUS_SEL_WIDTH)); -- SLRn2_monitor / base 0x00000000 / mask 0x00780000
+    elsif std_match(addr, "---------0001-------------------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN1_MONITOR, IPBUS_SEL_WIDTH)); -- SLRn1_monitor / base 0x00080000 / mask 0x00780000
+    elsif std_match(addr, "---------0010-------------------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_SLRN0_MONITOR, IPBUS_SEL_WIDTH)); -- SLRn0_monitor / base 0x00100000 / mask 0x00780000
+    elsif std_match(addr, "---------0100-------------------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_SLR_FINOR, IPBUS_SEL_WIDTH)); -- SLR_FINOR / base 0x00200000 / mask 0x00780000
+    elsif std_match(addr, "---------011--------------------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_FINOR_ROREG, IPBUS_SEL_WIDTH)); -- FINOR_ROREG / base 0x00300000 / mask 0x00700000
+    elsif std_match(addr, "---------100--------------------") then
+      sel := ipbus_sel_t(to_unsigned(N_SLV_ALGO_NAMES, IPBUS_SEL_WIDTH)); -- ALGO_NAMES / base 0x00400000 / mask 0x00700000
 -- END automatically generated VHDL
 
     else

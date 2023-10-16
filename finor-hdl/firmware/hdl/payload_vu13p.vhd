@@ -133,6 +133,24 @@ begin
     assert N_MONITOR_SLR /= 0
     report "Selected number Monoriting SLR cannot be 0"
     severity FAILURE;
+    
+    Menu_ROM : entity work.ipbus_file_init_menu_sprom
+        generic map(
+            DATA_FILE     => "menu_algo_string.mif",
+            COLUMNS       => 16,
+            ROWS          => 1536,
+            DEFAULT_VALUE => X"00100000",
+            ADDR_WIDTH    => 15,
+            DATA_WIDTH    => 32,
+            STYLE         => "ultra"
+        )
+        port map(
+            clk     => clk,
+            rst     => rst,
+            ipb_in  => ipb_to_slaves(N_SLV_ALGO_NAMES),
+            ipb_out => ipb_from_slaves(N_SLV_ALGO_NAMES)
+        );
+    
 
     fabric_i : entity work.ipbus_fabric_sel
         generic map(
