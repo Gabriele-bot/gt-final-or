@@ -53,7 +53,6 @@ test:serenity:
     - python3 -m pip install numpy
     - python3 -m pip install argparse
     - python3 -m pip install bitstring
-    - export LC_ALL=en_GB.utf8 LANG=en_GB.utf8
     - yum -y install git
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.cern.ch/cms-cactus/phase2/demonstrator-utilities.git
     # Remove SERENITY_CONFIG variable to avoid need for Serenity YML file

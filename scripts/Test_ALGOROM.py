@@ -112,12 +112,13 @@ HWtest.hw.dispatch()
 
 
 for i in range(1536):
-	for j in range(16):
-		if j == 0:
-			result = struct.pack("I", temp[i*16])
-		else:
-			result = result + struct.pack("I", temp[i*16+j])
-	print(result)
+    for j in range(16):
+        print(bin(temp[i*16+j]))
+        if j == 0:
+            result = struct.pack("I", temp[i*16])
+        else:
+            result = result + struct.pack("I", temp[i*16+j])
+    print(result)
 
 
 
