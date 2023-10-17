@@ -137,16 +137,13 @@ begin
     Menu_ROM : entity work.ipbus_file_init_menu_sprom
         generic map(
             DATA_FILE     => "menu_algo_string.mif",
-            COLUMNS       => 16,
-            ROWS          => 1536,
+            FILE_LENGTH   => N_ALGOS * integer(ALGONAME_MAX_CHARS/4),
+            ADDR_WIDTH    => log2c(N_ALGOS * integer(ALGONAME_MAX_CHARS/4)), 
             DEFAULT_VALUE => X"00100000",
-            ADDR_WIDTH    => 15,
-            DATA_WIDTH    => 32,
-            STYLE         => "ultra"
+            DATA_WIDTH    => 8*4
         )
         port map(
             clk     => clk,
-            rst     => rst,
             ipb_in  => ipb_to_slaves(N_SLV_ALGO_NAMES),
             ipb_out => ipb_from_slaves(N_SLV_ALGO_NAMES)
         );
@@ -165,7 +162,6 @@ begin
             ipb_from_slaves => ipb_from_slaves
         );
 
-    -- TODO this is suboptimal  
     d_SLR_ldata_fill_l : for i in 0 to INPUT_LINKS_SLR - 1 generate
         d_SLR_ldata_fill_g : case N_MONITOR_SLR generate
             when 1 =>

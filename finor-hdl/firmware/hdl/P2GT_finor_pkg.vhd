@@ -34,6 +34,7 @@ package P2GT_finor_pkg is
     constant N_SLR_ALGOS_MAX                  : integer := LWORD_WIDTH * 9;
     constant N_ALGOS                          : integer := N_SLR_ALGOS * N_MONITOR_SLR;
     constant DESER_OUT_REG                    : boolean := TRUE;
+    constant ALGONAME_MAX_CHARS               : integer := 64;
 
     type ChannelSystemMap is array (natural range <>) of natural;
     type QuadSystemMap is array (natural range <>) of natural;
