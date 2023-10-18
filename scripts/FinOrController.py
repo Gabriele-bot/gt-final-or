@@ -5,6 +5,7 @@
 import numpy as np
 import uhal
 import time
+import struct
 
 from click_texttable import Texttable
 from click import echo, secho
@@ -65,15 +66,44 @@ class FinOrController:
             self.hw.dispatch()
         return o_ctr
 
+    def get_algo_name(self, index):
+        ROM_content = self.hw.getNode("payload.ALGO_NAMES").readBlockOffset(16, 16 * index)
+        self.hw.dispatch()
+        # TODO slow and ugly
+        for j in range(16):
+            if j == 0:
+                algo_name = struct.pack("I", ROM_content[0])
+            else:
+                algo_name = algo_name + struct.pack("I", ROM_content[j])
+
+        return algo_name.decode('utf-8').replace(" ", "")
+
+    def get_menu(self):
+        ROM_content = self.hw.getNode("payload.ALGO_NAMES").readBlock(16 * self.n_algos)
+        self.hw.dispatch()
+        # TODO slow and ugly
+        menu = []
+        for i in range(self.n_algos):
+            for j in range(16):
+                if j == 0:
+                    algo_name = struct.pack("I", ROM_content[i * 16])
+                else:
+                    algo_name = algo_name + struct.pack("I", ROM_content[i * 16 + j])
+            menu.append(algo_name.decode('utf-8').replace(" ", ""))
+
+        return menu
+
     def print_link_info(self):
 
         Link_error = self.check_links_error()
         Link_mask = self.read_link_mask()
-        Table_header = [["SLR", "Link mask", "Align error Right", "Align error Left", "Align error Merged", "Frame error"]]
+        Table_header = [
+            ["SLR", "Link mask", "Align error Right", "Align error Left", "Align error Merged", "Frame error"]]
 
         tableData = Table_header
         for i in range(self.n_slr):
-            tableData += [["n%d" % i, hex(Link_mask[i]), Link_error[i, 0], Link_error[i, 1], Link_error[i, 2], Link_error[i, 3]]]
+            tableData += [
+                ["n%d" % i, hex(Link_mask[i]), Link_error[i, 0], Link_error[i, 1], Link_error[i, 2], Link_error[i, 3]]]
 
         table = Texttable()
         table.set_deco(Texttable.HEADER | Texttable.VLINES)
@@ -101,7 +131,7 @@ class FinOrController:
     def print_lumisection_mark(self):
 
         ls_trigg_mark = self.read_lumi_sec_trigger_mask_mark()
-        ls_veto_mark  = self.read_lumi_sec_veto_mask_mark()
+        ls_veto_mark = self.read_lumi_sec_veto_mask_mark()
         ls_prscl_mark = self.read_lumi_sec_prescale_mark(0)
         ls_prscl_prvw_mark = self.read_lumi_sec_prescale_mark(1)
 

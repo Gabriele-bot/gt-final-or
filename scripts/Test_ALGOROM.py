@@ -106,19 +106,21 @@ if args.test != 'algo-out':
 
     # Print errors
     HWtest.print_link_info()
-    
-temp = HWtest.hw.getNode("payload.ALGO_NAMES").readBlock(24576)
-HWtest.hw.dispatch()
 
+print("===============================================")
+print("=============TEST SIGNLE ALGO NAME=============")
+print("===============================================")
 
-for i in range(1536):
-    for j in range(16):
-        print(bin(temp[i*16+j]))
-        if j == 0:
-            result = struct.pack("I", temp[i*16])
-        else:
-            result = result + struct.pack("I", temp[i*16+j])
-    print(result)
+Algo_name = HWtest.get_algo_name(24)
+print("Algo name at index %d is: " % 24 + Algo_name)
+
+print("===============================================")
+print("===================TEST MENU===================")
+print("===============================================")
+
+Menu = HWtest.get_menu()
+for i in range(54):
+    print("Algo name at index %d is: " % i + Menu[i])
 
 
 
