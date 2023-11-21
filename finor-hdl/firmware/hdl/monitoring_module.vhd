@@ -48,6 +48,7 @@ entity monitoring_module is
         trigger_preview_o       : out std_logic_vector(NR_TRIGGERS - 1 downto 0);
         valid_trigger_o         : out std_logic;
         veto_o                  : out std_logic;
+        veto_preview_o          : out std_logic;
         start_of_orbit_o        : out std_logic;
         resync_o                : out std_logic
     );
@@ -159,10 +160,15 @@ architecture rtl of monitoring_module is
     signal supp_cal_BX_low               : std_logic_vector(11 downto 0);
     signal supp_cal_BX_high              : std_logic_vector(11 downto 0);
 
-    signal veto          : std_logic_vector(NR_ALGOS - 1 downto 0);
-    signal veto_out_s    : std_logic;
-    signal veto_cnt      : std_logic_vector(RATE_COUNTER_WIDTH - 1 DOWNTO 0);
-    signal veto_stat_reg : ipb_reg_v(0 downto 0);
+    signal veto       : std_logic_vector(NR_ALGOS - 1 downto 0);
+    signal veto_out_s : std_logic;
+    signal veto_cnt   : std_logic_vector(RATE_COUNTER_WIDTH - 1 DOWNTO 0);
+
+    signal veto_preview       : std_logic_vector(NR_ALGOS - 1 downto 0);
+    signal veto_preview_out_s : std_logic;
+    signal veto_preview_cnt   : std_logic_vector(RATE_COUNTER_WIDTH - 1 DOWNTO 0);
+
+    signal veto_stat_reg : ipb_reg_v(1 downto 0);
 
     signal trigger_out         : std_logic_vector(NR_TRIGGERS - 1 downto 0);
     signal trigger_out_preview : std_logic_vector(NR_TRIGGERS - 1 downto 0);
@@ -802,7 +808,8 @@ begin
                 algo_after_bxomask                  => algos_after_bxmask(i),
                 algo_after_prescaler                => algos_after_prescaler(i),
                 algo_after_prescaler_preview        => algos_after_prescaler_preview(i),
-                veto                                => veto(i)
+                veto                                => veto(i),
+                veto_preview                        => veto_preview(i)
             );
     end generate;
 
@@ -862,10 +869,23 @@ begin
             counter_o       => veto_cnt
         );
 
+    Veto_preview_rate_counter_i : entity work.algo_rate_counter
+        generic map(
+            COUNTER_WIDTH => RATE_COUNTER_WIDTH
+        )
+        port map(
+            clk40           => clk40,
+            rst40           => rst40,
+            sres_counter    => '0',
+            store_cnt_value => begin_lumi_per_del1,
+            algo_i          => veto_preview_out_s,
+            counter_o       => veto_preview_cnt
+        );
+
     Veto_cnt_regs : entity work.ipbus_ctrlreg_cdc_v
         generic map(
             N_CTRL         => 0,
-            N_STAT         => 1,
+            N_STAT         => 2,
             DEST_SYNC_FF   => 3,
             INIT_SYNC_FF   => 0,
             SIM_ASSERT_CHK => 0,
@@ -884,11 +904,13 @@ begin
         );
 
     veto_stat_reg(0)(RATE_COUNTER_WIDTH - 1 downto 0) <= veto_cnt;
+    veto_stat_reg(1)(RATE_COUNTER_WIDTH - 1 downto 0) <= veto_preview_cnt;
 
     veto_reg_p : process(clk40)
     begin
         if rising_edge(clk40) then
-            veto_out_s <= or veto;
+            veto_out_s         <= or veto;
+            veto_preview_out_s <= or veto_preview;
         end if;
     end process;
 
@@ -903,5 +925,6 @@ begin
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;
     veto_o            <= veto_out_s;
+    veto_preview_o    <= veto_preview_out_s;
 
 end architecture rtl;

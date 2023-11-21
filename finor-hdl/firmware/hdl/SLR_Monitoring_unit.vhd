@@ -43,6 +43,7 @@ entity SLR_Monitoring_unit is
         trigger_preview_o      : out std_logic_vector(N_TRIGG - 1 downto 0);
         trigger_valid_o        : out std_logic;
         veto_o                 : out std_logic;
+        veto_preview_o         : out std_logic;
         q_algos_o              : out lword;
         q_algos_after_bxmask_o : out lword;
         q_algos_after_prscl_o  : out lword
@@ -79,6 +80,7 @@ architecture RTL of SLR_Monitoring_unit is
     signal trigger_out         : std_logic_vector(N_TRIGG - 1 downto 0);
     signal trigger_out_preview : std_logic_vector(N_TRIGG - 1 downto 0);
     signal veto_out            : std_logic;
+    signal veto_preview_out    : std_logic;
 
     signal ctrs_first_align : ttc_stuff_array(4 downto 0);
 
@@ -223,15 +225,15 @@ begin
             NR_LINKS => 2
         )
         port map(
-            clk360      => clk360,
-            rst360      => rst360,
-            link_mask(0)   => or link_mask(NR_RIGHT_LINKS - 1 downto 0),
-            link_mask(1)   => or link_mask(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
-            rst_err     => rst_error,
-            align_err_o => align_error_last,
-            d(0)        => d_right_reg(1),
-            d(1)        => d_left_reg(1),
-            q           => d_res
+            clk360       => clk360,
+            rst360       => rst360,
+            link_mask(0) => or link_mask(NR_RIGHT_LINKS - 1 downto 0),
+            link_mask(1) => or link_mask(NR_LEFT_LINKS + NR_RIGHT_LINKS - 1 downto NR_RIGHT_LINKS),
+            rst_err      => rst_error,
+            align_err_o  => align_error_last,
+            d(0)         => d_right_reg(1),
+            d(1)         => d_left_reg(1),
+            q            => d_res
         );
 
     deser_i : entity work.Link_deserializer
@@ -352,6 +354,7 @@ begin
             trigger_preview_o       => trigger_out_preview,
             valid_trigger_o         => trigger_valid_o,
             veto_o                  => veto_out,
+            veto_preview_o          => veto_preview_out,
             start_of_orbit_o        => start_of_orbit_o,
             resync_o                => ttc_resync
         );
@@ -386,5 +389,6 @@ begin
     trigger_o         <= trigger_out;
     trigger_preview_o <= trigger_out_preview;
     veto_o            <= veto_out;
+    veto_preview_o    <= veto_preview_out;
 
 end architecture RTL;

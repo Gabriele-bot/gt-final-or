@@ -108,7 +108,7 @@ if args.test != 'algo-out':
     HWtest.print_link_info()
 
 print("===============================================")
-print("=============TEST SIGNLE ALGO NAME=============")
+print("=============TEST SINGLE ALGO NAME=============")
 print("===============================================")
 
 Algo_name = HWtest.get_algo_name(24)
@@ -119,7 +119,7 @@ print("===================TEST MENU===================")
 print("===============================================")
 
 Menu = HWtest.get_menu()
-for i in range(54):
+for i in range(64):
     print("Algo name at index %d is: " % i + Menu[i])
 
 

@@ -17,7 +17,8 @@
    </node>
   <node id="Veto_reg" address="0x90" fwinfo="endpoint;width=1">
     <node id="stat">
-      <node id="Veto_cnt"/>
+      <node id="veto_cnt"/>
+      <node id="veto_preview_cnt"/>
     </node>
   </node>  
 </node>

@@ -87,8 +87,10 @@ architecture rtl of emp_payload is
     signal trgg_prvw_conc : trigger_array_t;
 
     type SLRveto_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0);
-    signal veto_regs : SLRveto_t := (others => (others => '0'));
-    signal veto_conc : std_logic_vector(N_MONITOR_SLR - 1 downto 0);
+    signal veto_regs      : SLRveto_t := (others => (others => '0'));
+    signal veto_prvw_regs : SLRveto_t := (others => (others => '0'));
+    signal veto_conc      : std_logic_vector(N_MONITOR_SLR - 1 downto 0);
+    signal veto_prvw_conc : std_logic_vector(N_MONITOR_SLR - 1 downto 0);
 
     signal start_of_orbit_regs : std_logic_vector(SLR_CROSSING_LATENCY_TRIGGERBITS downto 0) := (others => '0');
 
@@ -133,21 +135,20 @@ begin
     assert N_MONITOR_SLR /= 0
     report "Selected number Monoriting SLR cannot be 0"
     severity FAILURE;
-    
+
     Menu_ROM : entity work.ipbus_file_init_menu_sprom
         generic map(
             DATA_FILE     => "menu_algo_string.mif",
-            FILE_LENGTH   => N_ALGOS * integer(ALGONAME_MAX_CHARS/4),
-            ADDR_WIDTH    => log2c(N_ALGOS * integer(ALGONAME_MAX_CHARS/4)), 
+            FILE_LENGTH   => N_ALGOS * integer(ALGONAME_MAX_CHARS / 4),
+            ADDR_WIDTH    => log2c(N_ALGOS * integer(ALGONAME_MAX_CHARS / 4)),
             DEFAULT_VALUE => X"00100000",
-            DATA_WIDTH    => 8*4
+            DATA_WIDTH    => 8 * 4
         )
         port map(
             clk     => clk,
             ipb_in  => ipb_to_slaves(N_SLV_ALGO_NAMES),
             ipb_out => ipb_from_slaves(N_SLV_ALGO_NAMES)
         );
-    
 
     fabric_i : entity work.ipbus_fabric_sel
         generic map(
@@ -223,6 +224,7 @@ begin
                 trigger_preview_o      => trgg_prvw_regs(2)(0),
                 trigger_valid_o        => valid_out_regs(2)(0),
                 veto_o                 => veto_regs(2)(0),
+                veto_preview_o         => veto_prvw_regs(2)(0),
                 q_algos_o              => algos_link_regs(2)(0),
                 q_algos_after_bxmask_o => algos_bxmask_link_regs(2)(0),
                 q_algos_after_prscl_o  => algos_presc_link_regs(2)(0)
@@ -259,6 +261,7 @@ begin
                 trigger_preview_o      => trgg_prvw_regs(1)(0),
                 trigger_valid_o        => valid_out_regs(1)(0),
                 veto_o                 => veto_regs(1)(0),
+                veto_preview_o         => veto_prvw_regs(1)(0),
                 q_algos_o              => algos_link_regs(1)(0),
                 q_algos_after_bxmask_o => algos_bxmask_link_regs(1)(0),
                 q_algos_after_prscl_o  => algos_presc_link_regs(1)(0)
@@ -295,6 +298,7 @@ begin
             trigger_preview_o      => trgg_prvw_regs(0)(0),
             trigger_valid_o        => valid_out_regs(0)(0),
             veto_o                 => veto_regs(0)(0),
+            veto_preview_o         => veto_prvw_regs(0)(0),
             q_algos_o              => algos_link_regs(0)(0),
             q_algos_after_bxmask_o => algos_bxmask_link_regs(0)(0),
             q_algos_after_prscl_o  => algos_presc_link_regs(0)(0)
@@ -309,12 +313,14 @@ begin
                 trgg_regs(i)(trgg_regs(i)'high downto 1)           <= trgg_regs(i)(trgg_regs(i)'high - 1 downto 0);
                 trgg_prvw_regs(i)(trgg_prvw_regs(i)'high downto 1) <= trgg_prvw_regs(i)(trgg_prvw_regs(i)'high - 1 downto 0);
 
-                veto_regs(i)(veto_regs(i)'high downto 1) <= veto_regs(i)(veto_regs(i)'high - 1 downto 0);
+                veto_regs(i)(veto_regs(i)'high downto 1)           <= veto_regs(i)(veto_regs(i)'high - 1 downto 0);
+                veto_prvw_regs(i)(veto_prvw_regs(i)'high downto 1) <= veto_prvw_regs(i)(veto_prvw_regs(i)'high - 1 downto 0);
             end if;
         end process;
         trgg_conc(i)      <= trgg_regs(i)(trgg_regs(i)'high);
         trgg_prvw_conc(i) <= trgg_prvw_regs(i)(trgg_prvw_regs(i)'high);
         veto_conc(i)      <= veto_regs(i)(veto_regs(i)'high);
+        veto_prvw_conc(i) <= veto_prvw_regs(i)(veto_prvw_regs(i)'high);
     end generate;
 
     soo_cross_SLR : process(clk_p)
@@ -356,6 +362,7 @@ begin
             trgg             => trgg_conc,
             trgg_prvw        => trgg_prvw_conc,
             veto             => veto_conc,
+            veto_prvw        => veto_prvw_conc,
             q(0)             => q(OUTPUT_CHANNEL)
         );
 

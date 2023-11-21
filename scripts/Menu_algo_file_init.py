@@ -8,7 +8,7 @@ def string_to_binary_array_method1(input_string):
 
 
 def pack_in4char(string):
-    string_padded = string.ljust(64)
+    string_padded = string.ljust(64, "\0")
     bin_char = string_to_binary_array_method1(string_padded)
     bin_char_32b = []
     for i in range(16):

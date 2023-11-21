@@ -89,7 +89,7 @@ class FinOrController:
                     algo_name = struct.pack("I", ROM_content[i * 16])
                 else:
                     algo_name = algo_name + struct.pack("I", ROM_content[i * 16 + j])
-            menu.append(algo_name.decode('utf-8').replace(" ", ""))
+            menu.append(algo_name.decode('utf-8'))
 
         return menu
 
@@ -275,16 +275,22 @@ class FinOrController:
 
         return np.array(cnt, dtype=np.uint32)
 
-    def read_veto_cnt(self):
-        cnt = self.hw.getNode("payload.SLR_FINOR.Veto_reg.stat.Veto_cnt").read()
+    def read_veto_cnt(self, sel=0):
+        if sel == 0:
+            cnt = self.hw.getNode("payload.SLR_FINOR.Veto_reg.stat.veto_cnt").read()
+        elif sel == 1:
+            cnt = self.hw.getNode("payload.SLR_FINOR.Veto_reg.stat.veto_preview_cnt").read()
         self.hw.dispatch()
 
         return np.uint32(cnt)
 
-    def read_partial_veto_cnt(self, SLR):
+    def read_partial_veto_cnt(self, SLR, sel=0):
         if self.n_slr < SLR < 0:
             raise Exception("SLR number not valid")
-        cnt = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.Veto_reg.stat.Veto_cnt" % int(SLR)).read()
+        if sel == 0:
+            cnt = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.Veto_reg.stat.veto_cnt" % int(SLR)).read()
+        elif sel == 1:
+            cnt = self.hw.getNode("payload.SLRn%d_monitor.monitoring_module.Veto_reg.stat.veto_preview_cnt" % int(SLR)).read()
         self.hw.dispatch()
 
         return np.uint32(cnt)

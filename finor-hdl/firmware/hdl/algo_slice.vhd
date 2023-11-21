@@ -55,7 +55,8 @@ entity algo_slice is
         algo_after_bxomask                  : out std_logic;
         algo_after_prescaler                : out std_logic;
         algo_after_prescaler_preview        : out std_logic;
-        veto                                : out std_logic
+        veto                                : out std_logic;
+        veto_preview                        : out std_logic
     );
 end algo_slice;
 
@@ -137,8 +138,6 @@ begin
             prescaled_algo_o            => algo_after_prescaler_preview_int
         );
 
-    veto <= algo_after_prescaler_int and veto_mask;
-
     rate_cnt_after_prescaler_preview_i : entity work.algo_rate_counter
         generic map(
             COUNTER_WIDTH => RATE_COUNTER_WIDTH
@@ -152,6 +151,9 @@ begin
             algo_i          => algo_after_prescaler_preview_int,
             counter_o       => rate_cnt_after_prescaler_preview
         );
+
+    veto         <= algo_after_prescaler_int and veto_mask;
+    veto_preview <= algo_after_prescaler_preview_int and veto_mask;
 
     rate_cnt_post_dead_time_i : entity work.algo_rate_counter_pdt
         generic map(
