@@ -127,7 +127,7 @@ package P2GT_finor_pkg is
     constant VETO_MASK_FILE             : string := "veto_mask_default.mif";
     constant TRIGGER_TYPE_MASK_FILE     : string := "trigger_mask_default.mif";
     constant BXMASK_32b_FILE            : string := "bxmask_113bx_window.mif";
-    constant PRESCALE_FACTORS_INIT_FILE : string := "Pre_scale_init.mif";
+    constant PRESCALE_FACTORS_INIT_FILE : string := "pre_scale_init.mif";
 
     --=================== FUNCTIONS ===========================================================================
 
