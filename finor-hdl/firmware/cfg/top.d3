@@ -26,6 +26,7 @@ src RAM_init_files/bxmask_113bx_window.mif
 src RAM_init_files/trigger_mask_default.mif
 src RAM_init_files/menu_algo_string.mif
 src RAM_init_files/pre_scale_init.mif
+src RAM_init_files/veto_mask_default.mif
 
 src --vhdl2008 BGO_sync.vhd
 src --vhdl2008 Counter_module.vhd

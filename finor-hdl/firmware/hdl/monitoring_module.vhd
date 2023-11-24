@@ -75,8 +75,12 @@ architecture rtl of monitoring_module is
     signal valid_algos_delayed      : std_logic;
 
     -- prescale factor ipb regs
-    signal prscl_fct      : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := InitPrescaleFactorFromFile(PRESCALE_FACTORS_INIT_FILE);
-    signal prscl_fct_prvw : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := InitPrescaleFactorFromFile(PRESCALE_FACTORS_INIT_FILE);
+    constant PRESCALE_FACTOR_INIT_ARRAY : prescale_factor_ipbreg_array := InitPrescaleFactorFromFile(PRESCALE_FACTORS_INIT_FILE);
+
+    signal prscl_fct              : prescale_factor_ipbreg_array;
+    signal prscl_fct_prvw         : prescale_factor_ipbreg_array;
+    signal prscl_fct_updated      : prescale_factor_array(NR_ALGOS - 1 downto 0);
+    signal prscl_fct_prvw_updated : prescale_factor_array(NR_ALGOS - 1 downto 0);
 
     signal rst_prescale_counters                   : std_logic;
     signal rst_prescale_preview_counters           : std_logic;
@@ -436,6 +440,35 @@ begin
         end if;
     end process;
 
+    -- update value of prescale factors 
+    prscl_update_g : for i in 0 to NR_ALGOS - 1 generate
+        prscl_update_i : entity work.update_process
+            generic map(
+                WIDTH      => PRESCALE_FACTOR_WIDTH,
+                INIT_VALUE => PRESCALE_FACTOR_INIT_ARRAY(i)
+            )
+            port map(
+                clk                  => clk40,
+                request_update_pulse => request_factor_update,
+                update_pulse         => end_lumi_per,
+                data_i               => prscl_fct(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
+                data_o               => prscl_fct_updated(i)
+            );
+
+        prscl_prvw_update_i : entity work.update_process
+            generic map(
+                WIDTH      => PRESCALE_FACTOR_WIDTH,
+                INIT_VALUE => PRESCALE_FACTOR_INIT_ARRAY(i)
+            )
+            port map(
+                clk                  => clk40,
+                request_update_pulse => request_factor_preview_update,
+                update_pulse         => end_lumi_per,
+                data_i               => prscl_fct_prvw(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
+                data_o               => prscl_fct_prvw_updated(i)
+            );
+    end generate;
+
     ----------------------------------------------------------------------------------
     ---------------RATE COUNTER BEFORE PRE-SCALE REGISTERS----------------------------
     ----------------------------------------------------------------------------------
@@ -768,37 +801,34 @@ begin
             generic map(
                 EXCLUDE_ALGO_VETOED   => TRUE,
                 RATE_COUNTER_WIDTH    => RATE_COUNTER_WIDTH,
-                PRESCALE_FACTOR_WIDTH => PRESCALE_FACTOR_WIDTH,
-                PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT
+                PRESCALE_FACTOR_WIDTH => PRESCALE_FACTOR_WIDTH
             )
             port map(
-                clk40                               => clk40,
-                rst40                               => rst40,
-                sres_algo_rate_counter              => '0',
-                sres_algo_pre_scaler                => rst_prescale_counters,
-                sres_algo_pre_scaler_preview        => rst_prescale_preview_counters,
-                sres_algo_post_dead_time_counter    => '0',
-                suppress_cal_trigger                => suppress_cal_trigger,
-                l1a                                 => ctrs_internal.l1a, --TODO modify this
-                request_update_factor_pulse         => request_factor_update,
-                request_update_factor_preview_pulse => request_factor_preview_update,
-                begin_lumi_per                      => begin_lumi_per,
-                end_lumi_per                        => end_lumi_per,
-                algo_i                              => algos_in(i) and valid_algos_in,
-                algo_after_prscl_del_i              => algos_delayed(i) and valid_algos_delayed,
-                prescale_factor                     => prscl_fct(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
-                prescale_factor_preview             => prscl_fct_prvw(i)(PRESCALE_FACTOR_WIDTH - 1 downto 0),
-                algo_bx_mask                        => algo_bx_mask_mem_out(i),
-                veto_mask                           => veto_mask_int(i),
-                rate_cnt_before_prescaler           => rate_cnt_before_prescaler(i),
-                rate_cnt_after_prescaler            => rate_cnt_after_prescaler(i),
-                rate_cnt_after_prescaler_preview    => rate_cnt_after_prescaler_preview(i),
-                rate_cnt_post_dead_time             => rate_cnt_post_dead_time(i),
-                algo_after_bxomask                  => algos_after_bxmask(i),
-                algo_after_prescaler                => algos_after_prescaler(i),
-                algo_after_prescaler_preview        => algos_after_prescaler_preview(i),
-                veto                                => veto(i),
-                veto_preview                        => veto_preview(i)
+                clk40                            => clk40,
+                rst40                            => rst40,
+                sres_algo_rate_counter           => '0',
+                sres_algo_pre_scaler             => rst_prescale_counters,
+                sres_algo_pre_scaler_preview     => rst_prescale_preview_counters,
+                sres_algo_post_dead_time_counter => '0',
+                suppress_cal_trigger             => suppress_cal_trigger,
+                l1a                              => ctrs_internal.l1a, --TODO modify this
+                begin_lumi_per                   => begin_lumi_per,
+                end_lumi_per                     => end_lumi_per,
+                algo_i                           => algos_in(i) and valid_algos_in,
+                algo_after_prscl_del_i           => algos_delayed(i) and valid_algos_delayed,
+                prescale_factor                  => prscl_fct_updated(i),
+                prescale_factor_preview          => prscl_fct_prvw_updated(i),
+                algo_bx_mask                     => algo_bx_mask_mem_out(i),
+                veto_mask                        => veto_mask_int(i),
+                rate_cnt_before_prescaler        => rate_cnt_before_prescaler(i),
+                rate_cnt_after_prescaler         => rate_cnt_after_prescaler(i),
+                rate_cnt_after_prescaler_preview => rate_cnt_after_prescaler_preview(i),
+                rate_cnt_post_dead_time          => rate_cnt_post_dead_time(i),
+                algo_after_bxomask               => algos_after_bxmask(i),
+                algo_after_prescaler             => algos_after_prescaler(i),
+                algo_after_prescaler_preview     => algos_after_prescaler_preview(i),
+                veto                             => veto(i),
+                veto_preview                     => veto_preview(i)
             );
     end generate;
 

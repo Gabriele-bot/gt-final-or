@@ -5,13 +5,6 @@
 -- Created by Gabriele Bortolato 14-03-2022
 -- Code based on the MP7 GT firmware (https://github.com/cms-l1-globaltrigger/mp7_ugt_legacy/tree/master/firmware) 
 
--- Resources utilization
--- |       | Synth |  Impl |
--- |-------|-------|-------|
--- | Carry |       |       |
--- | LUT   |  335  |  336  |
--- | FF    |  412  |  412  |
-
 library ieee;
 use ieee.std_logic_1164.all;
 use IEEE.numeric_std.all;
@@ -24,8 +17,7 @@ entity algo_slice is
     generic(
         EXCLUDE_ALGO_VETOED   : boolean                       := TRUE;
         RATE_COUNTER_WIDTH    : integer                       := 32;
-        PRESCALE_FACTOR_WIDTH : integer                       := 24;
-        PRESCALE_FACTOR_INIT  : std_logic_vector(31 DOWNTO 0) := X"00000064" --1.00
+        PRESCALE_FACTOR_WIDTH : integer                       := 24
     );
     port(
         --clocks
@@ -38,8 +30,6 @@ entity algo_slice is
         sres_algo_post_dead_time_counter    : in  std_logic;
         suppress_cal_trigger                : in  std_logic; -- pos. active signal: '1' = suppression of algos caused by calibration trigger !!!
         l1a                                 : in  std_logic;
-        request_update_factor_pulse         : in  std_logic;
-        request_update_factor_preview_pulse : in  std_logic;
         begin_lumi_per                      : in  std_logic;
         end_lumi_per                        : in  std_logic;
         algo_i                              : in  std_logic;
@@ -95,15 +85,13 @@ begin
     prescaler_i : entity work.algo_pre_scaler
         generic map(
             PRESCALE_FACTOR_WIDTH => PRESCALE_FACTOR_WIDTH,
-            PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT
+            PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT_VALUE_STD
         )
         port map(
             clk40                       => clk40,
             rst40                       => rst40,
             sres_counter                => sres_algo_pre_scaler,
             algo_i                      => algo_after_algo_bx_mask_int,
-            request_update_factor_pulse => request_update_factor_pulse,
-            update_factor_pulse         => end_lumi_per,
             prescale_factor             => prescale_factor,
             prescaled_algo_o            => algo_after_prescaler_int
         );
@@ -125,15 +113,13 @@ begin
     prescaler_preview_i : entity work.algo_pre_scaler
         generic map(
             PRESCALE_FACTOR_WIDTH => PRESCALE_FACTOR_WIDTH,
-            PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT
+            PRESCALE_FACTOR_INIT  => PRESCALE_FACTOR_INIT_VALUE_STD
         )
         port map(
             clk40                       => clk40,
             rst40                       => rst40,
             sres_counter                => sres_algo_pre_scaler_preview,
             algo_i                      => algo_after_algo_bx_mask_int,
-            request_update_factor_pulse => request_update_factor_preview_pulse,
-            update_factor_pulse         => end_lumi_per,
             prescale_factor             => prescale_factor_preview,
             prescaled_algo_o            => algo_after_prescaler_preview_int
         );
