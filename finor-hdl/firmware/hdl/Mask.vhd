@@ -23,27 +23,27 @@ end entity Mask;
 
 architecture RTL of Mask is
 
-    constant PASS_THROUGH_MASK : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '1');
+    constant INIT_TRIGGER_TYPE_MASK : mask_arr                                := InitTriggMaskFromFile(TRIGGER_TYPE_MASK_FILE);
 
     signal trigger_s : std_logic_vector(N_TRIGG - 1 downto 0) := (others => '0');
-    signal valid_s   : std_logic;
-    signal masks_int : mask_arr  := (others  => (others => '0'));
-
+    signal valid_s                  : std_logic;
+    signal masks_int                : mask_arr                                := InitTriggMaskFromFile(TRIGGER_TYPE_MASK_FILE);
+    
 begin
 
     gen_masks_update_l : for i in 0 to N_TRIGG - 1 generate
         masks_update_i : entity work.update_process
-            generic map(
-                WIDTH      => NR_ALGOS,
-                INIT_VALUE => PASS_THROUGH_MASK
-            )
-            port map(
-                clk                  => clk,
-                request_update_pulse => request_masks_update_pulse,
-                update_pulse         => update_pulse,
-                data_i               => masks(i)(NR_ALGOS - 1 downto 0),
-                data_o               => masks_int(i)(NR_ALGOS - 1 downto 0)
-            );
+                    generic map(
+                        WIDTH      => NR_ALGOS,
+                        INIT_VALUE => INIT_TRIGGER_TYPE_MASK(i)
+                    )
+                    port map(
+                        clk                  => clk,
+                        request_update_pulse => request_masks_update_pulse,
+                        update_pulse         => update_pulse,
+                        data_i               => masks(i)(NR_ALGOS - 1 downto 0),
+                        data_o               => masks_int(i)(NR_ALGOS - 1 downto 0)
+                    );
     end generate;
 
     trigger_out_l : for i in 0 to N_TRIGG - 1 generate

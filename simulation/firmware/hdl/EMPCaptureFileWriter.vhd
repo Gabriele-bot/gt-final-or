@@ -31,7 +31,7 @@ entity EMPCaptureFileWriter is
     );
   port(
     clk      : in std_logic;
-    rst      : in std_logic;
+    rst      : in std_logic  := '1';
     pctr     : in pctr_t;
     bctr     : in bctr_t;
     LinkData : in ldata(N_LINKS - 1 downto 0) := (others => LWORD_NULL)
@@ -41,7 +41,7 @@ end entity EMPCaptureFileWriter;
 --! @brief Architecture definition for entity EMPCaptureFileWriter
 --! @details Detailed description
 architecture behavioral of EMPCaptureFileWriter is
-
+    
   type CurrentWriteState_t is(Uninitialized, Payload);
 
 -- ----------------------------------------------------------
@@ -143,11 +143,10 @@ begin
     variable LinkData_d         : ldata(N_LINKS-1 downto 0)            := (others => LWORD_NULL);
     variable IsHeader           : std_logic_vector(N_LINKS-1 downto 0) := (others => '0');
   begin
-
+    
     if rising_edge(clk) then
-
+        
       lFrame := lClkCount-gCaptureOffset;
-
       if (lFrame >= 0 and lFrame < gCaptureLength) then
         if ( gInsertHeader ) then
           for q IN 0 to N_LINKS-1 loop
@@ -163,10 +162,10 @@ begin
       -- TODO Do we want to write (or overwrite) the outputs at each orbit?
       -- for now I just commented the line
       --if (rst = '1') or (pctr = "1000" and bctr = std_logic_vector(to_unsigned(LHC_BUNCH_COUNT-1, bctr'length))) then
-      if (rst = '1') then  
-        lClkCount := -1;
-      else
+      if (rst = '0') then  
         lClkCount := lClkCount + 1;
+      else
+        lClkCount := -1;
       end if;
 
     end if;

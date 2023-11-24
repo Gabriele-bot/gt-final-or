@@ -25,7 +25,7 @@ entity algo_pre_scaler is
         request_update_factor_pulse : in std_logic;
         update_factor_pulse         : in std_logic;
         
-        prescale_factor  : in std_logic_vector (PRESCALE_FACTOR_WIDTH-1 DOWNTO 0); -- why counter_width ???
+        prescale_factor  : in std_logic_vector (PRESCALE_FACTOR_WIDTH-1 DOWNTO 0);
         
         prescaled_algo_o            : out std_logic;
         -- output for simulation

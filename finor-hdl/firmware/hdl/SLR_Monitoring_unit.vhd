@@ -23,7 +23,8 @@ entity SLR_Monitoring_unit is
         NR_RIGHT_LINKS        : natural := INPUT_R_LINKS_SLR;
         NR_LEFT_LINKS         : natural := INPUT_L_LINKS_SLR;
         BEGIN_LUMI_TOGGLE_BIT : natural := BEGIN_LUMI_SEC_BIT;
-        MAX_DELAY             : natural := MAX_DELAY_PDT
+        MAX_DELAY             : natural := MAX_DELAY_PDT;
+        TMUX2_OUT             : boolean := FALSE
     );
     port(
         clk                    : in  std_logic;
@@ -371,6 +372,9 @@ begin
     end generate;
 
     output_links_data_i : entity work.algobits_out
+        generic map(
+            TMUX2 => TMUX2_OUT
+        )
         port map(
             clk360               => clk360,
             rst360               => rst360,

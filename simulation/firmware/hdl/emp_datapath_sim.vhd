@@ -118,7 +118,7 @@ architecture RTL of emp_datapath_sim is
 
     --signal tmt_sync_i, tmt_sync                                                : tmt_sync_t;
     signal rst_i, bctr_lock, bc0, oc0, go, bmax : std_logic;
-    signal rst_p_del_array                      : std_logic_vector(9 downto 0) := (others => '0');
+    signal rst_p_del_array                      : std_logic_vector(9 downto 0) := (others => '1');
     signal clr                                  : std_logic;
     --signal cap_bus_i, cap_bus                                                : daq_cap_bus;
     signal pctr                                 : pctr_t;

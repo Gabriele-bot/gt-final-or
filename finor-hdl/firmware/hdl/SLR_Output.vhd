@@ -22,7 +22,8 @@ entity SLR_Output is
     generic(
         NR_TRIGGERS           : natural := N_TRIGG;
         BEGIN_LUMI_TOGGLE_BIT : natural := 18;
-        MAX_DELAY             : natural := MAX_DELAY_PDT
+        MAX_DELAY             : natural := MAX_DELAY_PDT;
+        TMUX2_OUT             : boolean := FALSE
     );
     port(
         clk              : in  std_logic; -- ipbus signals
@@ -54,7 +55,7 @@ architecture RTL of SLR_Output is
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
     signal ipb_from_slaves : ipb_rbus_array(N_SLAVES - 1 downto 0);
 
-    signal frame_cntr     : integer range 0 to 8;
+    signal frame_cntr     : integer range 0 to 17;
     signal start_bit      : std_logic;
     signal start_of_orbit : std_logic;
     signal last           : std_logic;
@@ -127,24 +128,48 @@ architecture RTL of SLR_Output is
 
 begin
 
-    frame_counter_p : process(clk360)
-    begin
-        if rising_edge(clk360) then
-            valid_in_del <= valid_in;
-            if valid_in = '0' then
-                frame_cntr <= 0;
-            elsif frame_cntr < 8 then
-                frame_cntr <= frame_cntr + 1;
-            else
-                frame_cntr <= 0;
+    -- frame counter
+    tmux2_frame_counter_g : if TMUX2_OUT generate
+        frame_counter_TM2_p : process(clk360)
+        begin
+            if rising_edge(clk360) then -- rising clock edge
+                valid_in_del <= valid_in;
+                if valid_in = '0' then
+                    frame_cntr <= 0;
+                elsif frame_cntr < 17 then
+                    frame_cntr <= frame_cntr + 1;
+                else
+                    frame_cntr <= 0;
+                end if;
             end if;
-        end if;
-    end process frame_counter_p;
+        end process frame_counter_TM2_p;
+    else generate
+        frame_counter_p : process(clk360)
+        begin
+            if rising_edge(clk360) then
+                valid_in_del <= valid_in;
+                if valid_in = '0' then
+                    frame_cntr <= 0;
+                elsif frame_cntr < 8 then
+                    frame_cntr <= frame_cntr + 1;
+                else
+                    frame_cntr <= 0;
+                end if;
+            end if;
+        end process frame_counter_p;
+    end generate;
 
-    start_bit      <= '1' when (frame_cntr = 0 and valid_in = '1') else '0';
-    start_of_orbit <= '1' when (frame_cntr = 0 and start_of_orbit_i = '1') else '0';
-    last           <= '1' when (frame_cntr = 8 and valid_in = '1') else '0';
-    valid          <= valid_in;
+    tmux2_out_g : if TMUX2_OUT generate
+        start_bit      <= '1' when (frame_cntr = 0 and valid_in = '1') else '0';
+        start_of_orbit <= '1' when (frame_cntr = 0 and start_of_orbit_i = '1') else '0';
+        last           <= '1' when (frame_cntr = 17 and valid_in = '1') else '0';
+        valid          <= valid_in;
+    else generate
+        start_bit      <= '1' when (frame_cntr = 0 and valid_in = '1') else '0';
+        start_of_orbit <= '1' when (frame_cntr = 0 and start_of_orbit_i = '1') else '0';
+        last           <= '1' when (frame_cntr = 8 and valid_in = '1') else '0';
+        valid          <= valid_in;
+    end generate;
 
     fabric_i : entity work.ipbus_fabric_sel
         generic map(
@@ -771,11 +796,18 @@ begin
             q       => open,
             addr    => addr
         );
-
-    link_out.data(NR_TRIGGERS - 1 downto 0)                   <= Final_OR when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(NR_TRIGGERS * 2 - 1 downto NR_TRIGGERS)     <= Final_OR_preview when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(NR_TRIGGERS * 3 - 1 downto 2 * NR_TRIGGERS) <= Final_OR_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
-    link_out.data(NR_TRIGGERS * 4 - 1 downto 3 * NR_TRIGGERS) <= Final_OR_preview_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    
+    tmux2_data_out_g : if TMUX2_OUT generate
+        link_out.data(NR_TRIGGERS - 1 downto 0)                   <= Final_OR when (frame_cntr = 0 or frame_cntr = 9) and valid_in = '1' else (others => '0');
+        link_out.data(NR_TRIGGERS * 2 - 1 downto NR_TRIGGERS)     <= Final_OR_preview when (frame_cntr = 0 or frame_cntr = 9) and valid_in = '1' else (others => '0');
+        link_out.data(NR_TRIGGERS * 3 - 1 downto 2 * NR_TRIGGERS) <= Final_OR_with_veto when (frame_cntr = 0 or frame_cntr = 9) and valid_in = '1' else (others => '0');
+        link_out.data(NR_TRIGGERS * 4 - 1 downto 3 * NR_TRIGGERS) <= Final_OR_preview_with_veto when (frame_cntr = 0 or frame_cntr = 9) and valid_in = '1' else (others => '0');
+    else generate
+        link_out.data(NR_TRIGGERS - 1 downto 0)                   <= Final_OR when frame_cntr = 0  and valid_in = '1' else (others => '0');
+        link_out.data(NR_TRIGGERS * 2 - 1 downto NR_TRIGGERS)     <= Final_OR_preview when frame_cntr = 0 and valid_in = '1' else (others => '0');
+        link_out.data(NR_TRIGGERS * 3 - 1 downto 2 * NR_TRIGGERS) <= Final_OR_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
+        link_out.data(NR_TRIGGERS * 4 - 1 downto 3 * NR_TRIGGERS) <= Final_OR_preview_with_veto when frame_cntr = 0 and valid_in = '1' else (others => '0');
+    end generate;
     link_out.data(LWORD_WIDTH - 1 downto 4 * NR_TRIGGERS)     <= (others => '0');
 
     link_out.strobe         <= not rst360;

@@ -18,6 +18,9 @@ use work.P2GT_finor_pkg.all;
 use work.math_pkg.all;
 
 entity algobits_out is
+    generic(
+        TMUX2 : boolean := FALSE
+    );
     port(
         clk360               : in  std_logic;
         rst360               : in  std_logic;
@@ -66,6 +69,9 @@ begin
     end process;
 
     mux_algos_before_prscl_out : entity work.mux
+        generic map(
+            TMUX2 => TMUX2
+        )
         port map(
             clk360      => clk360,
             rst360      => rst360,
@@ -78,6 +84,9 @@ begin
         );
 
     mux_algos_after_prscl_out : entity work.mux
+        generic map(
+            TMUX2 => TMUX2
+        )
         port map(
             clk360      => clk360,
             rst360      => rst360,
@@ -90,6 +99,9 @@ begin
         );
 
     mux_algos_after_prscl_prvw_out : entity work.mux
+        generic map(
+            TMUX2 => TMUX2
+        )
         port map(
             clk360      => clk360,
             rst360      => rst360,

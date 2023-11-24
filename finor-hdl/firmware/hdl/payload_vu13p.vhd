@@ -205,7 +205,8 @@ begin
                 NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
                 NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
                 BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
-                MAX_DELAY             => MAX_DELAY_PDT
+                MAX_DELAY             => MAX_DELAY_PDT,
+                TMUX2_OUT             => TRUE
             )
             port map(
                 clk                    => clk,
@@ -242,7 +243,8 @@ begin
                 NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
                 NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
                 BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
-                MAX_DELAY             => MAX_DELAY_PDT
+                MAX_DELAY             => MAX_DELAY_PDT,
+                TMUX2_OUT             => TRUE
             )
             port map(
                 clk                    => clk,
@@ -279,7 +281,8 @@ begin
             NR_RIGHT_LINKS        => INPUT_R_LINKS_SLR,
             NR_LEFT_LINKS         => INPUT_L_LINKS_SLR,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
-            MAX_DELAY             => MAX_DELAY_PDT
+            MAX_DELAY             => MAX_DELAY_PDT,
+            TMUX2_OUT             => TRUE
         )
         port map(
             clk                    => clk,
@@ -345,7 +348,8 @@ begin
         generic map(
             NR_TRIGGERS           => N_TRIGG,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
-            MAX_DELAY             => MAX_DELAY_PDT
+            MAX_DELAY             => MAX_DELAY_PDT,
+            TMUX2_OUT             => TRUE
         )
         port map(
             clk              => clk,

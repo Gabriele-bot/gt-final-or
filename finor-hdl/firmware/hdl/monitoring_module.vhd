@@ -56,9 +56,10 @@ end monitoring_module;
 
 architecture rtl of monitoring_module is
 
-    constant NULL_VETO_MASK : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
-    constant N_CTRL         : natural                                 := 2;
-    constant N_STAT         : natural                                 := 5;
+    constant INIT_VETO_MASK : veto_mask_arr := InitVetoMaskFromFile(VETO_MASK_FILE);
+
+    constant N_CTRL : natural := 2;
+    constant N_STAT : natural := 5;
 
     -- fabric signals        
     signal ipb_to_slaves   : ipb_wbus_array(N_SLAVES - 1 downto 0);
@@ -74,8 +75,8 @@ architecture rtl of monitoring_module is
     signal valid_algos_delayed      : std_logic;
 
     -- prescale factor ipb regs
-    signal prscl_fct      : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
-    signal prscl_fct_prvw : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := (others => PRESCALE_FACTOR_INIT);
+    signal prscl_fct      : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := InitPrescaleFactorFromFile(PRESCALE_FACTORS_INIT_FILE);
+    signal prscl_fct_prvw : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0) := InitPrescaleFactorFromFile(PRESCALE_FACTORS_INIT_FILE);
 
     signal rst_prescale_counters                   : std_logic;
     signal rst_prescale_preview_counters           : std_logic;
@@ -88,8 +89,11 @@ architecture rtl of monitoring_module is
     signal rate_cnt_after_prescaler_preview : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0);
     signal rate_cnt_post_dead_time          : ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0);
 
-    signal masks_ipbus_regs : ipb_reg_v(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS - 1 downto 0) := (others => (others => '1'));
-    signal masks            : mask_arr                                                   := (others => (others => '1'));
+    signal masks_ipbus_regs : ipb_reg_v(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS - 1 downto 0) := (N_SLR_ALGOS_MAX / 32 - 1 downto 0 => (others => '1'),
+                                                                                             others                            => (others => '0'));
+    -- default value: all triggers belong to TRIGGER_TYPE_1 (standard physics)
+    signal masks            : mask_arr                                                   := (0      => (others => '1'),
+                                                                                             others => (others => '0'));
 
     signal veto_ipbus_regs : ipb_reg_v(N_SLR_ALGOS_MAX / 32 - 1 downto 0)   := (others => (others => '0'));
     signal veto_mask       : std_logic_vector(N_SLR_ALGOS_MAX - 1 downto 0) := (others => '0');
@@ -601,11 +605,12 @@ begin
     ---------------TRIGGER MASKS REGISTERS--------------------------------------------
     ----------------------------------------------------------------------------------
 
-    masks_regs : entity work.ipbus_initialized_dpram
+    masks_regs : entity work.ipbus_file_init_dpram
         generic map(
-            INIT_VALUE => X"ffffffff",
-            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS),
-            DATA_WIDTH => 32
+            DATA_FILE     => TRIGGER_TYPE_MASK_FILE,
+            DEFAULT_VALUE => X"00000000",
+            ADDR_WIDTH    => log2c(N_SLR_ALGOS_MAX / 32 * NR_TRIGGERS),
+            DATA_WIDTH    => 32
         )
         port map(
             clk     => clk,
@@ -634,15 +639,6 @@ begin
                 if rising_edge(clk40) then
                     if (ready_mask = '1' and ready_mask_1 = '0') then --rising edge
                         masks(i)((j + 1) * 32 - 1 downto j * 32) <= masks_ipbus_regs(i * (N_SLR_ALGOS_MAX / 32) + j);
-                        --masks(i) <= (masks_ipbus_regs(i * 18 + 17), masks_ipbus_regs(i * 18 + 16),
-                        --             masks_ipbus_regs(i * 18 + 15), masks_ipbus_regs(i * 18 + 14),
-                        --             masks_ipbus_regs(i * 18 + 13), masks_ipbus_regs(i * 18 + 12),
-                        --             masks_ipbus_regs(i * 18 + 11), masks_ipbus_regs(i * 18 + 10),
-                        --             masks_ipbus_regs(i * 18 + 9), masks_ipbus_regs(i * 18 + 8),
-                        --             masks_ipbus_regs(i * 18 + 7), masks_ipbus_regs(i * 18 + 6),
-                        --             masks_ipbus_regs(i * 18 + 5), masks_ipbus_regs(i * 18 + 4),
-                        --             masks_ipbus_regs(i * 18 + 3), masks_ipbus_regs(i * 18 + 2),
-                        --             masks_ipbus_regs(i * 18 + 1), masks_ipbus_regs(i * 18 + 0));
                     end if;
                 end if;
             end process;
@@ -654,11 +650,12 @@ begin
     ------------------VETO MASKS REGISTERS--------------------------------------------
     ----------------------------------------------------------------------------------
 
-    veto_regs : entity work.ipbus_initialized_dpram
+    veto_regs : entity work.ipbus_file_init_dpram
         generic map(
-            INIT_VALUE => X"00000000",
-            ADDR_WIDTH => log2c(N_SLR_ALGOS_MAX / 32),
-            DATA_WIDTH => 32
+            DATA_FILE     => VETO_MASK_FILE,
+            DEFAULT_VALUE => X"00000000",
+            ADDR_WIDTH    => log2c(N_SLR_ALGOS_MAX / 32),
+            DATA_WIDTH    => 32
         )
         port map(
             clk     => clk,
@@ -686,15 +683,6 @@ begin
             if rising_edge(clk40) then
                 if (ready_veto = '1' and ready_veto_1 = '0') then --rising edge
                     veto_mask((j + 1) * 32 - 1 downto j * 32) <= veto_ipbus_regs(j);
-                    --veto_mask <= (veto_ipbus_regs(17), veto_ipbus_regs(16),
-                    --            veto_ipbus_regs(15), veto_ipbus_regs(14),
-                    --              veto_ipbus_regs(13), veto_ipbus_regs(12),
-                    --              veto_ipbus_regs(11), veto_ipbus_regs(10),
-                    --              veto_ipbus_regs(9), veto_ipbus_regs(8),
-                    --              veto_ipbus_regs(7), veto_ipbus_regs(6),
-                    --              veto_ipbus_regs(5), veto_ipbus_regs(4),
-                    --              veto_ipbus_regs(3), veto_ipbus_regs(2),
-                    --              veto_ipbus_regs(1), veto_ipbus_regs(0));
                 end if;
             end if;
         end process;
@@ -704,7 +692,7 @@ begin
     veto_update_i : entity work.update_process
         generic map(
             WIDTH      => NR_ALGOS,
-            INIT_VALUE => NULL_VETO_MASK
+            INIT_VALUE => INIT_VETO_MASK
         )
         port map(
             clk                  => clk40,
@@ -720,7 +708,8 @@ begin
 
     algo_bx_mask_mem_i : entity work.ipbus_dpram_4096x576
         generic map(
-            DATA_FILE_32b => "bxmask_113bx_window.mif",
+            DATA_FILE_32b => BXMASK_32b_FILE,
+            --DATA_FILE_32b => "bxmask_odd_7_23.mif",
             DEFAULT_VALUE => (others => '1'),
             DATA_WIDTH    => NR_ALGOS
         )

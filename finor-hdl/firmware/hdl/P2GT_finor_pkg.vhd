@@ -8,8 +8,13 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.ipbus.all;
+use work.ipbus_reg_types.all;
+
 use work.emp_data_types.all;
 use work.emp_ttc_decl.all;
+
+use STD.TEXTIO.all;
 
 package P2GT_finor_pkg is
 
@@ -77,6 +82,7 @@ package P2GT_finor_pkg is
     type data_arr is array (INPUT_LINKS_SLR - 1 downto 0) of std_logic_vector(LWORD_WIDTH * 9 - 1 downto 0);
     type mask_arr is array (N_TRIGG - 1 downto 0) of std_logic_vector(N_SLR_ALGOS_MAX - 1 downto 0);
     type trigger_array_t is array (N_MONITOR_SLR - 1 downto 0) of std_logic_vector(N_TRIGG - 1 downto 0);
+    subtype veto_mask_arr is std_logic_vector(N_SLR_ALGOS_MAX - 1 downto 0);
 
     -- ================= COUNTER TYPES ========================================================================
 
@@ -99,14 +105,16 @@ package P2GT_finor_pkg is
     constant PRESCALE_FACTOR_INIT_VALUE : real := 1.00;
 
     -- Convertion in integer and std_logic_vector
-    constant PRESCALE_FACTOR_INIT_VALUE_INTEGER : integer               := integer(PRESCALE_FACTOR_INIT_VALUE * real(10 ** PRESCALE_FACTOR_FRACTION_DIGITS));
-    constant PRESCALE_FACTOR_INIT_VALUE_UNSGND  : unsigned(31 downto 0) := to_unsigned(PRESCALE_FACTOR_INIT_VALUE_INTEGER, 32);
+    constant PRESCALE_FACTOR_INIT_VALUE_INTEGER : integer                       := integer(PRESCALE_FACTOR_INIT_VALUE * real(10 ** PRESCALE_FACTOR_FRACTION_DIGITS));
+    constant PRESCALE_FACTOR_INIT_VALUE_UNSGND  : unsigned(31 downto 0)         := to_unsigned(PRESCALE_FACTOR_INIT_VALUE_INTEGER, 32);
+    constant PRESCALE_FACTOR_INIT_VALUE_STD     : std_logic_vector(31 downto 0) := std_logic_vector(PRESCALE_FACTOR_INIT_VALUE_UNSGND);
     --     constant PRESCALE_FACTOR_INIT : ipb_regs_array(0 to 511) := (others => PRESCALE_FACTOR_INIT_VALUE_VEC);
 
     -- Prescaler increment (1*10**fraction_digits)
     constant PRESCALER_INCR : unsigned(31 downto 0) := to_unsigned(10 ** PRESCALE_FACTOR_FRACTION_DIGITS, 32);
 
     type prescale_factor_array is array (natural range <>) of std_logic_vector(PRESCALE_FACTOR_WIDTH - 1 downto 0);
+    subtype prescale_factor_ipbreg_array is ipb_reg_v(N_SLR_ALGOS_MAX - 1 downto 0);
 
     -- ================= RATE COUNTERS ========================================================================
     -- Definitions for rate counters (P2GT FinalOR)
@@ -115,4 +123,62 @@ package P2GT_finor_pkg is
 
     type rate_counter_array is array (natural range <>) of std_logic_vector(RATE_COUNTER_WIDTH - 1 downto 0);
 
+    --=================== INIT FILES ==========================================================================
+    constant VETO_MASK_FILE             : string := "veto_mask_default.mif";
+    constant TRIGGER_TYPE_MASK_FILE     : string := "trigger_mask_default.mif";
+    constant BXMASK_32b_FILE            : string := "bxmask_113bx_window.mif";
+    constant PRESCALE_FACTORS_INIT_FILE : string := "Pre_scale_init.mif";
+
+    --=================== FUNCTIONS ===========================================================================
+
+    function InitTriggMaskFromFile(file_name : in string) return mask_arr;
+    function InitVetoMaskFromFile(file_name : in string) return veto_mask_arr;
+    function InitPrescaleFactorFromFile(file_name : in string) return prescale_factor_ipbreg_array;
+
 end package;
+
+package body P2GT_finor_pkg is
+
+    --=================== FUNCTIONS ===========================================================================
+
+    function InitTriggMaskFromFile(file_name : in string) return mask_arr is
+        file F         : text open read_mode is file_name;
+        variable L     : line;
+        variable masks : mask_arr := (others => (others => '0'));
+    begin
+        --144 in case of 576 max algos per SLR and 8 Trigger types
+        outer_l : for i in 0 to N_TRIGG - 1 loop
+            inner_l : for j in 0 to N_SLR_ALGOS_MAX / 32 - 1 loop
+                readline(F, L);
+                read(L, masks(i)((j + 1) * 32 - 1 downto j * 32));
+            end loop;
+        end loop;
+        return masks;
+    end;
+
+    function InitVetoMaskFromFile(file_name : in string) return veto_mask_arr is
+        file F         : text open read_mode is file_name;
+        variable L     : line;
+        variable masks : veto_mask_arr := (others => '0');
+    begin
+        --18 in case of 576 max algos per SLR
+        veto_load_l : for j in 0 to N_SLR_ALGOS_MAX / 32 - 1 loop
+            readline(F, L);
+            read(L, masks((j + 1) * 32 - 1 downto j * 32));
+        end loop;
+        return masks;
+    end;
+
+    function InitPrescaleFactorFromFile(file_name : in string) return prescale_factor_ipbreg_array is
+        file F           : text open read_mode is file_name;
+        variable L       : line;
+        variable factors : prescale_factor_ipbreg_array := (others => PRESCALE_FACTOR_INIT_VALUE_STD); --1.00
+    begin
+        factor_load_l : for i in 0 to factors'high - 1 loop
+            readline(F, L);
+            read(L, factors(i));
+        end loop;
+        return factors;
+    end;
+
+end package body P2GT_finor_pkg;
