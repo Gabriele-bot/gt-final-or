@@ -35,8 +35,8 @@ package emp_project_decl is
         -------------------- SLR1 RIGHT --------------------
         4      => kDummyRegion,         -- HighSpeedBus
         5      => kDummyRegion,         -- PCIe, AXI & TCDS
-        6      => (mgt_i_kind => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25), -- output algo-bits SLR0
-        7      => (mgt_i_kind => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_o_kind => gty25), -- output algo-bits SLR2
+        6      => kDummyRegion,         -- Not Used
+        7      => kDummyRegion,         -- Not Used
         -------------------- SLR2 RIGHT --------------------
         8      => kDummyRegion,         -- Not used
         9      => (mgt_i_kind => gty25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_o_kind => no_mgt), --input algo-bits links SLR2

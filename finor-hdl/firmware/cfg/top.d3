@@ -1,15 +1,3 @@
-src -c ipbus-firmware:components/ipbus_core ipbus_package.vhd
-src -c ipbus-firmware:components/ipbus_core ipbus_fabric_sel.vhd
-src -c ipbus-firmware:components/ipbus_slaves ipbus_reg_types.vhd
-src -c ipbus-firmware:components/ipbus_slaves ipbus_ctrlreg_v.vhd
-src -c ipbus-firmware:components/ipbus_slaves ipbus_syncreg_v.vhd
-src -c ipbus-firmware:components/ipbus_slaves ipbus_roreg_v.vhd
-src -c ipbus-firmware:components/ipbus_slaves ipbus_dpram.vhd
-src --vhdl2008 -c emp-fwk:components/links/slink emp_slink_types.vhd
-
-src --vhdl2008 math_pkg.vhd
-src --vhdl2008 P2GT_finor_pkg.vhd
-
 src --vhdl2008 decoders/ipbus_decode_emp_payload.vhd
 src --vhdl2008 decoders/ipbus_decode_SLR_Monitoring_unit.vhd
 src --vhdl2008 decoders/ipbus_decode_monitoring_module.vhd
@@ -26,6 +14,7 @@ src RAM_init_files/bxmask_113bx_window.mif
 src RAM_init_files/trigger_mask_default.mif
 src RAM_init_files/menu_algo_string.mif
 src RAM_init_files/pre_scale_init.mif
+src RAM_init_files/pre_scale_init_preview.mif
 src RAM_init_files/veto_mask_default.mif
 
 src --vhdl2008 BGO_sync.vhd

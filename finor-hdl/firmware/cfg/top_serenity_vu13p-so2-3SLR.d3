@@ -1,0 +1,24 @@
+src --vhdl2008  top_serenity_vu13p-so2_decl.vhd
+
+include -c emp-fwk:boards/serenity/dc_vu13p dc_vu13p_so2.dep
+
+src ../ucf/payload_serenity-vu13p_soft_3SLR.tcl
+src ../ucf/payload_timings_3SLR.tcl
+
+src -c ipbus-firmware:components/ipbus_core ipbus_package.vhd
+src -c ipbus-firmware:components/ipbus_core ipbus_fabric_sel.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_reg_types.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_ctrlreg_v.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_syncreg_v.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_roreg_v.vhd
+src -c ipbus-firmware:components/ipbus_slaves ipbus_dpram.vhd
+src --vhdl2008 -c emp-fwk:components/links/slink emp_slink_types.vhd
+
+src --vhdl2008 math_pkg.vhd
+
+src --vhdl2008 P2GT_finor_pkg_3SLR.vhd
+
+include top.d3
+src --vhdl2008 payload_vu13p.vhd
+
+setup build.tcl

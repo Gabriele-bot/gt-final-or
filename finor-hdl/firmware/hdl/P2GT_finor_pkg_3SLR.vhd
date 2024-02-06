@@ -99,7 +99,7 @@ package P2GT_finor_pkg is
     -- fixed point prescale factor format, e.g. 2 digits (!) in 32 bits integer
     -- Example input factor --> 1001, real factor --> 10.01
     constant PRESCALE_FACTOR_FRACTION_DIGITS : integer := 2;
-    constant PRESCALE_FACTOR_WIDTH           : integer := 24;
+    constant PRESCALE_FACTOR_WIDTH           : integer := 32;
 
     -- Initialization prescale factor value (note the decimal format with two digits)
     constant PRESCALE_FACTOR_INIT_VALUE : real := 1.00;
@@ -124,10 +124,11 @@ package P2GT_finor_pkg is
     type rate_counter_array is array (natural range <>) of std_logic_vector(RATE_COUNTER_WIDTH - 1 downto 0);
 
     --=================== INIT FILES ==========================================================================
-    constant VETO_MASK_FILE             : string := "veto_mask_default.mif";
-    constant TRIGGER_TYPE_MASK_FILE     : string := "trigger_mask_default.mif";
-    constant BXMASK_32b_FILE            : string := "bxmask_113bx_window.mif";
-    constant PRESCALE_FACTORS_INIT_FILE : string := "pre_scale_init.mif";
+    constant VETO_MASK_FILE                  : string := "veto_mask_default.mif";
+    constant TRIGGER_TYPE_MASK_FILE          : string := "trigger_mask_default.mif";
+    constant BXMASK_32b_FILE                 : string := "bxmask_113bx_window.mif";
+    constant PRESCALE_FACTORS_INIT_FILE      : string := "pre_scale_init.mif";
+    constant PRESCALE_FACTORS_PRVW_INIT_FILE : string := "pre_scale_init_preview.mif";
 
     --=================== FUNCTIONS ===========================================================================
 

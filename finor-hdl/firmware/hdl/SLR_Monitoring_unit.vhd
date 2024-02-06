@@ -335,6 +335,7 @@ begin
             NR_TRIGGERS           => N_TRIGG,
             PRESCALE_FACTOR_INIT  => X"00000064", --1.00,
             BEGIN_LUMI_TOGGLE_BIT => BEGIN_LUMI_TOGGLE_BIT,
+            EXCLUDE_ALGO_VETOED   => TRUE,
             MAX_DELAY             => MAX_DELAY
         )
         port map(
