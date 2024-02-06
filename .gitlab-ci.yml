@@ -131,7 +131,9 @@ test_HW_2SLR:serenity:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
       
- test_HW_3SLR:serenity:
+
+test_HW_3SLR:serenity:
+  extends: .test_base
   image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
   variables:
     HARDWARE_TEST_SERENITY_SITE: x0
