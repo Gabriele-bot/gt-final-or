@@ -29,7 +29,7 @@ FinOR_2SLR:build:
     PROJECT_DIR_PATH: finor-hdl
     PROJECT_DEPFILE: top_serenity_vu13p-so2-2SLR.d3
     
-FinOR_2SLR:build:
+FinOR_3SLR:build:
   extends: .vivado_build_emp
   variables:
     PROJECT_NAME: p2gt_finor_serenity-vu13p-3SLR
