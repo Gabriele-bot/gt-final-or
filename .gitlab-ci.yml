@@ -16,6 +16,9 @@ variables:
   HARDWARE_TEST_IMAGE_TAG: v0-3-47
   # Set PARENT_PIPELINE_ID as used in vivado-build-emp.yml in place of CI_PIPELINE_ID
   PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
+  PROJECT_NAME: p2gt_finor_serenity-vu13p-2SLR
+  PROJECT_DIR_PATH: finor-hdl
+  PROJECT_DEPFILE: top_serenity_vu13p-so2-2SLR.d3
 
 
 
