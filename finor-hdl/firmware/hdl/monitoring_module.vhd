@@ -26,6 +26,7 @@ entity monitoring_module is
         PRESCALE_FACTOR_INIT  : std_logic_vector(31 DOWNTO 0) := X"00000064"; --1.00
         BEGIN_LUMI_TOGGLE_BIT : natural                       := 18;
         MAX_DELAY             : natural                       := 255;
+        EXCLUDE_ALGO_VETOED   : boolean                       := TRUE;
         SIM                   : boolean                       := FALSE
     );
     port(
@@ -66,16 +67,19 @@ architecture rtl of monitoring_module is
     signal ipb_from_slaves : ipb_rbus_array(N_SLAVES - 1 downto 0);
 
     --algos signal
-    signal algos_delayed                 : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
-    signal algos_after_bxmask            : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
-    signal algos_after_prescaler         : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
-    signal algos_after_prescaler_preview : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    signal algos_delayed                           : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    signal algos_after_bxmask                      : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    signal algos_after_prescaler                   : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    signal algos_after_prescaler_preview           : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    signal algos_after_prescaler_veto_excl         : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
+    signal algos_after_prescaler_preview_veto_excl : std_logic_vector(NR_ALGOS - 1 downto 0) := (others => '0');
 
     signal algos_delayed_with_valid : std_logic_vector(NR_ALGOS downto 0) := (others => '0');
     signal valid_algos_delayed      : std_logic;
 
     -- prescale factor ipb regs
-    constant PRESCALE_FACTOR_INIT_ARRAY : prescale_factor_ipbreg_array := InitPrescaleFactorFromFile(PRESCALE_FACTORS_INIT_FILE);
+    constant PRESCALE_FACTOR_INIT_ARRAY      : prescale_factor_ipbreg_array := InitPrescaleFactorFromFile(PRESCALE_FACTORS_INIT_FILE);
+    constant PRESCALE_FACTOR_INIT_PRVW_ARRAY : prescale_factor_ipbreg_array := InitPrescaleFactorFromFile(PRESCALE_FACTORS_PRVW_INIT_FILE);
 
     signal prscl_fct              : prescale_factor_ipbreg_array;
     signal prscl_fct_prvw         : prescale_factor_ipbreg_array;
@@ -458,7 +462,7 @@ begin
         prscl_prvw_update_i : entity work.update_process
             generic map(
                 WIDTH      => PRESCALE_FACTOR_WIDTH,
-                INIT_VALUE => PRESCALE_FACTOR_INIT_ARRAY(i)
+                INIT_VALUE => PRESCALE_FACTOR_INIT_PRVW_ARRAY(i)
             )
             port map(
                 clk                  => clk40,
@@ -605,7 +609,7 @@ begin
     ready <= not we;
 
     stat_reg(0)(0)           <= ready;
-    stat_reg(0)(31 downto 1) <= (others => '0');
+    stat_reg(0)(31 downto 1) <= (others => '0'); --reserved
     stat_reg(1)              <= lumi_sec_load_prscl_mark;
     stat_reg(2)              <= lumi_sec_load_prscl_prvw_mark;
     stat_reg(3)              <= lumi_sec_load_masks_mark;
@@ -799,7 +803,6 @@ begin
     gen_algos_slice_l : for i in 0 to NR_ALGOS - 1 generate
         algos_slice_i : entity work.algo_slice
             generic map(
-                EXCLUDE_ALGO_VETOED   => TRUE,
                 RATE_COUNTER_WIDTH    => RATE_COUNTER_WIDTH,
                 PRESCALE_FACTOR_WIDTH => PRESCALE_FACTOR_WIDTH
             )
@@ -837,7 +840,15 @@ begin
 
     ----------------------------------------------------------------------------------
     -----------------------Trigger masks and veto-------------------------------------
-    ----------------------------------------------------------------------------------   
+    ---------------------------------------------------------------------------------- 
+    
+    veto_exclusion : if EXCLUDE_ALGO_VETOED generate
+        algos_after_prescaler_veto_excl         <= algos_after_prescaler and not veto_mask_int;
+        algos_after_prescaler_preview_veto_excl <= algos_after_prescaler_preview and not veto_mask_int;
+    else generate
+        algos_after_prescaler_veto_excl         <= algos_after_prescaler;
+        algos_after_prescaler_preview_veto_excl <= algos_after_prescaler_preview;
+    end generate;
 
     Mask_i : entity work.Mask
         generic map(
@@ -846,7 +857,7 @@ begin
         )
         port map(
             clk                        => clk40,
-            algos_in                   => algos_after_prescaler,
+            algos_in                   => algos_after_prescaler_veto_excl,
             valid_in                   => valid_algos_in,
             masks                      => masks,
             request_masks_update_pulse => request_masks_update,
@@ -862,7 +873,7 @@ begin
         )
         port map(
             clk                        => clk40,
-            algos_in                   => algos_after_prescaler_preview,
+            algos_in                   => algos_after_prescaler_preview_veto_excl,
             valid_in                   => valid_algos_in,
             masks                      => masks,
             request_masks_update_pulse => request_masks_update,

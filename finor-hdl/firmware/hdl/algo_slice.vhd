@@ -15,7 +15,6 @@ use work.math_pkg.all;
 
 entity algo_slice is
     generic(
-        EXCLUDE_ALGO_VETOED   : boolean                       := TRUE;
         RATE_COUNTER_WIDTH    : integer                       := 32;
         PRESCALE_FACTOR_WIDTH : integer                       := 24
     );
@@ -158,16 +157,10 @@ begin
 
     -- ****************************************************************************************************
 
-    --TODO maybe add algos with and w/o veto
-    veto_exclusion : if EXCLUDE_ALGO_VETOED generate
-        algo_after_bxomask           <= algo_after_algo_bx_mask_int and not veto_mask;
-        algo_after_prescaler         <= algo_after_prescaler_int and not veto_mask;
-        algo_after_prescaler_preview <= algo_after_prescaler_preview_int and not veto_mask;
-    else generate
-        algo_after_bxomask           <= algo_after_algo_bx_mask_int;
-        algo_after_prescaler         <= algo_after_prescaler_int;
-        algo_after_prescaler_preview <= algo_after_prescaler_preview_int;
-    end generate;
+    
+    algo_after_bxomask           <= algo_after_algo_bx_mask_int;
+    algo_after_prescaler         <= algo_after_prescaler_int;
+    algo_after_prescaler_preview <= algo_after_prescaler_preview_int;
 
 end architecture rtl;
 
