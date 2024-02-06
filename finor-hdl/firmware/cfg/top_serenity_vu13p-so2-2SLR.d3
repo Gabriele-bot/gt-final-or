@@ -19,6 +19,6 @@ src --vhdl2008 math_pkg.vhd
 src --vhdl2008 P2GT_finor_pkg_2SLR.vhd
 
 include top.d3
-src --vhdl2008 payload_vu13p_2SLR.vhd
+src --vhdl2008 payload_vu13p.vhd
 
 setup build.tcl
