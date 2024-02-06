@@ -24,7 +24,6 @@ variables:
 
 FinOR_2SLR:build:
   extends: .vivado_build_emp
-  image: gitlab-registry.cern.ch/cms-cactus/phase2/firmware/docker/fw-builder:${BUILD_IMAGE_TAG}
   variables:
     PROJECT_NAME: p2gt_finor_serenity-vu13p-2SLR
     PROJECT_DIR_PATH: finor-hdl
@@ -32,7 +31,6 @@ FinOR_2SLR:build:
     
 FinOR_2SLR:build:
   extends: .vivado_build_emp
-  image: gitlab-registry.cern.ch/cms-cactus/phase2/firmware/docker/fw-builder:${BUILD_IMAGE_TAG}
   variables:
     PROJECT_NAME: p2gt_finor_serenity-vu13p-3SLR
     PROJECT_DIR_PATH: finor-hdl
