@@ -130,6 +130,10 @@ test_HW_2SLR:serenity:
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
+  needs:
+    - job: build
+      optional: true
+
       
 
 test_HW_3SLR:serenity:
@@ -226,6 +230,9 @@ test_HW_3SLR:serenity:
   rules:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
+  needs:
+    - job: build
+      optional: true
 
 
 
