@@ -8,21 +8,15 @@ include:
     
 .ci_templates_ref: v0.1.7
 
-variables:
-  #QUESTASIM_VERSION: "2021.1_2"
-  VIVADO_VERSION: "2022.2"
-  BUILD_DIR: "build"
-  MTI_VCO_MODE: "64"
-  HARDWARE_TEST_IMAGE_TAG: v0-3-47
-  # Set PARENT_PIPELINE_ID as used in vivado-build-emp.yml in place of CI_PIPELINE_ID
-  PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
-  PROJECT_NAME: p2gt_finor_serenity-vu13p-2SLR
-  PROJECT_DIR_PATH: finor-hdl
-  PROJECT_DEPFILE: top_serenity_vu13p-so2-2SLR.d3
-
 vu13p_2SLR:build:
   extends: .vivado_build_emp
   variables:
+    VIVADO_VERSION: "2022.2"
+    BUILD_DIR: "build"
+    MTI_VCO_MODE: "64"
+    HARDWARE_TEST_IMAGE_TAG: v0-3-47
+    # Set PARENT_PIPELINE_ID as used in vivado-build-emp.yml in place of CI_PIPELINE_ID
+    PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
     PROJECT_NAME: p2gt_finor_serenity-vu13p-2SLR
     PROJECT_DIR_PATH: finor-hdl
     PROJECT_DEPFILE: top_serenity_vu13p-so2-2SLR.d3
@@ -31,6 +25,12 @@ vu13p_2SLR:build:
 vu13p_3SLR:build:
   extends: .vivado_build_emp
   variables:
+    VIVADO_VERSION: "2022.2"
+    BUILD_DIR: "build"
+    MTI_VCO_MODE: "64"
+    HARDWARE_TEST_IMAGE_TAG: v0-3-47
+    # Set PARENT_PIPELINE_ID as used in vivado-build-emp.yml in place of CI_PIPELINE_ID
+    PARENT_PIPELINE_ID: ${CI_PIPELINE_ID}
     PROJECT_NAME: p2gt_finor_serenity-vu13p-3SLR
     PROJECT_DIR_PATH: finor-hdl
     PROJECT_DEPFILE: top_serenity_vu13p-so2-3SLR.d3
