@@ -131,7 +131,7 @@ test_HW_2SLR:serenity:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
   needs:
-    - job: vu13p_2SLR
+    - job: vu13p_2SLR:build
       optional: true
 
       
@@ -230,7 +230,7 @@ test_HW_3SLR:serenity:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
   needs:
-    - job: vu13p_3SLR
+    - job: vu13p_3SLR:build
       optional: true
 
 
