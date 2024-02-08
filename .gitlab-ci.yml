@@ -20,16 +20,16 @@ variables:
   PROJECT_DIR_PATH: finor-hdl
   PROJECT_DEPFILE: top_serenity_vu13p-so2-2SLR.d3
 
-build:2SLR:
-  image: gitlab-registry.cern.ch/cms-cactus/phase2/firmware/docker/fw-builder:${BUILD_IMAGE_TAG}
+vu13p_2SLR:build:
+  extends: .vivado_build_emp
   variables:
     PROJECT_NAME: p2gt_finor_serenity-vu13p-2SLR
     PROJECT_DIR_PATH: finor-hdl
     PROJECT_DEPFILE: top_serenity_vu13p-so2-2SLR.d3
 
 
-build:3SLR:
-  image: gitlab-registry.cern.ch/cms-cactus/phase2/firmware/docker/fw-builder:${BUILD_IMAGE_TAG}
+vu13p_3SLR:build:
+  extends: .vivado_build_emp
   variables:
     PROJECT_NAME: p2gt_finor_serenity-vu13p-3SLR
     PROJECT_DIR_PATH: finor-hdl
@@ -37,6 +37,7 @@ build:3SLR:
 
     
 test_HW_2SLR:serenity:
+  extends: test:serenity
   image: gitlab-registry.cern.ch/p2-xware/software/serenity-toolbox/serenity-test:${HARDWARE_TEST_IMAGE_TAG}
   variables:
     HARDWARE_TEST_SERENITY_SITE: x0
@@ -130,7 +131,7 @@ test_HW_2SLR:serenity:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
   needs:
-    - job: build:2SLR
+    - job: vu13p_2SLR
       optional: true
 
       
@@ -229,7 +230,7 @@ test_HW_3SLR:serenity:
     - if: '$HARDWARE_TEST_TYPE =~ /^serenity/'
       when: manual
   needs:
-    - job: build:3SLR
+    - job: vu13p_3SLR
       optional: true
 
 
