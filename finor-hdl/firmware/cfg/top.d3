@@ -7,14 +7,20 @@ src -c ipbus-firmware:components/ipbus_slaves ipbus_roreg_v.vhd
 src -c ipbus-firmware:components/ipbus_slaves ipbus_dpram.vhd
 src --vhdl2008 -c emp-fwk:components/links/slink emp_slink_types.vhd
 
+addrtab -c gt-final-or:finor-hdl -t emp_payload.xml
+addrtab -c gt-final-or:finor-hdl -t SLR_Monitoring_unit.xml
+addrtab -c gt-final-or:finor-hdl -t monitoring_module.xml
+addrtab -c gt-final-or:finor-hdl -t ipbus_dpram_4096x576.xml
+addrtab -c gt-final-or:finor-hdl -t SLR_Output.xml
+
 src --vhdl2008 math_pkg.vhd
 src --vhdl2008 P2GT_finor_pkg.vhd
 
-src --vhdl2008 decoders/ipbus_decode_emp_payload.vhd
-src --vhdl2008 decoders/ipbus_decode_SLR_Monitoring_unit.vhd
-src --vhdl2008 decoders/ipbus_decode_monitoring_module.vhd
-src --vhdl2008 decoders/ipbus_decode_ipbus_dpram_4096x576.vhd
-src --vhdl2008 decoders/ipbus_decode_SLR_Output.vhd
+src --vhdl2008 ipbus_decode_emp_payload.vhd
+src --vhdl2008 ipbus_decode_SLR_Monitoring_unit.vhd
+src --vhdl2008 ipbus_decode_monitoring_module.vhd
+src --vhdl2008 ipbus_decode_ipbus_dpram_4096x576.vhd
+src --vhdl2008 ipbus_decode_SLR_Output.vhd
 
 src --vhdl2008 ipbus/ipbus_initialized_dpram.vhd
 src --vhdl2008 ipbus/ipbus_file_init_dpram.vhd
@@ -46,10 +52,4 @@ src --vhdl2008 CTRS_delay_producer.vhd
 src --vhdl2008 algobits_out.vhd
 src --vhdl2008 SLR_Monitoring_unit.vhd
 src --vhdl2008 SLR_Output.vhd
-
-addrtab -c gt-final-or:finor-hdl emp_payload.xml
-addrtab -c gt-final-or:finor-hdl SLR_Monitoring_unit.xml
-addrtab -c gt-final-or:finor-hdl monitoring_module.xml
-addrtab -c gt-final-or:finor-hdl ipbus_dpram_4096x576.xml
-addrtab -c gt-final-or:finor-hdl SLR_Output.xml
 
