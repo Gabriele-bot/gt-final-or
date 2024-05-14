@@ -1,12 +1,12 @@
 include:
   - project: gbortola/p2gt_ci_gb_mod
-    ref: v0.1.7
+    # ref: v0.1.7
     file: 
       - pipelines/workflow.yml
       - pipelines/vivado-build-emp.yml
       #- templates/xilinx/build-emp.yml
     
-.ci_templates_ref: v0.1.7
+#.ci_templates_ref: v0.1.7
 
 variables:
   #QUESTASIM_VERSION: "2021.1_2"
