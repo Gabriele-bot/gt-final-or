@@ -3,3 +3,9 @@ addrtab -c gt-final-or:finor-hdl -t SLR_Monitoring_unit.xml
 addrtab -c gt-final-or:finor-hdl -t monitoring_module.xml
 addrtab -c gt-final-or:finor-hdl -t ipbus_dpram_4096x576.xml
 addrtab -c gt-final-or:finor-hdl -t SLR_Output.xml
+
+src --vhdl2008 ipbus_decode_emp_payload.vhd
+src --vhdl2008 ipbus_decode_SLR_Monitoring_unit.vhd
+src --vhdl2008 ipbus_decode_monitoring_module.vhd
+src --vhdl2008 ipbus_decode_ipbus_dpram_4096x576.vhd
+src --vhdl2008 ipbus_decode_SLR_Output.vhd
