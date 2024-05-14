@@ -1,0 +1,5 @@
+addrtab -c gt-final-or:finor-hdl -t emp_payload.xml
+addrtab -c gt-final-or:finor-hdl -t SLR_Monitoring_unit.xml
+addrtab -c gt-final-or:finor-hdl -t monitoring_module.xml
+addrtab -c gt-final-or:finor-hdl -t ipbus_dpram_4096x576.xml
+addrtab -c gt-final-or:finor-hdl -t SLR_Output.xml
