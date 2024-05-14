@@ -8,3 +8,4 @@ scripts/.idea/
 scripts/test.py
 scripts/test.txt
 scripts/Pattern_files*
+finor-hdl/firmware/hdl/ipbus_decode*

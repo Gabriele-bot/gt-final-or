@@ -1,5 +1,5 @@
 include:
-  - project: cms-cactus/phase2/firmware/ci-templates
+  - project: gbortola/p2gt_ci_gb_mod3
     ref: v0.1.7
     file: 
       - pipelines/workflow.yml
