@@ -1,8 +1,8 @@
 #Area constraints for VU13P P2GT
 set SLR_n2  SLR3
 set SLR_n1  SLR2
-set SLR_n0  SLR0
-set SLR_out SLR1
+set SLR_n0  SLR1
+set SLR_out SLR0
 set N_MONITOR_SLR 3
 
 create_pblock pblock_SLR_n2
@@ -30,11 +30,11 @@ set_property keep_hierarchy no [get_cells -hierarchical -filter {NAME =~ *payloa
 set_property keep_hierarchy no [get_cells -hierarchical -filter {NAME =~ *payload/SLRn2*/monitoring_module}]
 
 create_pblock link_merger_SLRn0_L
-resize_pblock [get_pblocks link_merger_SLRn0_L] -add {SLICE_X17Y239:SLICE_X30Y0}
+resize_pblock [get_pblocks link_merger_SLRn0_L] -add {SLICE_X17Y479:SLICE_X30Y240}
 add_cells_to_pblock [get_pblock link_merger_SLRn0_L]  [get_cells -hierarchical -filter {NAME =~ *SLRn0_module/Left_merge}]
 
 create_pblock link_merger_SLRn0_R
-resize_pblock [get_pblocks link_merger_SLRn0_R] -add {SLICE_X202Y239:SLICE_X215Y0}
+resize_pblock [get_pblocks link_merger_SLRn0_R] -add {SLICE_X202Y479:SLICE_X215Y240}
 add_cells_to_pblock [get_pblock link_merger_SLRn0_R]  [get_cells -hierarchical -filter {NAME =~ *SLRn0_module/Right_merge}]
 
 if {$N_MONITOR_SLR > 1} {
@@ -56,3 +56,6 @@ if {$N_MONITOR_SLR > 2} {
 	resize_pblock [get_pblocks link_merger_SLRn2_R] -add {SLICE_X202Y959:SLICE_X215Y720}
 	add_cells_to_pblock [get_pblock link_merger_SLRn2_R]  [get_cells -hierarchical -filter {NAME =~ *SLRn2_module/Right_merge}]
 }
+
+# Boundaries for the link merger LEFT  {SLICE_X17Y<240*(SLR+1)-1>:SLICE_X30Y,240*SLR} 
+# Boundaries for the link merger RIGTH {SLICE_X202Y<240*(SLR+1)-1>:SLICE_X215Y,240*SLR} 

@@ -1,0 +1,11 @@
+src --vhdl2008  top_serenity_s1_vu13p_decl.vhd
+
+include -c emp-fwk:boards/serenity/s1_vu13p s1_vu13p-2.dep
+
+src ../ucf/payload_serenity-vu13p_soft.tcl
+src ../ucf/payload_timings.tcl
+
+include top.d3
+src --vhdl2008 payload_vu13p.vhd
+
+setup build.tcl

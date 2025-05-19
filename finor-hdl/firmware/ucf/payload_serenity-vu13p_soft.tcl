@@ -1,8 +1,8 @@
 #Area constraints for VU13P P2GT
 set SLR_n2  SLR3
 set SLR_n1  SLR2
-set SLR_n0  SLR0
-set SLR_out SLR1
+set SLR_n0  SLR1
+set SLR_out SLR0
 set N_MONITOR_SLR 3
 
 #add lower row to pblock
