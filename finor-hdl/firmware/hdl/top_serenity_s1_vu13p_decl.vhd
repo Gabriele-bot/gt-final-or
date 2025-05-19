@@ -51,7 +51,7 @@ package emp_project_decl is
         16     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR3 [1024:1535]
         17     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR3 [1024:1535]
         18     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR3 [1024:1535]
-        19     => kDummyRegion,]
+        19     => kDummyRegion,
         -------------------- SLR2 LEFT --------------------
         20     kDummyRegion,
         21     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR2 [512:1023]
@@ -66,7 +66,7 @@ package emp_project_decl is
         28     => (mgt_protocol_in => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- External condition to algo-boards
         29     => (mgt_protocol_in => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- External condition to algo-boards
         30     => (mgt_protocol_in => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- External condition to algo-boards
-        31      => kDummyRegion,         -- DAQ
+        31     => kDummyRegion,         -- DAQ
         others => kDummyRegion
     );
 
