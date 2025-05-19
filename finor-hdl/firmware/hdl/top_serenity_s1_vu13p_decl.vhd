@@ -53,12 +53,12 @@ package emp_project_decl is
         18     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR3 [1024:1535]
         19     => kDummyRegion,
         -------------------- SLR2 LEFT --------------------
-        20     kDummyRegion,
+        20     => kDummyRegion,
         21     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR2 [512:1023]
         22     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR2 [512:1023]
         23     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR2 [512:1023]
         -------------------- SLR1 LEFT --------------------
-        24     kDummyRegion,
+        24     => kDummyRegion,
         25     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR1 [0:511]
         26     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR1 [0:511]
         27     => (mgt_protocol_in => csp25, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf, mgt_protocol_out => csp25), -- input algo-bits links SLR1 [0:511]
