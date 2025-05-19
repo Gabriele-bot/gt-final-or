@@ -1,12 +1,12 @@
 include:
   - project: cms-cactus/phase2/firmware/ci-templates
-    ref: v0.1.8
+    ref: v0.2.0
     file: 
       - pipelines/workflow.yml
       - pipelines/vivado-build-emp.yml
       #- templates/xilinx/build-emp.yml
     
-.ci_templates_ref: v0.1.8
+.ci_templates_ref: v0.2.0
 
 variables:
   #QUESTASIM_VERSION: "2023.4"
@@ -23,7 +23,7 @@ variables:
 
 
 build:
-  image: gitlab-registry.cern.ch/cms-cactus/phase2/firmware/docker/fw-builder:${BUILD_IMAGE_TAG}
+  image: gitlab-registry.cern.ch/cms-cactus/phase2/firmware/docker/alma8/fw-builder:${BUILD_IMAGE_TAG}
   variables:
     PROJECT_NAME: p2gt_finor_serenity-s1_vu13p
     PROJECT_DIR_PATH: finor-hdl
