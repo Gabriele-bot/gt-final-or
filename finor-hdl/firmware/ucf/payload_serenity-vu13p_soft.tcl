@@ -5,16 +5,6 @@ set SLR_n0  SLR1
 set SLR_out SLR0
 set N_MONITOR_SLR 3
 
-#add lower row to pblock
-#TODO Modify this
-#resize_pblock [get_pblocks payload] -add {CLOCKREGION_X0Y0}
-resize_pblock [get_pblocks payload] -add {CLOCKREGION_X1Y0}
-resize_pblock [get_pblocks payload] -add {CLOCKREGION_X2Y0}
-resize_pblock [get_pblocks payload] -add {CLOCKREGION_X3Y0}
-resize_pblock [get_pblocks payload] -add {CLOCKREGION_X4Y0}
-resize_pblock [get_pblocks payload] -add {CLOCKREGION_X5Y0}
-resize_pblock [get_pblocks payload] -add {CLOCKREGION_X6Y0}
-
 add_cells_to_pblock [get_pblock payload] payload
 
 set_property USER_SLR_ASSIGNMENT $SLR_n0  [get_cells -hierarchical -filter {NAME =~ *SLRn0_module}]
@@ -24,6 +14,19 @@ if {$N_MONITOR_SLR > 1} {
 }
 if {$N_MONITOR_SLR > 2} {
 	set_property USER_SLR_ASSIGNMENT $SLR_n2  [get_cells -hierarchical -filter {NAME =~ *SLRn2_module}]
+}
+
+#Remove link mergers from payload pblock
+remove_cells_from_pblock [get_pblock payload] [get_cells -hierarchical -filter {NAME =~ *SLRn0_module/Left_merge}]
+remove_cells_from_pblock [get_pblock payload] [get_cells -hierarchical -filter {NAME =~ *SLRn0_module/Right_merge}]
+
+if {$N_MONITOR_SLR > 1} {
+	remove_cells_from_pblock [get_pblock payload] [get_cells -hierarchical -filter {NAME =~ *SLRn1_module/Left_merge}]
+	remove_cells_from_pblock [get_pblock payload] [get_cells -hierarchical -filter {NAME =~ *SLRn1_module/Right_merge}]
+}
+if {$N_MONITOR_SLR > 2} {
+	remove_cells_from_pblock [get_pblock payload] [get_cells -hierarchical -filter {NAME =~ *SLRn2_module/Left_merge}]
+	remove_cells_from_pblock [get_pblock payload] [get_cells -hierarchical -filter {NAME =~ *SLRn2_module/Right_merge}]
 }
 
 create_pblock link_merger_SLRn0_L
