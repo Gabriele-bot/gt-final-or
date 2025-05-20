@@ -40,8 +40,8 @@ package emp_project_decl is
         -------------------- SLR3 RIGHT --------------------
         12     => (mgt_protocol_in => no_mgt, buf_i_kind => no_buf, fmt_kind => no_fmt, buf_o_kind => buf   , mgt_protocol_out => csp25), -- output algo-bits to scouting
         13     => (mgt_protocol_in => csp25 , buf_i_kind => buf   , fmt_kind => no_fmt, buf_o_kind => buf   , mgt_protocol_out => csp25), -- backup algo-bits links SLR3 [1024:1535] & output algo-bits to scouting
-        14     => (mgt_protocol_in => csp25 , buf_i_kind => buf   , fmt_kind => no_fmt, buf_o_kind => n0_buf, mgt_protocol_out => no_mgt), -- backup algo-bits links SLR3 [1024:1535]
-        15     => (mgt_protocol_in => csp25 , buf_i_kind => buf   , fmt_kind => no_fmt, buf_o_kind => n0_buf, mgt_protocol_out => no_mgt), -- backup algo-bits links SLR3 [1024:1535]
+        14     => (mgt_protocol_in => csp25 , buf_i_kind => buf   , fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_protocol_out => no_mgt), -- backup algo-bits links SLR3 [1024:1535]
+        15     => (mgt_protocol_in => csp25 , buf_i_kind => buf   , fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_protocol_out => no_mgt), -- backup algo-bits links SLR3 [1024:1535]
         -------------------- SLR3 LEFT --------------------
         16     => (mgt_protocol_in => csp25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_protocol_out => no_mgt), -- input algo-bits links SLR3 [1024:1535]
         17     => (mgt_protocol_in => csp25, buf_i_kind => buf, fmt_kind => no_fmt, buf_o_kind => no_buf, mgt_protocol_out => no_mgt), -- input algo-bits links SLR3 [1024:1535]
