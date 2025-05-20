@@ -48,7 +48,7 @@ package P2GT_finor_pkg is
     constant SLRn2_INPUT_QUADS    : ChannelSystemMap(INPUT_LINKS_SLR / 4 - 1 downto 0) := (18, 17 , 16, 15 , 14, 13);
 
     -- =================================================================================
-    -- OUTPUTs on SLR3
+    -- OUTPUTs on SLR3 SLR2
     -- =================================================================================
     constant SLRn2_OUTPUT_CHANNELS : ChannelSystemMap(3 - 1 downto 0) := (50,49,48);
     constant SLRn2_OUTPUT_QUAD     : natural                          := 12;
@@ -97,7 +97,7 @@ package P2GT_finor_pkg is
     -- fixed point prescale factor format, e.g. 2 digits (!) in 32 bits integer
     -- Example input factor --> 1001, real factor --> 10.01
     constant PRESCALE_FACTOR_FRACTION_DIGITS : integer := 2;
-    constant PRESCALE_FACTOR_WIDTH           : integer := 24;
+    constant PRESCALE_FACTOR_WIDTH           : integer := 32;
 
     -- Initialization prescale factor value (note the decimal format with two digits)
     constant PRESCALE_FACTOR_INIT_VALUE : real := 1.00;

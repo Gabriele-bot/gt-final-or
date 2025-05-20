@@ -30,11 +30,11 @@ if {$N_MONITOR_SLR > 2} {
 }
 
 create_pblock link_merger_SLRn0_L
-resize_pblock [get_pblocks link_merger_SLRn0_L] -add {SLICE_X17Y239:SLICE_X30Y0}
+resize_pblock [get_pblocks link_merger_SLRn0_L] -add {SLICE_X17Y479:SLICE_X30Y240}
 add_cells_to_pblock [get_pblock link_merger_SLRn0_L]  [get_cells -hierarchical -filter {NAME =~ *SLRn0_module/Left_merge}]
 
 create_pblock link_merger_SLRn0_R
-resize_pblock [get_pblocks link_merger_SLRn0_R] -add {SLICE_X202Y239:SLICE_X215Y0}
+resize_pblock [get_pblocks link_merger_SLRn0_R] -add {SLICE_X202Y479:SLICE_X215Y240}
 add_cells_to_pblock [get_pblock link_merger_SLRn0_R]  [get_cells -hierarchical -filter {NAME =~ *SLRn0_module/Right_merge}]
 
 if {$N_MONITOR_SLR > 1} {
